@@ -11,6 +11,21 @@ Another characteristic is the possibility of configuring the parameters of both 
 optimizers (GA, PSO, DE, ES) and the characteristics of the Benchmark, which until now consists 
 of the Moving Peak Benchmark (MPB).
 
+## Usage
+
+To use the framework, the easiest way is just clone the git repository and start to use.
+For this, you can use the following command in your terminal:
+
+<br> 
+> git clone https://github.com/AbEC-EC/AbEC.git
+
+<br>
+Now, you basically just need to adjust the algorithm in the way that you want and boom!!
+
+<br>
+
+To know more about the configuration files, >come here<.
+
 ## Contents
 
 This repository contains both the framework code in the "abec/" 
