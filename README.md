@@ -1,29 +1,29 @@
-# AbCD
+# AbEC
 
 
 ## Description
-The AbCD (Adjustable Component for Dynamic Problems) is a framework developed in Python using the DEAP library to test different 
-components present in the literature on Dynamic Evolutionary Algorithms (DEA) that are 
-used in optimization of dynamic problems (DOP). It allows the components to be turned 
+The AbEC (Adjustable Evolutionary Components) is a framework developed in Python to test different 
+components present in the literature on Evolutionary Algorithms (EA) that are 
+used in optimization of Static and Dynamic problems. It allows the components to be turned 
 on/off in order to test the effectiveness of each one of them independently in a given 
 problem.
 Another characteristic is the possibility of configuring the parameters of both the 
-optimizers (PSO, ES) and the characteristics of the Benchmark, which until now consists 
+optimizers (GA, PSO, DE, ES) and the characteristics of the Benchmark, which until now consists 
 of the Moving Peak Benchmark (MPB).
 
 ## Contents
 
-This repository contains both the framework code in the "codes/algorithms/adpso" 
+This repository contains both the framework code in the "abec/" 
 folder and codes related to the analysis of experimental data:
 
 In <br> 
-> "abcd/plot"
+> "abec/plot"
 
 Are the codes responsible for generating the performance graphs of 
 the algorithms;
 
 In <br>
-> "abcd/metrics" 
+> "abec/metrics" 
 
 Are the codes responsible for calculating the metrics of the execution of the algorithms.
 
