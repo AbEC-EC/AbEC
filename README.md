@@ -15,40 +15,55 @@ of the Moving Peak Benchmark (MPB).
 
 To use the framework, the easiest way is just clone the git repository and start to use.
 For this, you can use the following command in your terminal:
-
-<br> 
-```bat
-git clone https://github.com/AbEC-EC/AbEC.git
-cd \
-copy a b
-ping 192.168.0.1
+ 
+```python
+    git clone https://github.com/AbEC-EC/AbEC.git
 ```
 
-<br>
 <br>
 Now, you basically just need to adjust the algorithm in the way that you want and boom!!
 
 <br>
 
-To know more about the configuration files, <a href="#">come here</a>
+To know more about the configuration files and usage of the framework [come here](https://google.com).
 
 ## Contents
 
-This repository contains both the framework code in the "abec/" 
-folder and codes related to the analysis of experimental data:
+Besides of the algorithm configuration the framework also has some features related to the analysis of experimental data:
 
 In <br> 
-> "abec/plot"
+> AbEC/abec/metrics
 
-Are the codes responsible for generating the performance graphs of 
-the algorithms;
+Are the codes responsible for the metrics of the algorithms. The metrics implemented so far are:
 
-In <br>
-> "abec/metrics" 
+* Current Error
+* Offline Error
 
-Are the codes responsible for calculating the metrics of the execution of the algorithms.
+And In <br>
+> AbEC/abec/plot
 
-## Parameters settings
+Are the codes responsible for generating the graphs. The options implemented so far are:
+
+* Current Error
+* Offline Error
+* Search Space
+
+## Configuration files
+
+The configuration of the framework is divided in three configuration files, named:
+
+* algoConfig.ini
+
+Where it is the configuration related to the functioning of the algorithm itself (e.g. Population size, optimizers, ...).
+
+* frameConfig.ini
+
+Where it is the configuration of the framework parameters (e.g. number of runs, path of the files, number of evaluations, ...).
+
+* benchConfig.ini
+
+Fot the configuration of the benchmark.
+
 
 ### General
 - **Parameters for general purpose**
