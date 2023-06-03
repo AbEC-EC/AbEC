@@ -17,8 +17,9 @@ To use the framework, the easiest way is just clone the git repository and start
 For this, you can use the following command in your terminal:
 
 <br> 
-> "git clone https://github.com/AbEC-EC/AbEC.git"
+> git clone 'https://github.com/AbEC-EC/AbEC.git'
 
+<br>
 <br>
 Now, you basically just need to adjust the algorithm in the way that you want and boom!!
 
