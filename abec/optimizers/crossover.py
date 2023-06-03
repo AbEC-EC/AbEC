@@ -1,6 +1,6 @@
 import globalVar
 import sys
-from encoder import *
+from optimizers.encoder import *
 
 def cp_crossover(parameters):
     if 0 < parameters["GA_CROSS_PERC"] < 1:

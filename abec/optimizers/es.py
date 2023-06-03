@@ -13,7 +13,7 @@ def es(ind, popBest, parameters, P=1):
 
     indTemp = abec.evaluate(indTemp, parameters)
     if indTemp["fit"] < ind["fit"]:
-        indTemp, globalVar.best = abcd.updateBest(indTemp, globalVar.best)
+        indTemp, globalVar.best = abec.updateBest(indTemp, globalVar.best)
         return indTemp
     else:
         ind["ae"] = 1

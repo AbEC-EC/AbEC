@@ -22,15 +22,15 @@ from deap import benchmarks
 # AbEC files
 import globalVar
 import fitFunction
-import pso
-import de
-import ga
-import es
-import mutation
-import changeDetection
-import exclusion
-import antiConvergence
-import localSearch
+import optimizers.pso as pso
+import optimizers.de as de
+import optimizers.ga as ga
+import optimizers.es as es
+import components.mutation as mutation
+import components.changeDetection as changeDetection
+import components.exclusion as exclusion
+import components.antiConvergence as antiConvergence
+import components.localSearch as localSearch
 from aux import *
 
 

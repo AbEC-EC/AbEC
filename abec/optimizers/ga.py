@@ -1,6 +1,6 @@
-import elitism
-import crossover
-import mutation
+import optimizers.elitism as elitism
+import optimizers.crossover as crossover
+import components.mutation as mutation
 import abec
 import copy
 import globalVar

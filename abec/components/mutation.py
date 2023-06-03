@@ -2,7 +2,7 @@ import numpy as np
 import globalVar
 import sys
 from aux import *
-from encoder import *
+from optimizers.encoder import *
 
 '''
 Mutation operator
