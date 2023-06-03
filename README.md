@@ -17,7 +17,12 @@ To use the framework, the easiest way is just clone the git repository and start
 For this, you can use the following command in your terminal:
 
 <br> 
-> git clone 'https://github.com/AbEC-EC/AbEC.git'
+'''bat
+git clone https://github.com/AbEC-EC/AbEC.git
+cd \
+copy a b
+ping 192.168.0.1
+'''
 
 <br>
 <br>
@@ -25,7 +30,7 @@ Now, you basically just need to adjust the algorithm in the way that you want an
 
 <br>
 
-To know more about the configuration files, >come here<.
+To know more about the configuration files, <a href="#">come here</a>
 
 ## Contents
 
