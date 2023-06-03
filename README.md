@@ -2,7 +2,7 @@
 
 
 ## Description
-The AbEC (Adjustable Evolutionary Components) is a framework developed in Python to test different 
+The AbEC (<ins>**A**</ins>djusta<ins>**b**</ins>le <ins>**E**</ins>volutionary <ins>**C**</ins>omponents) is a framework developed in Python to test different 
 components present in the literature on Evolutionary Algorithms (EA) that are 
 used in optimization of Static and Dynamic problems. It allows the components to be turned 
 on/off in order to test the effectiveness of each one of them independently in a given 
