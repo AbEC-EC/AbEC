@@ -1,5 +1,6 @@
 import random
 import globalVar
+import aux
 from deap import benchmarks
 from deap.benchmarks import movingpeaks
 
@@ -60,6 +61,9 @@ def fitnessFunction(x, parameters):
     elif(parameters["BENCHMARK"] == "MPB"):
         if not globalVar.mpb:
             globalVar.mpb = mpbAbcd(parameters)
+            if(globalVar.peaks <= len(parameters["CHANGES_NEVALS"])): # Save the optima values
+                aux.saveOptima(parameters)
+                globalVar.peaks += 1
         globalOP = globalVar.mpb.maximums()[0][0]
         fitInd = globalVar.mpb(x)[0]
 

@@ -1,8 +1,10 @@
 
 '''
-Code to plot graph using data file
+Code to plot search space graph using data file
 
 Alexandre Mascarenhas
+
+2023/1
 '''
 import json
 import shutil
@@ -12,18 +14,12 @@ import random
 import numpy as np
 import pandas as pd
 import math
+import getopt
 import matplotlib.pyplot as plt
 import datetime
 import os
 import csv
 import sys
-from deap import base
-from deap import benchmarks
-from deap import creator
-from deap import tools
-from deap.benchmarks import movingpeaks
-from deap import creator
-from deap import tools
 
 cDate = datetime.datetime.now()
 year = cDate.year
@@ -33,7 +29,7 @@ hour = cDate.hour
 minute = cDate.minute
 
 #colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow"]
-colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow"]
+colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow","r", "b", "#afafaf", "#820e57", "orange", "yellow","r", "b", "#afafaf", "#820e57", "orange", "yellow"]
 colorS = ["orange", "red", "g", "b"]
 colors2 = ["r", "gray"]
 
@@ -80,8 +76,7 @@ def plot(ax, data, label=None, fStd=0, color="orange", s=1, marker="o", alpha=1,
     return ax
 
 
-def showPlots(fig, ax, parameters):
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
+def showPlots(fig, ax, path, parameters):
     THEME = parameters["THEME"]
     plt.legend()
     for text in plt.legend().get_texts():
@@ -99,72 +94,107 @@ def showPlots(fig, ax, parameters):
 
 
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hp:", ["help", "path="])
+    except:
+        print(arg_help)
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(arg_help)  # print the help message
+            sys.exit(2)
+        elif opt in ("-p", "--path"):
+            path = arg
+
+    print(f"[PATH]: {path}")
+
     # reading the parameters from the config file
-    with open("./config.ini") as f:
+    with open(f"./config.ini") as f:
         parameters = json.loads(f.read())
     debug = parameters["DEBUG"]
-    if(debug):
-        print("Parameters:")
-        print(parameters)
 
     THEME = parameters["THEME"]
-
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
-    df = pd.read_csv(f"{path}/data.csv")
-    gop = pd.read_csv(f"{path}/optima.csv")
-
     fig, ax = configPlot(parameters)
 
-    #print( len(pd.unique(df["run"])) )
-    data = [[] for i in range( len(pd.unique(df["run"])) )]
-    best = [[] for i in range( len(pd.unique(df["run"])) )]
-    part = [[] for i in range( len(pd.unique(df["run"])) )]
-    if(parameters["ALGORITHM"] == "MPSO"):
-        swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
-        bswarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
-    for i in range(len(pd.unique(df["run"])) ):
-        data[i] = df[df["run"] == i+1]
-        if(parameters["PLOT_SWARMS"] and parameters["ALGORITHM"] == "MPSO"):
-            for j in range(len(pd.unique(data[i]["swarm"])) ): # Get the number of runs
-                swarm[j] = data[i][data[i]["swarm"] == j+1]
-                bswarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["sbest"]]
-                bswarm[j].reset_index(inplace=True)
-                bswarm[j] = bswarm[j]["sbest"].values.tolist()
-                temp = [json.loads(item)[0:2] for item in bswarm[j]]
-                ax = plot(ax, data=temp, color=colors[j], s=4000, alpha=0.05)
+    #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}"
+    for j in range(3, len(sys.argv)):
+
+        pathTmp = f"{path}/{sys.argv[j]}"
+        #pathTmp = f"{path}"
+        print(f"[PATH {j-2}]: {pathTmp}")
+
+        df = pd.read_csv(f"{pathTmp}/data.csv")
+
+     # Read the parameters from the config file
+        with open(f"{pathTmp}/algoConfig.ini") as f:
+            p0 = json.loads(f.read())
+        with open(f"{pathTmp}/benchConfig.ini") as f:
+            p1 = json.loads(f.read())
+        with open(f"{pathTmp}/frameConfig.ini") as f:
+            p2 = json.loads(f.read())
+
+        parameters2 = p0 | p1 | p2
+
+        #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
+        df = pd.read_csv(f"{pathTmp}/data.csv")
+        gop = pd.read_csv(f"{pathTmp}/optima.csv")
+
+        #print( len(pd.unique(df["run"])) )
+        data = [[] for i in range( len(pd.unique(df["run"])) )]
+        best = [[] for i in range( len(pd.unique(df["run"])) )]
+        ind = [[] for i in range( len(pd.unique(df["run"])) )]
+        if(parameters2["COMP_MULTIPOP"]):
+            subpops = [[] for i in range( len(pd.unique(df["popId"])) )]
+            bsubpop = [[] for i in range( len(pd.unique(df["popId"])) )]
+
+        for i in range(len(pd.unique(df["run"])) ):
+            data[i] = df[df["run"] == i+1]
+            #print(data[i])
+            if parameters2["COMP_MULTIPOP"]:
+                for j in range(len(pd.unique(data[i]["popId"])) ): # Get the number of runs
+                    subpops[j] = data[i][data[i]["popId"] == j+1]
+                    bsubpop[j] = subpops[j].drop_duplicates(subset=["gen"], keep="last")[["popBestPos"]]
+                    #bsubpop[j] = bsubpop[j].iloc[-1]
+                    #print(bsubpop[j]["popBestPos"])
+                    bsubpop[j].reset_index(inplace=True)
+                    #print(bsubpop[j]["popBestPos"].iloc[-1])
+                    bsubpop[j] = bsubpop[j]["popBestPos"].values.tolist()[-2:-1]
+                    print(bsubpop[j])
+                    #e()
+                    temp = [json.loads(item)[0:2] for item in bsubpop[j]]
+                    ax = plot(ax, data=temp, color=colors[j], s=4000, alpha=0.5)
+            else:
+                best[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["bestPos"]]
+                best[i].reset_index(inplace=True)
+                best[i] = best[i]["bestPos"].values.tolist()
+                #part[i] = data[i]["indPos"].values.tolist()
+                #temp = [json.loads(item)[0:2] for item in part[i]]
+                #ax = plot(ax, data=temp, label=f"Run {i+1}", color=colors[i], s=5, alpha=0.3)
+                temp = [json.loads(item)[0:2] for item in best[i]]
+                ax = plot(ax, data=temp, color=colors[i], s=5, marker="X", conn=True)
 
 
-        else:
-            best[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["best"]]
-            best[i].reset_index(inplace=True)
-            best[i] = best[i]["best"].values.tolist()
-            part[i] = data[i]["part"].values.tolist()
-            temp = [json.loads(item)[0:2] for item in part[i]]
-            ax = plot(ax, data=temp, label=f"Run {i+1}", color=colors[i], s=5, alpha=0.3)
-            temp = [json.loads(item)[0:2] for item in best[i]]
-            ax = plot(ax, data=temp, color=colors[i], s=5, marker="X", conn=True)
+        for k in range(gop.shape[1]):
+            temp = gop[f"opt{k}"].values.tolist()
+            for j in range(len(temp)):
+                temp[j] = list(temp[j].split(", "))
+                for i in range(len(temp[j])):
+                    temp[j][i] =  temp[j][i].replace("[", "")
+                    temp[j][i] =  temp[j][i].replace("(", "")
+                    temp[j][i] =  temp[j][i].replace(")", "")
+                    temp[j][i] =  temp[j][i].replace("]", "")
+                    temp[j][i] =  float(temp[j][i])
+
+            #print(temp)
+            x = [[x[1], x[2]] for x in temp]
+            if(k == 0):
+                ax = plot(ax, data=x, label=f"GOP", color="green", s=10, marker="*", conn=True)
+            else:
+                ax = plot(ax, data=x, color="green", s=5, marker="s", conn=True, alpha=0.5)
 
 
-    for k in range(gop.shape[1]):
-        temp = gop[f"opt{k}"].values.tolist()
-        for j in range(len(temp)):
-            temp[j] = list(temp[j].split(", "))
-            for i in range(len(temp[j])):
-                temp[j][i] =  temp[j][i].replace("[", "")
-                temp[j][i] =  temp[j][i].replace("(", "")
-                temp[j][i] =  temp[j][i].replace(")", "")
-                temp[j][i] =  temp[j][i].replace("]", "")
-                temp[j][i] =  float(temp[j][i])
-
-        #print(temp)
-        x = [[x[1], x[2]] for x in temp]
-        if(k == 0):
-            ax = plot(ax, data=x, label=f"GOP", color="green", s=10, marker="*", conn=True)
-        else:
-            ax = plot(ax, data=x, color="brown", s=5, marker="s", conn=True, alpha=0.5)
-
-
-    showPlots(fig, ax, parameters)
+        showPlots(fig, ax, pathTmp, parameters)
 
 
 if __name__ == "__main__":
