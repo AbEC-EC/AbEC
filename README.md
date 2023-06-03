@@ -17,12 +17,12 @@ To use the framework, the easiest way is just clone the git repository and start
 For this, you can use the following command in your terminal:
 
 <br> 
-'''bat
+```bat
 git clone https://github.com/AbEC-EC/AbEC.git
 cd \
 copy a b
 ping 192.168.0.1
-'''
+```
 
 <br>
 <br>
