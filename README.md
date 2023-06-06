@@ -25,7 +25,7 @@ Now, you basically just need to adjust the algorithm in the way that you want an
 
 <br>
 
-To know more about the configuration files and usage of the framework [come here](https://google.com).
+To know more about the configuration files and usage of the framework [come here](https://abec-ec.github.io).
 
 ## Contents
 
@@ -62,67 +62,4 @@ Where it is the configuration of the framework parameters (e.g. number of runs, 
 
 * benchConfig.ini
 
-Fot the configuration of the benchmark.
-
-
-### General
-- **Parameters for general purpose**
-    - *RUNS: 1 - 1000* (int) -> Number of runs;
-    - *NEVALS: 1 - 1000000* (int) -> Number of Evaluations of each run;
-    - *POPSIZE: 1 - 1000* (int) -> Population size;
-    - *NDIM: 1-1000* (int) -> Number of dimensions of the problem;
-    - *BOUNDS: [BOUNDMIN, BOUNDMAX]* (list of int) -> Problem boundaries;
-
-### Optmizers
-
-- **PSO**
-    - *phi1: 0 - 10* (real) -> Parameter referring to the weight of the individual's contribution;
-    - *phi2: 0 - 10* (real) -> Parameter referring to the contribution weight of the best individual in the flock.
-
-- **ES**
-    - *RCLOUD: 0 - BOUNDMAX* (real) -> Radius around the individual to be searched.
-
-## Operators
-
-### Change Detection
-
-- **Reevaluation based method**
-
-    - *CHANGE_DETECTION_OP: 0 or 1* (bool) -> 0 for change detection OFF, 1 for change detection ON.
-
-
-### Diversity control
-
-- **Anti-Convergence**
-
-    - *ANTI_CONVERGENCE_OP: 0 or 1* (bool) -> 0 for anti-convergency OFF, 1 for anti-convergency ON
-    - *AC_TYPE_OP: {1, 2, 3}* (int) -> Type of anti-convergency
-        - 1: Spatial size monitoring
-            - *RCONV: 0 - BOUNDMAX* (real) -> Radius for a subpopulation be considered converged.
-        - 2: Fitness monitoring
-            - *RCONV: 0 - BOUNDMAX* (real) -> Radius for a subpopulation be considered converged.
-
-- **Exclusion based on spatial size monitoring**
-
-    - *EXCLUSION_OP: 0 or 1* (bool) -> 0 for exclusion OFF, 1 for exclusion ON
-    - *REXCL: 0 - BOUNDMAX* (real) -> Radius for two subpopulation be considered redundant.
-
-### Population division and management
-
-- **Multipopulation**
-
-    - Fixed number of subpopulations
-        - *NSPOP: 1 - POPSIZE* (int) -> Number of subpopulations.
-
-## Benchmark (Moving Peak Benchmark) parameters:
-
-- *CHANGE: 0 or 1* (bool) -> If there will be changes in the environment;
-- *RANDOM_CHANGES: 0 or 1* (bool) -> Whether the changes will be random or not;
-- *RANGE_GEN_CHANGES: [MIN, MAX]* (list of int) -> Range of allowed values for random changes to occur;
-- *NCHANGES: 1-1000* (int) -> Number of random changes;
-- *CHANGES_GEN: [values]* (list of int) -> If the changes are manual, these are the values of the generations in which they will occur;
-- *NPEAKS_MPB: 1 - 1000* (int) -> Number of benchmark peaks;
-- *UNIFORM_HEIGHT_MPB: 0 - 1000* (float) -> Initial value of the peaks. If 0 will be random;
-- *MAX_HEIGHT_MPB: 0 - 1000* (float) -> Maximum value for peaks;
-- *MIN_HEIGHT_MPB: 0 - 1000* (float) -> Minimum value for peaks;
-- *MOVE_SEVERITY_MPB: 1 - BOUNDMAX* (float) -> Intensity of the change in the position of the peaks when there is a change of environment;
+For the configuration of the benchmark.
