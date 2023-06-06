@@ -60,6 +60,6 @@ Where it is the configuration related to the functioning of the algorithm itself
 
 Where it is the configuration of the framework parameters (e.g. number of runs, path of the files, number of evaluations, ...).
 
-* benchConfig.ini
+* problemConfig.ini
 
-For the configuration of the benchmark.
+For the configuration of the problem (e.g. number of dimensions, dynamic or not, ...).

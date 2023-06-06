@@ -512,7 +512,7 @@ def abec(parameters, seed):
     # Copy the config.ini file to the experiment dir
     if(parameters["CONFIG_COPY"]):
         shutil.copyfile("algoConfig.ini", f"{globalVar.path}/algoConfig.ini")
-        shutil.copyfile("benchConfig.ini", f"{globalVar.path}/benchConfig.ini")
+        shutil.copyfile("problemConfig.ini", f"{globalVar.path}/benchConfig.ini")
         shutil.copyfile("frameConfig.ini", f"{globalVar.path}/frameConfig.ini")
 
     # Evaluate the offline error
