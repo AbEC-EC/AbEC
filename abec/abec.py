@@ -255,6 +255,17 @@ def evaluatePop(pop, best, parameters):
     return pop, best
 
 
+def finishRun(parameters):
+    if parameters["FINISH_RUN_MODE"] == 0:
+        if (globalVar.nevals < (parameters["FINISH_RUN_MODE_VALUE"]-parameters["POPSIZE"])+1):
+            return 0
+        else:
+            return 1
+    else:
+        if globalVar.best["fit"] > parameters["FINISH_RUN_MODE_VALUE"]:
+            return 0
+        else:
+            return 1
 
 
 '''
@@ -345,7 +356,8 @@ def abec(parameters, seed):
         # LOOP UNTIL FINISH THE RUN
         ###########################################################################
 
-        while globalVar.nevals < (parameters["NEVALS"]-parameters["POPSIZE"])+1 and globalVar.best["fit"] != 42:
+
+        while finishRun(parameters) == 0:
 
 
             #####################################
@@ -540,7 +552,7 @@ def main():
    # Read the parameters from the config file
     with open(f"{globalVar.path}/algoConfig.ini") as f:
         parameters0 = json.loads(f.read())
-    with open(f"{globalVar.path}/benchConfig.ini") as f:
+    with open(f"{globalVar.path}/problemConfig.ini") as f:
         parameters1 = json.loads(f.read())
     with open(f"{globalVar.path}/frameConfig.ini") as f:
         parameters2 = json.loads(f.read())
@@ -609,17 +621,23 @@ def main():
             print(f"---- Etry:\t{parameters['COMP_LOCAL_SEARCH_ETRY']}")
             print(f"---- Rls:\t{parameters['COMP_LOCAL_SEARCH_RLS']}")
 
-
-        print()
-        print(f"[BENCHMARK SETUP]")
-        print(f"- Name: {parameters['BENCHMARK']}")
-        print(f"- NDIM: {parameters['NDIM']}")
-
         print()
         print(f"[FRAMEWORK SETUP]")
         print(f"- RUNS:\t\t {parameters['RUNS']}")
-        print(f"- NEVALS p/ RUN: {parameters['NEVALS']}")
+        if parameters["FINISH_RUN_MODE"] == 0:
+            print(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}")
+        else:
+            print(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}")
         print(f"- SEED:\t\t {parameters['SEED']}")
+
+
+        print()
+        print(f"[PROBLEM SETUP]")
+        if parameters["BENCHMARK"] == "NONE":
+            print(f"- Name: Fitness Function")
+        else:
+            print(f"- Name: {parameters['BENCHMARK']}")
+        print(f"- NDIM: {parameters['NDIM']}")
 
     time.sleep(1)
     try:

@@ -1,6 +1,7 @@
 import random
 import globalVar
 import aux
+import abec
 from deap import benchmarks
 from deap.benchmarks import movingpeaks
 
@@ -66,6 +67,8 @@ def fitnessFunction(x, parameters):
                 globalVar.peaks += 1
         globalOP = globalVar.mpb.maximums()[0][0]
         fitInd = globalVar.mpb(x)[0]
+    elif(parameters["BENCHMARK"] == "NONE"):
+        abec.errorWarning("0.0.0", file="function.py", parameter="NONE", text="The fitness function is not defined. The file function.py must be included in this directory.")
 
 
 
