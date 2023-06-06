@@ -13,7 +13,7 @@ def mpbAbcd(parameters):
     elif (parameters["SCENARIO_MPB"] == 3):
         scenario = movingpeaks.SCENARIO_3
     severity = parameters["MOVE_SEVERITY_MPB"]
-    scenario["period"] = parameters["PERIOD"]
+    scenario["period"] = 0
     scenario["npeaks"] = parameters["NPEAKS_MPB"]
     scenario["uniform_height"] = parameters["UNIFORM_HEIGHT_MPB"]
     scenario["move_severity"] = severity
