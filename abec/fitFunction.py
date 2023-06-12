@@ -2,7 +2,7 @@ import random
 import globalVar
 import aux
 import abec
-import function
+import fitnessFunction.function as function
 from deap import benchmarks
 from deap.benchmarks import movingpeaks
 

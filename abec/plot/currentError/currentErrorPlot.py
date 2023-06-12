@@ -173,7 +173,7 @@ def main():
      # Read the parameters from the config file
         with open(f"{pathTmp}/algoConfig.ini") as f:
             p0 = json.loads(f.read())
-        with open(f"{pathTmp}/benchConfig.ini") as f:
+        with open(f"{pathTmp}/problemConfig.ini") as f:
             p1 = json.loads(f.read())
         with open(f"{pathTmp}/frameConfig.ini") as f:
             p2 = json.loads(f.read())

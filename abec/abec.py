@@ -518,12 +518,6 @@ def abec(parameters, seed):
         print(f'Time Exec: {str(executionTime)} s\n')
 
 
-    # Copy the config.ini file to the experiment dir
-    if(parameters["CONFIG_COPY"]):
-        shutil.copyfile("algoConfig.ini", f"{globalVar.path}/algoConfig.ini")
-        shutil.copyfile("problemConfig.ini", f"{globalVar.path}/benchConfig.ini")
-        shutil.copyfile("frameConfig.ini", f"{globalVar.path}/frameConfig.ini")
-
     # Evaluate the offline error
     if(parameters["OFFLINE_ERROR"]):
         if (parameters["DEBUG_RUN"]):
@@ -546,23 +540,6 @@ def main():
     seed = minute
     arg_help = "{0} -s <seed> -p <path>".format(sys.argv[0])
 
-   # Read the parameters from the config file
-    with open(f"{globalVar.path}/algoConfig.ini") as f:
-        parameters0 = json.loads(f.read())
-    with open(f"{globalVar.path}/problemConfig.ini") as f:
-        parameters1 = json.loads(f.read())
-    with open(f"{globalVar.path}/frameConfig.ini") as f:
-        parameters2 = json.loads(f.read())
-
-    parameters = parameters0 | parameters1 | parameters2
-
-    if parameters["SEED"] >= 0:
-        seed = parameters["SEED"]
-
-    if globalVar.path == ".":
-        globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-        globalVar.path = checkDirs(globalVar.path)
-
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:p:", ["help", "seed=", "path="])
     except:
@@ -577,6 +554,43 @@ def main():
             seed = int(arg)
         elif opt in ("-p", "--path"):
             globalVar.path = arg
+
+    parameters0 = algoConfig()
+    parameters1 = frameConfig()
+    parameters2 = problemConfig()
+   # Read the parameters from the config file
+    if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
+        with open(f"{globalVar.path}/algoConfig.ini") as f:
+            p0 = list(json.loads(f.read()).items())
+            for i in range(len(p0)):
+                #print(p0[i][0])
+                parameters0[f"{p0[i][0]}"] = p0[i][1]
+
+    if os.path.isfile(f"{globalVar.path}/frameConfig.ini"):
+        with open(f"{globalVar.path}/frameConfig.ini") as f:
+            p1 = list(json.loads(f.read()).items())
+            for i in range(len(p1)):
+                #print(p1[i][0])
+                parameters1[f"{p1[i][0]}"] = p1[i][1]
+
+    if os.path.isfile(f"{globalVar.path}/problemConfig.ini"):
+        with open(f"{globalVar.path}/problemConfig.ini") as f:
+            p2 = list(json.loads(f.read()).items())
+            for i in range(len(p2)):
+                #print(p2[i][0])
+                parameters2[f"{p2[i][0]}"] = p2[i][1]
+
+    parameters = parameters0 | parameters1 | parameters2
+
+    if parameters["SEED"] >= 0:
+        seed = parameters["SEED"]
+
+    if globalVar.path == ".":
+        if not os.path.isdir(f"{parameters['PATH']}"):
+            os.mkdir(f"{parameters['PATH']}")
+        globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+        globalVar.path = checkDirs(globalVar.path)
+
 
     if parameters["DEBUG_RUN"]:
         print(f"======================================================")
@@ -644,6 +658,17 @@ def main():
 
     print("\n[START]\n")
     abec(parameters, seed)
+    # Copy the config.ini file to the experiment dir
+    if(parameters["CONFIG_COPY"]):
+        f = open(f"{globalVar.path}/algoConfig.ini","w")
+        f.write(json.dumps(parameters0))
+        f.close()
+        f = open(f"{globalVar.path}/frameConfig.ini","w")
+        f.write(json.dumps(parameters1))
+        f.close()
+        f = open(f"{globalVar.path}/problemConfig.ini","w")
+        f.write(json.dumps(parameters2))
+        f.close()
     print("\n[END]\nThx :)\n")
 
 
