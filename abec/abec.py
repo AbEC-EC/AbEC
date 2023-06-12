@@ -501,13 +501,24 @@ def abec(parameters, seed):
 
 
     if parameters["RUNS"] > 1:
+        luffy = 0
+        bestsPos = []
+
         bests = [d["fit"] for d in bestRuns]
         meanBest = np.mean(bests)
         stdBest = np.std(bests)
+        bPos = [d["pos"] for d in bestRuns]
+        for i in range(len(bPos[0])):
+            for j in range(len(bPos)):
+                luffy += bPos[j][i]
+            bestsPos.append(luffy/len(bPos))
+            luffy = 0
+
         if parameters["DEBUG_RUN"]:
             print(f"\n==============================================")
             print(f"[RUNS:{parameters['RUNS']}]")
-            print(f"[BEST MEAN: {meanBest:.2f}({stdBest:.2f})]")
+            print(f"[POS MEAN: {bestsPos} ]")
+            print(f"[FIT MEAN: {meanBest:.2f}({stdBest:.2f})]")
             print(f"==============================================\n")
 
     executionTime = (time.time() - startTime)

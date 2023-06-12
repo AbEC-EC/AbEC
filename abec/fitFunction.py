@@ -36,18 +36,33 @@ def fitnessFunction(x, parameters):
     globalOP = 0
     fitInd = 0
     global mpb
-    if(parameters["BENCHMARK"] == "H1"):
-        globalOP = benchmarks.h1([8.6998, 6.7665])[0]
-        fitInd = benchmarks.h1(x)[0]
-    elif(parameters["BENCHMARK"] == "BOHACHEVSKY"):
-        globalOP = benchmarks.bohachevsky([0 for _ in range(parameters["NDIM"])])[0]
-        fitInd = benchmarks.bohachevsky(x)[0]
-    elif(parameters["BENCHMARK"] == "HIMMELBLAU"):
-        globalOP = benchmarks.himmelblau([3.0, 2.0])[0]
-        fitInd = benchmarks.himmelblau(x)[0]
+    if(parameters["BENCHMARK"] == "CIGAR"):
+        globalOP = benchmarks.cigar([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.cigar(x)[0]
+    elif(parameters["BENCHMARK"] == "PLANE"):
+        globalOP = benchmarks.plane([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.plane(x)[0]
     elif(parameters["BENCHMARK"] == "SPHERE"):
         globalOP = benchmarks.sphere([0 for _ in range(parameters["NDIM"])])[0]
         fitInd = benchmarks.sphere(x)[0]
+    elif(parameters["BENCHMARK"] == "ACKLEY"):
+        globalOP = benchmarks.ackley([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.ackley(x)[0]
+    elif(parameters["BENCHMARK"] == "BOHACHEVSKY"):
+        globalOP = benchmarks.bohachevsky([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.bohachevsky(x)[0]
+    elif(parameters["BENCHMARK"] == "GRIEWANK"):
+        globalOP = benchmarks.griewank([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.griewank(x)[0]
+    elif(parameters["BENCHMARK"] == "H1"):
+        globalOP = benchmarks.h1([8.6998, 6.7665])[0]
+        fitInd = benchmarks.h1(x)[0]
+    elif(parameters["BENCHMARK"] == "HIMMELBLAU"):
+        globalOP = benchmarks.himmelblau([3.0, 2.0])[0]
+        fitInd = benchmarks.himmelblau(x)[0]
+    elif(parameters["BENCHMARK"] == "RASTRIGIN"):
+        globalOP = benchmarks.rastrigin([0 for _ in range(parameters["NDIM"])])[0]
+        fitInd = benchmarks.rastrigin(x)[0]
     elif(parameters["BENCHMARK"] == "ROSENBROCK"):
         globalOP = benchmarks.rosenbrock([1 for _ in range(parameters["NDIM"])])[0]
         fitInd = benchmarks.rosenbrock(x)[0]
@@ -57,9 +72,6 @@ def fitnessFunction(x, parameters):
     elif(parameters["BENCHMARK"] == "SCHWEFEL"):
         globalOP = benchmarks.schwefel([420.9687436 for _ in range(parameters["NDIM"])])[0]
         fitInd = benchmarks.schwefel(x)[0]
-    elif(parameters["BENCHMARK"] == "RASTRIGIN"):
-        globalOP = benchmarks.rastrigin([0 for _ in range(parameters["NDIM"])])[0]
-        fitInd = benchmarks.rastrigin(x)[0]
     elif(parameters["BENCHMARK"] == "MPB"):
         if not globalVar.mpb:
             globalVar.mpb = mpbAbcd(parameters)
@@ -69,10 +81,8 @@ def fitnessFunction(x, parameters):
         globalOP = globalVar.mpb.maximums()[0][0]
         fitInd = globalVar.mpb(x)[0]
     elif(parameters["BENCHMARK"] == "NONE"):
-        fitInd = function.function(x)
+        fitInd = function.function(x, parameters["CHANGES_NEVALS"])
         globalOP = 0
-        #abec.errorWarning("0.0.0", file="function.py", parameter="NONE", text="The fitness function is not defined. The file function.py must be included in this directory.")
-
 
 
     if parameters["BENCHMARK"] =="NONE":
