@@ -19,5 +19,10 @@ def pso(ind, best, parameters):
         elif abs(speed) > parameters["PSO_MAX_VEL"]:
             ind["vel"][i] = math.copysign(parameters["PSO_MAX_VEL"], speed)
     ind["pos"] = list(map(operator.add, ind["pos"], ind["vel"]))
+    for i in range(len(ind["pos"])):
+        if ind["pos"][i] > parameters["MAX_POS"]:
+            ind["pos"][i] = parameters["MAX_POS"]
+        elif ind["pos"][i] < parameters["MIN_POS"]:
+            ind["pos"][i] = parameters["MIN_POS"]
 
     return ind
