@@ -58,6 +58,11 @@ def mutation(pop, parameters, comp=0):
         else:
             for d in range(parameters["NDIM"]):
                 if globalVar.rng.random() < mutation_factor:
-                    pop.ind[i]["pos"][d] += globalVar.rng.normal(loc = 0.0, scale = mutation_std)
-
+                    dp = globalVar.rng.normal(loc = 0.0, scale = mutation_std)
+                    if (pop.ind[i]["pos"][d] + dp ) > parameters["MAX_POS"]:
+                        pop.ind[i]["pos"][d] = parameters["MAX_POS"]
+                    elif (pop.ind[i]["pos"][d] + dp ) < parameters["MIN_POS"]:
+                        pop.ind[i]["pos"][d] = parameters["MIN_POS"]
+                    else:
+                        pop.ind[i]["pos"][d] += dp
     return pop

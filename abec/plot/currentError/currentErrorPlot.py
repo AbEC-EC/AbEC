@@ -27,7 +27,7 @@ day = cDate.day
 hour = cDate.hour
 minute = cDate.minute
 
-colors = ["#afafaf", "#820e57", "orange", "red", "green", "blue", "yellow"]
+colors = ["#820e57", "orange", "red", "green", "#afafaf","blue", "yellow"]
 lineStyles = ["dashdot", "dotted", "dashed", ":", "solid",  "solid", "solid"]
 markers = [".", "x", "^", "^", "."]
 
@@ -61,17 +61,17 @@ def configPlot(parameters):
 def plot(ax, data, label, fStd=0, color="orange", linestyle="-", marker=".", parameters=False):
     ax.plot(data["nevals"], data["bestError"], color=color, linestyle=linestyle, marker=marker, markersize=0, label=label)
     if(fStd):
-        ax.fill_between(data["nevals"], data["bestError"] - data["std"], data["bestError"] + data["std"], color=color, alpha=0.1)
+        ax.fill_between(data["nevals"], data["bestError"] - data["std"], data["bestError"] + data["std"], color=color, alpha=0.05)
     ax.set_xlabel("Evaluations", fontsize=15)
     ax.set_ylabel("Current error", fontsize=15)
     if(parameters["YLIM"]):
         ax.set_ylim(bottom=parameters["YLIM"][0], top=parameters["YLIM"][1])
-    else:
-        ax.set_ylim(bottom=0)
+    #else:
+     #   ax.set_ylim(bottom=0)
     if(parameters["XLIM"]):
         ax.set_xlim(left=parameters["XLIM"][0], right=parameters["XLIM"][1])
     else:
-        ax.set_xlim(0, data["nevals"].iloc[-1])
+        ax.set_xlim(data["nevals"].iloc[0], data["nevals"].iloc[-1])
     #plt.xscale("log")
     return ax
 
@@ -93,13 +93,20 @@ def showPlots(fig, ax, parameters, parameters2, path):
         if(parameters["THEME"] == 3):
             title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']}"
         else:
-            title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']} \n\n \
-                    POPSIZE: {parameters2['POPSIZE']}   \
-                    NPEAKS: {parameters2['NPEAKS_MPB']}\
-                    DIM: {parameters2['NDIM']}\
-                    SEVERITY: {parameters2['MOVE_SEVERITY_MPB']} \
-                    "
-    ax.set_title(title, fontsize=20)
+            if parameters["BENCHMARK"] == "MPB":
+                title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']} \n\n \
+                        POPSIZE: {parameters2['POPSIZE']}   \
+                        NPEAKS: {parameters2['NPEAKS_MPB']}\
+                        DIM: {parameters2['NDIM']}\
+                        SEVERITY: {parameters2['MOVE_SEVERITY_MPB']} \
+                        "
+            else:
+                title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']} \n\n \
+                POPSIZE: {parameters2['POPSIZE']}   \
+                DIM: {parameters2['NDIM']}\
+                NRUNS: {parameters2['RUNS']}\
+                "
+    ax.set_title(title, fontsize=18)
     plt.savefig(f"{path}/{parameters['NAME']}", format="png")
     plt.show()
 
@@ -192,9 +199,9 @@ def main():
 
     changesEnv = parameters2["CHANGES_NEVALS"]
     #changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
-    if(parameters["THEME"] != 3):
-        for i in changesEnv:
-            plt.axvline(int(i), color="black", linestyle="--")
+    #if(parameters["THEME"] != 3):
+        #for i in changesEnv:
+            #plt.axvline(int(i), color="black", linestyle="--")
 
     showPlots(fig, ax, parameters, parameters2, path)
 

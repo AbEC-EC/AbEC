@@ -45,6 +45,17 @@ def crossover(pop, newPop, parameters):
             child1["pos"], child2["pos"]  = parent1["pos"][:cutPoint] + parent2["pos"][cutPoint:], \
                                             parent2["pos"][:cutPoint] + parent1["pos"][cutPoint:]
 
+        for i in range(len(child1["pos"])):
+            if child1["pos"][i] > parameters["MAX_POS"]:
+                child1["pos"][i] = parameters["MAX_POS"]
+            elif child1["pos"][i] < parameters["MIN_POS"]:
+                child1["pos"][i] = parameters["MIN_POS"]
+
+            if child2["pos"][i] > parameters["MAX_POS"]:
+                child2["pos"][i] = parameters["MAX_POS"]
+            elif child2["pos"][i] < parameters["MIN_POS"]:
+                child2["pos"][i] = parameters["MIN_POS"]
+
         newPop.addInd(parameters, i)
         newPop.ind[-1]["pos"] = child1["pos"].copy()
         newPop.ind[-1]["type"] = "GA"

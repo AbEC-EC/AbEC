@@ -375,7 +375,6 @@ def abec(parameters, seed):
                     pops[id] = randInit(pops[id], parameters)
                     randomInit[id] = 0
 
-
             if localSearch.cp_localSearch(parameters):
                 globalVar.best = localSearch.localSearch(globalVar.best, parameters)
 
@@ -392,7 +391,6 @@ def abec(parameters, seed):
                     if change == 0:
                         change = changeDetection.detection(pop, parameters)
                     if change:
-                        #print(f"[NEVALS: {globalVar.nevals}]")
                         globalVar.best["fit"] = "NaN"
                         pop, globalVar.best = evaluatePop(pop, globalVar.best, parameters)
                         if flagEnv == 0:
@@ -421,7 +419,6 @@ def abec(parameters, seed):
                         pop.ind[i] = pso.pso(pop.ind[i], pop.best, parameters)
                     elif pop.ind[i]["type"] == "ES":
                         pop.ind[i] = es.es(pop.ind[i], pop.best, parameters)
-                        #print(ind)
 
 
                 #####################################

@@ -10,6 +10,10 @@ def es(ind, popBest, parameters, P=1):
     rcloud = parameters["ES_RCLOUD"]
     for d in range(parameters["NDIM"]):
         indTemp["pos"][d] = popBest["pos"][d] + P*(globalVar.rng.uniform(-1, 1)*rcloud)
+        if indTemp["pos"][d] > parameters["MAX_POS"]:
+            indTemp["pos"][d] = parameters["MAX_POS"]
+        elif indTemp["pos"][d] < parameters["MIN_POS"]:
+            indTemp["pos"][d] = parameters["MIN_POS"]
 
     indTemp = abec.evaluate(indTemp, parameters)
     if indTemp["fit"] < ind["fit"]:
