@@ -8,8 +8,7 @@ used in optimization of Static and Dynamic problems. It allows the components to
 on/off in order to test the effectiveness of each one of them independently in a given 
 problem.
 Another characteristic is the possibility of configuring the parameters of both the 
-optimizers (GA, PSO, DE, ES) and the characteristics of the Benchmark, which until now consists 
-of the Moving Peak Benchmark (MPB).
+optimizers (GA, PSO, DE, ES) and the characteristics of the Benchmarks.
 
 ## Usage
 
