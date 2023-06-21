@@ -4,6 +4,8 @@ Exclusion operator
 import itertools
 import numpy as np
 
+params = ["REXCL"]
+
 def cp_exclusion(parameters):
     if parameters["COMP_EXCLUSION"] == 1:
         if 0 < parameters["COMP_EXCLUSION_REXCL"] < parameters["MAX_POS"]:

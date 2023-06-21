@@ -5,6 +5,9 @@ import copy
 '''
 Apply ES on the particle
 '''
+
+params = ["RCLOUD"]
+
 def es(ind, popBest, parameters, P=1):
     indTemp = copy.deepcopy(ind)
     rcloud = parameters["ES_RCLOUD"]

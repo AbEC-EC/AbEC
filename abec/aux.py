@@ -2,6 +2,9 @@ import csv
 import os
 import datetime
 import globalVar
+import importlib
+from os import listdir
+from os.path import isfile, join
 
 cDate = datetime.datetime.now()
 year = cDate.year
@@ -67,13 +70,50 @@ def saveOptima(parameters):
 Default parametrization for algoConfig.ini
 '''
 def algoConfig():
+    components = [f for f in listdir("components") if isfile(join("components", f))]
+    optimizers = [f for f in listdir("optimizers") if isfile(join("optimizers", f))]
+    comp_parameters = []
+    opt_parameters = []
+
     config = {
         "__COMMENT__": "BASIC CONFIGURATION", \
-        "ALGORITHM": "PSO", \
-        "POPSIZE": 50, \
-        "MIN_POS": -10, \
-        "MAX_POS": 10, \
-        "__COMMENT__": "OPTIMIZER CONFIGURATION", \
+        "ALGORITHM": "", \
+        "POPSIZE": 0, \
+        "MIN_POS": 0, \
+        "MAX_POS": 0, \
+    }
+    print(config)
+    print(optimizers)
+    print(components)
+
+    # Load the optimizers
+    for i in range(len(optimizers)):
+        optimizers[i] = optimizers[i].split(".")[0]
+        opt_parameters.append(importlib.import_module(f"optimizers.{optimizers[i]}"))
+        optimizers[i] = optimizers[i].upper()
+        print(optimizers[i])
+        config.update({f"{optimizers[i]}_POP_PERC": 0})
+        for j in range(len(opt_parameters[i].params)):
+            #print(opt_parameters[i].params[j])
+            config.update({f"{optimizers[i]}_{opt_parameters[i].params[j]}": 0})
+        #print()
+
+    # Load the components
+    for i in range(len(components)):
+        components[i] = components[i].split(".")[0]
+        comp_parameters.append(importlib.import_module(f"components.{components[i]}"))
+        components[i] = components[i].upper()
+        print(components[i])
+        config.update({f"COMP_{components[i]}": 0})
+        for j in range(len(comp_parameters[i].params)):
+            #print(comp_parameters[i].params[j])
+            config.update({f"COMP_{components[i]}_{comp_parameters[i].params[j]}": 0})
+        #print()
+
+    #print(config)
+    #e()
+
+    '''
         "GA_POP_PERC": 0, \
         "GA_ELI_PERC": 0.2, \
         "GA_CROSS_PERC": 1, \
@@ -93,6 +133,8 @@ def algoConfig():
         "ES_POP_PERC": 0, \
         "ES_RCLOUD": 0.2, \
         "__COMMENT__": "COMPONENTS CONFIGURATION", \
+    }
+        f"COMP_{components[0]}": 0, \
         "COMP_CHANGE_DETECT": 0, \
         "COMP_CHANGE_DETECT_MODE": 0, \
         "COMP_MULTIPOP": 0, \
@@ -109,6 +151,7 @@ def algoConfig():
         "COMP_LOCAL_SEARCH_ETRY": 20, \
         "COMP_LOCAL_SEARCH_RLS": 1 \
     }
+    '''
     return config
 
 '''

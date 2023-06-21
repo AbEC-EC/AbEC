@@ -5,6 +5,9 @@ import globalVar
 '''
 Apply PSO on the particle
 '''
+
+params = ["PHI1", "PHI2", "W", "MIN_VEL", "MAX_VEL"]
+
 def pso(ind, best, parameters):
     W = (parameters["PSO_W"] for _ in range(len(ind["pos"])))
     u1 = (globalVar.rng.uniform(0, parameters["PSO_PHI1"]) for _ in range(len(ind["pos"])))

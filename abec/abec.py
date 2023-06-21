@@ -27,10 +27,11 @@ import optimizers.de as de
 import optimizers.ga as ga
 import optimizers.es as es
 import components.mutation as mutation
-import components.changeDetection as changeDetection
+import components.change_detection as changeDetection
 import components.exclusion as exclusion
-import components.antiConvergence as antiConvergence
-import components.localSearch as localSearch
+import components.anti_convergence as antiConvergence
+import components.local_search as localSearch
+import components.multipopulation as multipopulation
 from aux import *
 
 
@@ -133,6 +134,8 @@ def createPopulation(parameters):
         This function is to create the populations and individuals
     '''
     pop = []
+    pop = multipopulation.multipopulation(pop, parameters)
+    '''
     if(parameters["COMP_MULTIPOP"] == 1):
         for _ in range (parameters["COMP_MULTIPOP_N"]):
             pop.append(population(parameters))
@@ -140,6 +143,7 @@ def createPopulation(parameters):
         pop.append(population(parameters))
     else:
         errorWarning(0.1, "algoConfig.ini", "COMP_MULTIPOP", "Component Multipopulation should be 0 or 1")
+    '''
 
     best = pop[0].ind[0].copy()
     best["id"] = "NaN"
@@ -313,7 +317,6 @@ def abec(parameters, seed):
         flagEnv = 0
         Eo = 0
         change = 0
-        randomInit = [0 for _ in range(1, parameters["COMP_MULTIPOP_N"]+2)]
 
         # Create the population with POPSIZE individuals
         pops, globalVar.best = createPopulation(parameters)
@@ -365,15 +368,15 @@ def abec(parameters, seed):
             #####################################
 
             if antiConvergence.cp_antiConvergence(parameters):
-                randomInit = antiConvergence.antiConvergence(pops, parameters, randomInit)
+                globalVar.randomInit = antiConvergence.antiConvergence(pops, parameters, randomInit)
 
             if exclusion.cp_exclusion(parameters):
-                randomInit = exclusion.exclusion(pops, parameters, randomInit)
+                globalVar.randomInit = exclusion.exclusion(pops, parameters, randomInit)
 
-            for id, i in enumerate(randomInit, 0):
+            for id, i in enumerate(globalVar.randomInit, 0):
                 if i:
                     pops[id] = randInit(pops[id], parameters)
-                    randomInit[id] = 0
+                    globalVar.randomInit[id] = 0
 
             if localSearch.cp_localSearch(parameters):
                 globalVar.best = localSearch.localSearch(globalVar.best, parameters)
@@ -387,7 +390,7 @@ def abec(parameters, seed):
             for pop in pops:
 
                 # Change detection component in the environment
-                if(parameters["COMP_CHANGE_DETECT"] == 1):
+                if(parameters["COMP_CHANGE_DETECTION"] == 1):
                     if change == 0:
                         change = changeDetection.detection(pop, parameters)
                     if change:
@@ -400,8 +403,8 @@ def abec(parameters, seed):
                         for ind in pop.ind:
                             ind["ae"] = 0 # Allow new evaluation
                         continue
-                elif(parameters["COMP_CHANGE_DETECT"] != 0):
-                    errorWarning(0.1, "algoConfig.ini", "COMP_CHANGE_DETECT", "Component Change Detection should be 0 or 1")
+                elif(parameters["COMP_CHANGE_DETECTION"] != 0):
+                    errorWarning(0.1, "algoConfig.ini", "COMP_CHANGE_DETECTION", "Component Change Detection should be 0 or 1")
 
                 #####################################
                 # Apply the optimizers in the pops

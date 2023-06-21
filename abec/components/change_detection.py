@@ -2,6 +2,9 @@ import globalVar
 import fitFunction
 import aux
 
+
+params = [""]
+
 def evaluate(x, parameters):
     '''
     Fitness function. Returns the error between the fitness of the particle

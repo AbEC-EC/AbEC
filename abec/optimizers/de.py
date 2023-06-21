@@ -5,6 +5,9 @@ import copy
 '''
     DE optimizer
 '''
+
+params = ["F", "CR"]
+
 def de(pop, parameters):
     tempPop = copy.deepcopy(pop)
     tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"]) # Order the individuals by the id number

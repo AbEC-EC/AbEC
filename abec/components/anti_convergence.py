@@ -5,6 +5,8 @@ Anti-convergence operator
 import numpy as np
 import copy
 
+params = ["RCONV"]
+
 def cp_antiConvergence(parameters):
     if parameters["COMP_ANTI_CONVERGENCE"] == 1:
         if 0 < parameters["COMP_ANTI_CONVERGENCE_RCONV"] < parameters["MAX_POS"]:

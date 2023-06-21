@@ -6,6 +6,9 @@ import fitFunction
 import globalVar
 import copy
 
+nparam = 2
+params = ["ETRY", "RLS"]
+
 def evaluate(x, parameters):
     '''
     Fitness function. Returns the error between the fitness of the particle

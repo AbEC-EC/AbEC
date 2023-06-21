@@ -13,6 +13,7 @@ changeEnv = 0
 flagChangeEnv = 0
 path = "."
 peaks = 0
+randomInit = [0]
 
 
 
