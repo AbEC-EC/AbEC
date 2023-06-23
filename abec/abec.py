@@ -20,19 +20,13 @@ import shutil
 import numpy as np
 from deap import benchmarks
 # AbEC files
-import globalVar
-import fitFunction
+import aux.globalVar as globalVar
+import aux.fitFunction as fitFunction
+from aux.aux import *
 import optimizers.pso as pso
 import optimizers.de as de
 import optimizers.ga as ga
 import optimizers.es as es
-import components.mutation as mutation
-import components.change_detection as changeDetection
-import components.exclusion as exclusion
-import components.anti_convergence as antiConvergence
-import components.local_search as localSearch
-import components.multipopulation as multipopulation
-from aux import *
 
 
 # datetime variables
@@ -129,21 +123,19 @@ class population():
 
 
 
-def createPopulation(parameters):
+def createPopulation(algo, parameters):
     '''
         This function is to create the populations and individuals
     '''
     pop = []
-    pop = multipopulation.multipopulation(pop, parameters)
-    '''
-    if(parameters["COMP_MULTIPOP"] == 1):
-        for _ in range (parameters["COMP_MULTIPOP_N"]):
-            pop.append(population(parameters))
-    elif(parameters["COMP_MULTIPOP"] == 0):
+
+    for i in range(len(algo.comps_initialization)):
+        if algo.comps_initialization[i].cp(parameters):
+            pop = algo.comps_initialization[i].component(pop, parameters)
+
+    if not pop:
         pop.append(population(parameters))
-    else:
-        errorWarning(0.1, "algoConfig.ini", "COMP_MULTIPOP", "Component Multipopulation should be 0 or 1")
-    '''
+        globalVar.randomInit = [0]
 
     best = pop[0].ind[0].copy()
     best["id"] = "NaN"
@@ -226,17 +218,6 @@ def randInit(pop, parameters):
     return pop
 
 
-def errorWarning(nError="0.0", file="NONE", parameter="NONE", text="NONE"):
-    '''
-        Print error function
-    '''
-    print(f"[ERROR][{nError}]")
-    print(f"--[File: '{file}']")
-    print(f"--[parameter: '{parameter}']")
-    print(f"----[{text}]")
-    sys.exit()
-
-
 
 def evaluatePop(pop, best, parameters):
     '''
@@ -275,7 +256,7 @@ def finishRun(parameters):
 '''
 Framework
 '''
-def abec(parameters, seed):
+def abec(algo, parameters, seed):
     startTime = time.time()
     filename = f"{globalVar.path}/{parameters['FILENAME']}"
 
@@ -289,6 +270,11 @@ def abec(parameters, seed):
     writeLog(mode=0, filename=filename, header=header)
     headerOPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
     writeLog(mode=0, filename=f"{globalVar.path}/optima.csv", header=headerOPT)
+
+    #print(algo.optimizers)
+    #print(algo.comps_global)
+    #print(algo.comps_local)
+    #print(algo.comps_individual)
 
 
     #####################################
@@ -319,7 +305,7 @@ def abec(parameters, seed):
         change = 0
 
         # Create the population with POPSIZE individuals
-        pops, globalVar.best = createPopulation(parameters)
+        pops, globalVar.best = createPopulation(algo, parameters)
 
         #####################################
         # For each pop in pops do the job
@@ -363,34 +349,34 @@ def abec(parameters, seed):
         while finishRun(parameters) == 0:
 
 
-            #####################################
-            # Apply the components in Global level
-            #####################################
+            ###########################################
+            # Apply the Global Diversity Components
+            ###########################################
 
-            if antiConvergence.cp_antiConvergence(parameters):
-                globalVar.randomInit = antiConvergence.antiConvergence(pops, parameters, randomInit)
-
-            if exclusion.cp_exclusion(parameters):
-                globalVar.randomInit = exclusion.exclusion(pops, parameters, randomInit)
+            for i in range(len(algo.comps_global["GD"])):
+                if algo.comps_global["GD"][i].cp(parameters):
+                    globalVar.randomInit = algo.comps_global["GD"][i].component(pops, parameters, globalVar.randomInit)
 
             for id, i in enumerate(globalVar.randomInit, 0):
                 if i:
                     pops[id] = randInit(pops[id], parameters)
                     globalVar.randomInit[id] = 0
 
-            if localSearch.cp_localSearch(parameters):
-                globalVar.best = localSearch.localSearch(globalVar.best, parameters)
 
+            ###########################################
+            # Apply the Global Exploitation Components
+            ###########################################
 
-            '''
-                The next componentes should be here
-            '''
+            for i in range(len(algo.comps_global["GE"])):
+                if algo.comps_global["GE"][i].cp(parameters):
+                    globalVar.best = algo.comps_global["GE"][i].component(globalVar.best, parameters)
 
 
             for pop in pops:
 
+
                 # Change detection component in the environment
-                if(parameters["COMP_CHANGE_DETECTION"] == 1):
+                if(parameters["COMP_REEVALUATION"] == 1):
                     if change == 0:
                         change = changeDetection.detection(pop, parameters)
                     if change:
@@ -403,7 +389,7 @@ def abec(parameters, seed):
                         for ind in pop.ind:
                             ind["ae"] = 0 # Allow new evaluation
                         continue
-                elif(parameters["COMP_CHANGE_DETECTION"] != 0):
+                elif(parameters["COMP_REEVALUATION"] != 0):
                     errorWarning(0.1, "algoConfig.ini", "COMP_CHANGE_DETECTION", "Component Change Detection should be 0 or 1")
 
                 #####################################
@@ -423,18 +409,17 @@ def abec(parameters, seed):
                     elif pop.ind[i]["type"] == "ES":
                         pop.ind[i] = es.es(pop.ind[i], pop.best, parameters)
 
+                ###########################################
+                # Apply the Local Diversity Components
+                ###########################################
 
-                #####################################
-                # Apply the components in Population level
-                #####################################
+                for i in range(len(algo.comps_local["LD"])):
+                    if algo.comps_local["LD"][i].cp(parameters):
+                        pop = algo.comps_local["LD"][i].component(pop, parameters)
 
-                if mutation.cp_mutation(parameters, comp=1):
-                    pop = mutation.mutation(pop, parameters, comp=1)
-
-
-                '''
-                    The next componentes should be here
-                '''
+                ###########################################
+                # Apply the Local Exploitation Components
+                ###########################################
 
 
                 # Evaluate all the individuals that have no been yet in the pop and update the bests
@@ -569,9 +554,10 @@ def main():
         elif opt in ("-p", "--path"):
             globalVar.path = arg
 
-    parameters0 = algoConfig()
+    parameters0, algo = algoConfig()
     parameters1 = frameConfig()
     parameters2 = problemConfig()
+
    # Read the parameters from the config file
     if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
         with open(f"{globalVar.path}/algoConfig.ini") as f:
@@ -671,7 +657,7 @@ def main():
         pass
 
     print("\n[START]\n")
-    abec(parameters, seed)
+    abec(algo, parameters, seed)
     # Copy the config.ini file to the experiment dir
     if(parameters["CONFIG_COPY"]):
         f = open(f"{globalVar.path}/algoConfig.ini","w")

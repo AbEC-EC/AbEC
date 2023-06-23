@@ -3,7 +3,7 @@
 #import components.mutation as mutation
 import abec
 import copy
-import globalVar
+import aux.globalVar as globalVar
 
 '''
     GA optimizer

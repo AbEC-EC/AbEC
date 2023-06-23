@@ -1,8 +1,9 @@
 import csv
 import os
 import datetime
-import globalVar
+import aux.globalVar as globalVar
 import importlib
+import sys
 from os import listdir
 from os.path import isfile, join
 
@@ -27,6 +28,17 @@ def checkDirs(path):
     if(os.path.isdir(path) == False):
         os.mkdir(path)
     return path
+
+def errorWarning(nError="0.0", file="NONE", parameter="NONE", text="NONE"):
+    '''
+        Print error function
+    '''
+    print(f"[ERROR][{nError}]")
+    print(f"--[File: '{file}']")
+    print(f"--[parameter: '{parameter}']")
+    print(f"----[{text}]")
+    sys.exit()
+
 
 
 '''
@@ -65,6 +77,31 @@ def saveOptima(parameters):
         write.writerow(opt)
 
 
+'''
+Create the class of the algorithm
+'''
+class algoritmo():
+
+    def __init__(self):
+        CAT = 4
+        self.optimizers = []
+        self.comps_global = {"GD": [], "GE": []}
+        self.comps_local = {"LD": [], "LE": []}
+        self.comps_initialization = []
+
+    def updateOptimizers(self, x):
+        self.optimizers.append(x)
+
+    def updateInitialization(self, x):
+        self.comps_initialization.append(x)
+
+    def updateLocal(self, x, scope):
+        self.comps_local[scope].append(x)
+
+    def updateGlobal(self, x, scope):
+        self.comps_global[scope].append(x)
+
+
 
 '''
 Default parametrization for algoConfig.ini
@@ -74,6 +111,8 @@ def algoConfig():
     optimizers = [f for f in listdir("optimizers") if isfile(join("optimizers", f))]
     comp_parameters = []
     opt_parameters = []
+
+    algo = algoritmo()
 
     config = {
         "__COMMENT__": "BASIC CONFIGURATION", \
@@ -102,6 +141,19 @@ def algoConfig():
     for i in range(len(components)):
         components[i] = components[i].split(".")[0]
         comp_parameters.append(importlib.import_module(f"components.{components[i]}"))
+        if comp_parameters[i].scope[0] == "IN":
+            algo.updateInitialization(comp_parameters[i])
+        elif comp_parameters[i].scope[0] == "GD":
+            algo.updateGlobal(comp_parameters[i], "GD")
+        elif comp_parameters[i].scope[0] == "GE":
+            algo.updateGlobal(comp_parameters[i], "GE")
+        elif comp_parameters[i].scope[0] == "LD":
+            algo.updateLocal(comp_parameters[i], "LD")
+        elif comp_parameters[i].scope[0] == "LE":
+            algo.updateLocal(comp_parameters[i], "LE")
+        else:
+            print("ERRO")
+
         components[i] = components[i].upper()
         print(components[i])
         config.update({f"COMP_{components[i]}": 0})
@@ -110,49 +162,7 @@ def algoConfig():
             config.update({f"COMP_{components[i]}_{comp_parameters[i].params[j]}": 0})
         #print()
 
-    #print(config)
-    #e()
-
-    '''
-        "GA_POP_PERC": 0, \
-        "GA_ELI_PERC": 0.2, \
-        "GA_CROSS_PERC": 1, \
-        "GA_MUT_PERC": 0.1, \
-        "GA_MUT_STD": 1, \
-        "GA_ENCODER": 0, \
-        "GA_INDSIZE": 16, \
-        "PSO_POP_PERC": 1, \
-        "PSO_PHI1": 2.05, \
-        "PSO_PHI2": 2.05, \
-        "PSO_W": 0.729, \
-        "PSO_MIN_VEL": -10, \
-        "PSO_MAX_VEL": 10, \
-        "DE_POP_PERC": 0, \
-        "DE_F": 0.5, \
-        "DE_CR": 0.7, \
-        "ES_POP_PERC": 0, \
-        "ES_RCLOUD": 0.2, \
-        "__COMMENT__": "COMPONENTS CONFIGURATION", \
-    }
-        f"COMP_{components[0]}": 0, \
-        "COMP_CHANGE_DETECT": 0, \
-        "COMP_CHANGE_DETECT_MODE": 0, \
-        "COMP_MULTIPOP": 0, \
-        "COMP_MULTIPOP_N": 10, \
-        "COMP_MUT": 0, \
-        "COMP_MUT_PERC": 0.05, \
-        "COMP_MUT_ELI": 0.5, \
-        "COMP_MUT_STD": 0.1, \
-        "COMP_EXCLUSION": 0, \
-        "COMP_EXCLUSION_REXCL": 22.9, \
-        "COMP_ANTI_CONVERGENCE": 0, \
-        "COMP_ANTI_CONVERGENCE_RCONV": 39.7, \
-        "COMP_LOCAL_SEARCH": 0, \
-        "COMP_LOCAL_SEARCH_ETRY": 20, \
-        "COMP_LOCAL_SEARCH_RLS": 1 \
-    }
-    '''
-    return config
+    return config, algo
 
 '''
 Default parametrization for frameConfig.ini

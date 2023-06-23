@@ -1,6 +1,6 @@
 import math
 import operator
-import globalVar
+import aux.globalVar as globalVar
 
 '''
 Apply PSO on the particle

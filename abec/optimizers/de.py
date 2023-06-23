@@ -1,4 +1,4 @@
-import globalVar
+import aux.globalVar as globalVar
 import abec
 import copy
 
