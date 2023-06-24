@@ -4,7 +4,7 @@ Anti-convergence operator
 
 import numpy as np
 import copy
-from aux import *
+from aux.aux import *
 
 
 params = ["RCONV"]

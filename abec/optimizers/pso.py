@@ -1,5 +1,7 @@
 import math
 import operator
+import sys
+from aux.aux import errorWarning
 import aux.globalVar as globalVar
 
 '''
@@ -7,6 +9,18 @@ Apply PSO on the particle
 '''
 
 params = ["PHI1", "PHI2", "W", "MIN_VEL", "MAX_VEL"]
+
+def cp(parameters):
+    if parameters["PSO_W"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "PSO_W", "The W should be greater than 0")
+        sys.exit()
+    if parameters["PSO_PHI1"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "PSO_PHI1", "The PHI1 should be greater than 0")
+        sys.exit()
+    if parameters["PSO_PHI2"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "PSO_PHI2", "The PHI2 should be greater than 0")
+        sys.exit()
+
 
 def pso(ind, best, parameters):
     W = (parameters["PSO_W"] for _ in range(len(ind["pos"])))

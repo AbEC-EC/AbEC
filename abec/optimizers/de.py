@@ -1,12 +1,22 @@
 import aux.globalVar as globalVar
 import abec
 import copy
+from aux.aux import errorWarning
 
 '''
     DE optimizer
 '''
 
 params = ["F", "CR"]
+
+def cp(parameters):
+    if parameters["DE_F"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "DE_F", "The F should be greater than 0")
+        sys.exit()
+    if parameters["DE_CR"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "DF_CR", "The CR should be greater than 0")
+        sys.exit()
+
 
 def de(pop, parameters):
     tempPop = copy.deepcopy(pop)

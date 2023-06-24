@@ -130,8 +130,7 @@ def createPopulation(algo, parameters):
     pop = []
 
     for i in range(len(algo.comps_initialization)):
-        if algo.comps_initialization[i].cp(parameters):
-            pop = algo.comps_initialization[i].component(pop, parameters)
+        pop = algo.comps_initialization[i].component(pop, parameters)
 
     if not pop:
         pop.append(population(parameters))
@@ -271,12 +270,6 @@ def abec(algo, parameters, seed):
     headerOPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
     writeLog(mode=0, filename=f"{globalVar.path}/optima.csv", header=headerOPT)
 
-    #print(algo.optimizers)
-    #print(algo.comps_global)
-    #print(algo.comps_local)
-    #print(algo.comps_individual)
-
-
     #####################################
     # Main loop of the runs
     #####################################
@@ -354,8 +347,7 @@ def abec(algo, parameters, seed):
             ###########################################
 
             for i in range(len(algo.comps_global["GD"])):
-                if algo.comps_global["GD"][i].cp(parameters):
-                    globalVar.randomInit = algo.comps_global["GD"][i].component(pops, parameters, globalVar.randomInit)
+                globalVar.randomInit = algo.comps_global["GD"][i].component(pops, parameters, globalVar.randomInit)
 
             for id, i in enumerate(globalVar.randomInit, 0):
                 if i:
@@ -368,8 +360,7 @@ def abec(algo, parameters, seed):
             ###########################################
 
             for i in range(len(algo.comps_global["GE"])):
-                if algo.comps_global["GE"][i].cp(parameters):
-                    globalVar.best = algo.comps_global["GE"][i].component(globalVar.best, parameters)
+                globalVar.best = algo.comps_global["GE"][i].component(globalVar.best, parameters)
 
 
             for pop in pops:
@@ -414,8 +405,7 @@ def abec(algo, parameters, seed):
                 ###########################################
 
                 for i in range(len(algo.comps_local["LD"])):
-                    if algo.comps_local["LD"][i].cp(parameters):
-                        pop = algo.comps_local["LD"][i].component(pop, parameters)
+                    pop = algo.comps_local["LD"][i].component(pop, parameters)
 
                 ###########################################
                 # Apply the Local Exploitation Components
@@ -565,6 +555,8 @@ def main():
             for i in range(len(p0)):
                 #print(p0[i][0])
                 parameters0[f"{p0[i][0]}"] = p0[i][1]
+    else:
+        errorWarning(0.1, "algoConfig.ini", "FILE_NOT_FIND", "The algoConfig.ini file is mandatory!")
 
     if os.path.isfile(f"{globalVar.path}/frameConfig.ini"):
         with open(f"{globalVar.path}/frameConfig.ini") as f:
@@ -581,6 +573,9 @@ def main():
                 parameters2[f"{p2[i][0]}"] = p2[i][1]
 
     parameters = parameters0 | parameters1 | parameters2
+
+    algo = updateAlgo(algo, parameters)
+    print(algo.comps_initialization)
 
     if parameters["SEED"] >= 0:
         seed = parameters["SEED"]

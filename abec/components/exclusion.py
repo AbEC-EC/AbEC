@@ -3,7 +3,7 @@ Exclusion operator
 '''
 import itertools
 import numpy as np
-from aux import *
+from aux.aux import *
 
 
 params = ["REXCL"]

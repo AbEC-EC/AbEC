@@ -4,6 +4,7 @@
 import abec
 import copy
 import aux.globalVar as globalVar
+from aux.aux import errorWarning
 
 '''
     GA optimizer
@@ -20,7 +21,6 @@ def cp_elitism(parameters):
     else:
         errorWarning(1.2, "algoConfig.ini", "GA_ELI_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
         sys.exit()
-        return 0
 
 def elitism(pop, newPop, parameters):
     for i in range(int(parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])):
@@ -38,12 +38,11 @@ def elitism(pop, newPop, parameters):
 Crossover operator
 '''
 def cp_crossover(parameters):
-    if 0 < parameters["GA_CROSS_PERC"] < 1:
+    if 0.1 < parameters["GA_CROSS_PERC"] <= 1:
         return 1
     else:
-        errorWarning(2.2, "algoConfig.ini", "GA_CROSS_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
+        errorWarning(2.2, "algoConfig.ini", "GA_CROSS_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0.1, 1[")
         sys.exit()
-        return 0
 
 def condition(individual):
     return individual["fit"]
@@ -154,11 +153,9 @@ def cp_mutation(parameters):
         else:
             errorWarning("3.3", "algoConfig.ini", "GA_MUT_STD", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
             sys.exit()
-            return 0
     else:
         errorWarning("3.2", "algoConfig.ini", "GA_MUT_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
         sys.exit()
-        return 0
 
 
 def mutation(pop, parameters, comp=0):
@@ -193,6 +190,10 @@ def mutation(pop, parameters, comp=0):
     return pop
 
 
+def cp(parameters):
+    cp_elitism(parameters)
+    cp_mutation(parameters)
+    cp_crossover(parameters)
 
 def ga(pop, parameters):
     newPop = abec.population(parameters, id = 0, fill = 0)

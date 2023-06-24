@@ -83,7 +83,6 @@ Create the class of the algorithm
 class algoritmo():
 
     def __init__(self):
-        CAT = 4
         self.optimizers = []
         self.comps_global = {"GD": [], "GE": []}
         self.comps_local = {"LD": [], "LE": []}
@@ -92,15 +91,76 @@ class algoritmo():
     def updateOptimizers(self, x):
         self.optimizers.append(x)
 
+    def removeOptimizers(self, x):
+        self.optimizers.remove(x)
+
     def updateInitialization(self, x):
         self.comps_initialization.append(x)
+
+    def removeInitialization(self, x):
+        self.comps_initialization.remove(x)
 
     def updateLocal(self, x, scope):
         self.comps_local[scope].append(x)
 
+    def removeComps_local(self, x):
+        self.comps_local[x.scope[0]].remove(x)
+
     def updateGlobal(self, x, scope):
         self.comps_global[scope].append(x)
 
+    def removeComps_global(self, x):
+        self.comps_global[x.scope[0]].remove(x)
+
+
+
+
+'''
+Update algo with the parameters
+'''
+def updateAlgo(algo, parameters):
+    components = [f for f in listdir("components") if isfile(join("components", f))]
+    optimizers = [f for f in listdir("optimizers") if isfile(join("optimizers", f))]
+    comp_parameters = []
+    opt_parameters = []
+    validation = 0
+    # Load the optimizers
+    for i in range(len(optimizers)):
+        optimizers[i] = optimizers[i].split(".")[0].upper()
+        arg = f"{optimizers[i]}_POP_PERC"
+        opt = importlib.import_module(f"optimizers.{optimizers[i].lower()}")
+        if 0 < parameters[arg] <= 1:
+            opt.cp(parameters)    # Call the test of the parameters values
+            validation += parameters[arg]
+        elif(parameters[arg] != 0):
+            errorWarning("0.2.1", "algoConfig.ini", f"{parameters[arg]}_POP_PERC", "Percentage of the population to perform optimizer should be in [0, 1]")
+            sys.exit()
+        else:
+            algo.removeOptimizers(opt)
+
+    if (abs(validation-1) > 0.001):
+        errorWarning(0.0, "algoConfig.ini", "XXX_POP_PERC", "The sum of the percentage of the population to perform the optimizers should be in 1")
+        sys.exit()
+
+
+    for i in range(len(components)):
+        components[i] = components[i].split(".")[0].upper()
+        arg = f"COMP_{components[i]}"
+        comp = importlib.import_module(f"components.{components[i].lower()}")
+        if parameters[arg] == 0:
+            if comp.scope[0] == "IN":
+                algo.removeInitialization(comp)
+            elif comp.scope[0] == "GD" or comp.scope[0] == "GE":
+                algo.removeComps_global(comp)
+            elif comp.scope[0] == "LD" or comp.scope[0] == "LE":
+                algo.removeComps_local(comp)
+        elif(parameters[arg] != 1):
+            errorWarning("0.2.1", "algoConfig.ini", f"{arg}", "Component selection should be 0 or 1")
+            sys.exit()
+        else:
+            comp.cp(parameters)
+
+    return algo
 
 
 '''
@@ -121,21 +181,21 @@ def algoConfig():
         "MIN_POS": 0, \
         "MAX_POS": 0, \
     }
-    print(config)
-    print(optimizers)
-    print(components)
+    #print(config)
+    #print(optimizers)
+    #print(components)
 
     # Load the optimizers
     for i in range(len(optimizers)):
         optimizers[i] = optimizers[i].split(".")[0]
         opt_parameters.append(importlib.import_module(f"optimizers.{optimizers[i]}"))
+        algo.updateOptimizers(opt_parameters[i])
         optimizers[i] = optimizers[i].upper()
-        print(optimizers[i])
+        #print(optimizers[i])
         config.update({f"{optimizers[i]}_POP_PERC": 0})
         for j in range(len(opt_parameters[i].params)):
             #print(opt_parameters[i].params[j])
             config.update({f"{optimizers[i]}_{opt_parameters[i].params[j]}": 0})
-        #print()
 
     # Load the components
     for i in range(len(components)):
@@ -155,7 +215,7 @@ def algoConfig():
             print("ERRO")
 
         components[i] = components[i].upper()
-        print(components[i])
+        #print(components[i])
         config.update({f"COMP_{components[i]}": 0})
         for j in range(len(comp_parameters[i].params)):
             #print(comp_parameters[i].params[j])

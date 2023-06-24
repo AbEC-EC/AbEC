@@ -1,12 +1,19 @@
 import aux.globalVar as globalVar
 import abec
 import copy
+from aux.aux import errorWarning
 
 '''
 Apply ES on the particle
 '''
 
 params = ["RCLOUD"]
+
+def cp(parameters):
+    if parameters["ES_RCLOUD"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "ES_RCLOUD", "The RCLOUD should be greater than 0")
+        sys.exit()
+
 
 def es(ind, popBest, parameters, P=1):
     indTemp = copy.deepcopy(ind)
