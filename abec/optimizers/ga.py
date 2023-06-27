@@ -1,6 +1,3 @@
-#import optimizers.elitism as elitism
-#import optimizers.crossover as crossover
-#import components.mutation as mutation
 import abec
 import copy
 import aux.globalVar as globalVar
@@ -22,16 +19,14 @@ def cp_elitism(parameters):
         errorWarning(1.2, "algoConfig.ini", "GA_ELI_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
         sys.exit()
 
-def elitism(pop, newPop, parameters):
+def elitism(pop, newPop, parameters, ids):
     for i in range(int(parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])):
         newPop.addInd(parameters)
-        #print(f"newPop.ind[{i}]: {newPop.ind[i]}")
-        #print(f"pop[{i}]: {pop[i]}")
-        #e()
         newPop.ind[i] = copy.deepcopy(pop[i])
         newPop.ind[i]["ae"] = 1
+        ids.remove(pop[i]["id"])    # Remove the id of the elite to not enter in crossover
 
-    return newPop
+    return newPop, ids
 
 
 '''
@@ -55,7 +50,7 @@ def tournament(pop, parameters):
     choosed = min(c, key=condition)
     return choosed
 
-def crossover(pop, newPop, parameters):
+def crossover(pop, newPop, parameters, ids):
     for i in range(1, int((parameters["GA_POP_PERC"]*parameters["POPSIZE"] - parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])+1), 2):
         parent1 = tournament(pop, parameters)
         parent2 = tournament(pop, parameters)
@@ -86,10 +81,10 @@ def crossover(pop, newPop, parameters):
             elif child2["pos"][i] < parameters["MIN_POS"]:
                 child2["pos"][i] = parameters["MIN_POS"]
 
-        newPop.addInd(parameters, i)
+        newPop.addInd(parameters, ids[i])
         newPop.ind[-1]["pos"] = child1["pos"].copy()
         newPop.ind[-1]["type"] = "GA"
-        newPop.addInd(parameters, i+1)
+        newPop.addInd(parameters, ids[i+1])
         newPop.ind[-1]["pos"] = child2["pos"].copy()
         newPop.ind[-1]["type"] = "GA"
 
@@ -195,31 +190,25 @@ def cp(parameters):
     cp_mutation(parameters)
     cp_crossover(parameters)
 
-def ga(pop, parameters):
+def optimizer(pop, best, parameters):
     newPop = abec.population(parameters, id = 0, fill = 0)
     newPop.id = pop.id
     tempPop = copy.deepcopy(pop)
     #tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"])
 
     gaPop = [d for d in tempPop.ind if d["type"]=="GA"] # Select only the DE individuals
-    #gaPop = sorted(gaPop, key=lambda x:x["fit"])
+    ids = [d["id"] for d in gaPop]
 
-    if cp_mutation(parameters):
-        newPop = elitism(gaPop, newPop, parameters)
-        newPop = crossover(gaPop, newPop, parameters)
-        newPop = mutation(newPop, parameters)
+    newPop, ids = elitism(gaPop, newPop, parameters, ids)
 
+    newPop = crossover(gaPop, newPop, parameters, ids)
+
+    newPop = mutation(newPop, parameters)
 
     # Substitute the individuals of GA population
     for ind in newPop.ind:
         for i in range(len(pop.ind)):
             if ind["id"] == pop.ind[i]["id"]:
                     pop.ind[i] = ind.copy()
-    '''
-    for i, ind in enumerate(newPop.ind):
-        if ind["id"] == pop.ind[i]["id"]:
-        #if ind["id"] <= int(parameters["GA_POP_PERC"]*parameters["POPSIZE"]):
-            pop.ind[i] = ind.copy()
-    '''
 
     return pop

@@ -18,12 +18,11 @@ def cp(parameters):
         sys.exit()
 
 
-def de(pop, parameters):
+def optimizer(pop, best, parameters):
     tempPop = copy.deepcopy(pop)
     tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"]) # Order the individuals by the id number
 
     dePop = [d for d in tempPop.ind if d["type"]=="DE"] # Select only the DE individuals
-
 
     for ind in dePop:
         x = []

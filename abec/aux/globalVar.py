@@ -4,6 +4,8 @@
 '''
 
 nevals = 0
+run = 0
+gen = 0
 eo_sum = 0
 mpb = None
 rng = None
@@ -14,8 +16,6 @@ flagChangeEnv = 0
 path = "."
 peaks = 0
 randomInit = [0]
-
-
 
 '''
 # datetime variables
