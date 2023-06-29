@@ -3,21 +3,30 @@ Exclusion operator
 '''
 import itertools
 import numpy as np
+from aux.aux import *
 
-def cp_exclusion(parameters):
+
+params = ["REXCL"]
+scope = ["GD"]
+
+def cp(parameters):
     if parameters["COMP_EXCLUSION"] == 1:
-        if 0 < parameters["COMP_EXCLUSION_REXCL"] < parameters["MAX_POS"]:
-            return 1
-        else:
-            errorWarning("3.2.1", "algoConfig.ini", "COMP_EXCLUSION_REXCL", "The Exclusion radio should be 0 between ]0, POS_MAX[")
+        if parameters["COMP_MULTIPOPULATION"] == 1:
+            if 0 < parameters["COMP_EXCLUSION_REXCL"] < parameters["MAX_POS"]:
+                return 1
+            else:
+                errorWarning("3.2.1", "algoConfig.ini", "COMP_EXCLUSION_REXCL", "The Exclusion radio should be 0 between ]0, POS_MAX[")
+                sys.exit()
+        elif (parameters["COMP_MULTIPOPULATION_N"] < 1):
+            errorWarning("3.2.2", "algoConfig.ini", "COMP_MULTIPOPULATION_N", "The Exclusion component require the multipopulation N should be greater than 1")
             sys.exit()
-            return 0
     elif(parameters["COMP_EXCLUSION"] != 0):
         errorWarning("3.2.2", "algoConfig.ini", "COMP_EXCLUSION", "The Exclusion component should be 0 or 1")
         sys.exit()
+    else:
         return 0
 
-def exclusion(pop, parameters, randomInit):
+def component(pop, parameters, randomInit):
     rexcl = parameters["COMP_EXCLUSION_REXCL"]
     for sp1, sp2 in itertools.combinations(range(len(pop)), 2):
         # Subpop must have a best and not already be set to reinitialize

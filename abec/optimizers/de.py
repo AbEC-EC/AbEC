@@ -1,16 +1,28 @@
-import globalVar
+import aux.globalVar as globalVar
 import abec
 import copy
+from aux.aux import errorWarning
 
 '''
     DE optimizer
 '''
-def de(pop, parameters):
+
+params = ["F", "CR"]
+
+def cp(parameters):
+    if parameters["DE_F"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "DE_F", "The F should be greater than 0")
+        sys.exit()
+    if parameters["DE_CR"] <= 0:
+        errorWarning("3.2.1", "algoConfig.ini", "DF_CR", "The CR should be greater than 0")
+        sys.exit()
+
+
+def optimizer(pop, best, parameters):
     tempPop = copy.deepcopy(pop)
     tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"]) # Order the individuals by the id number
 
     dePop = [d for d in tempPop.ind if d["type"]=="DE"] # Select only the DE individuals
-
 
     for ind in dePop:
         x = []

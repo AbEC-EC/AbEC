@@ -1,6 +1,6 @@
 import random
-import globalVar
-import aux
+import aux.globalVar
+import aux.aux
 import abec
 import fitnessFunction.function as function
 from deap import benchmarks

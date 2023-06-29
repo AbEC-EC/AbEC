@@ -2,9 +2,13 @@
 Apply LS on the best
 '''
 
-import fitFunction
-import globalVar
+import aux.fitFunction as fitFunction
+import aux.globalVar as globalVar
 import copy
+from aux import *
+
+params = ["ETRY", "RLS"]
+scope = ["GE"]
 
 def evaluate(x, parameters):
     '''
@@ -16,7 +20,7 @@ def evaluate(x, parameters):
     return fitness
 
 
-def cp_localSearch(parameters):
+def cp(parameters):
     if parameters["COMP_LOCAL_SEARCH"] == 1:
         if 0 < parameters["COMP_LOCAL_SEARCH_ETRY"] < parameters["POPSIZE"]:
             if 0 < parameters["COMP_LOCAL_SEARCH_RLS"] < parameters["MAX_POS"]:
@@ -35,7 +39,7 @@ def cp_localSearch(parameters):
         return 0
 
 
-def localSearch(best, parameters):
+def component(best, parameters):
     rls  = parameters["COMP_LOCAL_SEARCH_RLS"]
     bp = copy.deepcopy(best)
     for _ in range(parameters["COMP_LOCAL_SEARCH_ETRY"]):

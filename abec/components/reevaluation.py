@@ -1,6 +1,11 @@
-import globalVar
-import fitFunction
+import aux.globalVar as fitFunction
+import aux.fitFunction as fitFunction
 import aux
+
+
+
+params = [""]
+scope = ["LD"]
 
 def evaluate(x, parameters):
     '''
@@ -10,6 +15,16 @@ def evaluate(x, parameters):
     fitness = fitFunction.fitnessFunction(x['pos'], parameters)
     globalVar.nevals += 1
     return fitness
+
+def cp(parameters):
+    if parameters["COMP_REEVALUATION"] == 1 :
+        return 1
+    elif parameters["COMP_REEVALUATION"] != 0:
+        errorWarning("3.1", "algoConfig.ini", "COMP_REEVALUATION", "Component Mutation should be 0 or 1")
+        sys.exit()
+    else:
+        return 0
+
 
 
 def detection(pop, parameters):
