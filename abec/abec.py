@@ -59,7 +59,7 @@ def updateBest(ind, best):
 
 
 
-def evaluate(x, parameters):
+def evaluate(x, parameters, be = 0):
     '''
     Fitness function. Returns the error between the fitness of the particle
     and the global optimum
@@ -70,21 +70,27 @@ def evaluate(x, parameters):
     x["fit"] = fitFunction.fitnessFunction(x['pos'], parameters)
     globalVar.nevals += 1
 
-    if parameters["OFFLINE_ERROR"] and isinstance(globalVar.best["fit"], numbers.Number):
-        globalVar.eo_sum += globalVar.best["fit"]
+    if not be: # If it is a best evaluation does not log
 
-    x["ae"] = 1 # Set as already evaluated
+        if parameters["OFFLINE_ERROR"] and isinstance(globalVar.best["fit"], numbers.Number):
+            globalVar.eo_sum += globalVar.best["fit"]
 
-    if parameters["LOG_ALL"]:
-        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals": globalVar.nevals, \
-            "popId": x["pop_id"], "indId": x["id"], "type": x["type"], "indPos": x["pos"], \
-            "indVel": x["vel"], "indBestPos": x["best_pos"], "indBestFit": x["best_fit"], \
-            "indFit": x["fit"], \
-            "globalBestId": globalVar.best["id"], "globalBestPos": globalVar.best["pos"], \
-            "globalBestFit": globalVar.best["fit"]}]
-        writeLog(mode=1, filename=filename_LA, header=header_LA, data=log)
+        x["ae"] = 1 # Set as already evaluated
 
-    return x
+        if parameters["LOG_ALL"]:
+            log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals": globalVar.nevals, \
+                "popId": x["pop_id"], "indId": x["id"], "type": x["type"], "indPos": x["pos"], \
+                "indVel": x["vel"], "indBestPos": x["best_pos"], "indBestFit": x["best_fit"], \
+                "indFit": x["fit"], \
+                "globalBestId": globalVar.best["id"], "globalBestPos": globalVar.best["pos"], \
+                "globalBestFit": globalVar.best["fit"]}]
+            writeLog(mode=1, filename=filename_LA, header=header_LA, data=log)
+
+        return x
+
+    else:
+
+        return x["fit"]
 
 
 
