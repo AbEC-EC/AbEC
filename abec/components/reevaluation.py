@@ -5,7 +5,7 @@ import aux
 
 
 params = [""]
-scope = ["LD"]
+scope = ["LER"]
 
 def evaluate(x, parameters):
     '''

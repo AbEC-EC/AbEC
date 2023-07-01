@@ -3,7 +3,7 @@ import aux.globalVar as globalVar
 import sys
 
 params = ["PERC", "STD", "ELI"]
-scope = ["LE"]
+scope = ["LER"]
 
 '''
 Mutation operator

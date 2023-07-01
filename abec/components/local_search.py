@@ -8,7 +8,7 @@ import copy
 from aux import *
 
 params = ["ETRY", "RLS"]
-scope = ["GE"]
+scope = ["GET"]
 
 def evaluate(x, parameters):
     '''

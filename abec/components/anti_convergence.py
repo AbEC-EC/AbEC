@@ -8,7 +8,7 @@ from aux.aux import *
 
 
 params = ["RCONV"]
-scope = ["GD"]
+scope = ["GDV"]
 
 def cp(parameters):
     if parameters["COMP_ANTI_CONVERGENCE"] == 1:

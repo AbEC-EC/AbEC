@@ -7,7 +7,7 @@ from aux.aux import *
 
 
 params = ["REXCL"]
-scope = ["GD"]
+scope = ["GDV"]
 
 def cp(parameters):
     if parameters["COMP_EXCLUSION"] == 1:

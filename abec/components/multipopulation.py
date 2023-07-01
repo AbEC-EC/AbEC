@@ -9,7 +9,7 @@ from aux.aux import *
 
 
 params = ["N"]
-scope = ["IN"]
+scope = ["INI"]
 
 def cp(parameters):
     if parameters["COMP_MULTIPOPULATION"] == 1:

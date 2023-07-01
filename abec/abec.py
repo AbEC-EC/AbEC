@@ -306,8 +306,8 @@ def abec(algo, parameters, seed):
             # Apply the Global Diversity Components
             ###########################################
 
-            for i in range(len(algo.comps_global["GD"])):
-                globalVar.randomInit = algo.comps_global["GD"][i].component(pops, parameters, globalVar.randomInit)
+            for i in range(len(algo.comps_global["GDV"])):
+                globalVar.randomInit = algo.comps_global["GDV"][i].component(pops, parameters, globalVar.randomInit)
 
             for id, i in enumerate(globalVar.randomInit, 0):
                 if i:
@@ -315,11 +315,19 @@ def abec(algo, parameters, seed):
                     globalVar.randomInit[id] = 0
 
             ###########################################
+            # Apply the Global Exploration Components
+            ###########################################
+
+            for i in range(len(algo.comps_global["GER"])):
+                pops = algo.comps_global["GER"][i].component(pops, parameters)
+
+
+            ###########################################
             # Apply the Global Exploitation Components
             ###########################################
 
-            for i in range(len(algo.comps_global["GE"])):
-                globalVar.best = algo.comps_global["GE"][i].component(globalVar.best, parameters)
+            for i in range(len(algo.comps_global["GET"])):
+                globalVar.best = algo.comps_global["GET"][i].component(globalVar.best, parameters)
 
 
             for pop in pops:
@@ -349,11 +357,11 @@ def abec(algo, parameters, seed):
                     pop = algo.opts[i].optimizer(pop, globalVar.best, parameters)
 
                 ###########################################
-                # Apply the Local Diversity Components
+                # Apply the Local Exploration Components
                 ###########################################
 
-                for i in range(len(algo.comps_local["LD"])):
-                    pop = algo.comps_local["LD"][i].component(pop, parameters)
+                for i in range(len(algo.comps_local["LER"])):
+                    pop = algo.comps_local["LER"][i].component(pop, parameters)
 
                 ###########################################
                 # Apply the Local Exploitation Components

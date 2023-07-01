@@ -84,8 +84,8 @@ class algoritmo():
 
     def __init__(self):
         self.opts = []
-        self.comps_global = {"GD": [], "GE": []}
-        self.comps_local = {"LD": [], "LE": []}
+        self.comps_global = {"GDV": [], "GER": [], "GET": []}
+        self.comps_local = {"LER": [], "LET": []}
         self.comps_initialization = []
         self.components = []
         self.optimizers = []
@@ -161,11 +161,11 @@ def updateAlgo(algo, parameters):
         arg = f"COMP_{components[i]}"
         comp = importlib.import_module(f"components.{components[i].lower()}")
         if parameters[arg] == 0:
-            if comp.scope[0] == "IN":
+            if comp.scope[0] == "INI":
                 algo.removeInitialization(comp)
-            elif comp.scope[0] == "GD" or comp.scope[0] == "GE":
+            elif comp.scope[0] == "GDV" or comp.scope[0] == "GER" or comp.scope[0] == "GET":
                 algo.removeComps_global(comp)
-            elif comp.scope[0] == "LD" or comp.scope[0] == "LE":
+            elif comp.scope[0] == "LER" or comp.scope[0] == "LET":
                 algo.removeComps_local(comp)
         elif(parameters[arg] != 1):
             errorWarning("0.2.1", "algoConfig.ini", f"{arg}", "Component selection should be 0 or 1")
@@ -215,16 +215,16 @@ def algoConfig():
     for i in range(len(components)):
         components[i] = components[i].split(".")[0]
         comp_parameters.append(importlib.import_module(f"components.{components[i]}"))
-        if comp_parameters[i].scope[0] == "IN":
+        if comp_parameters[i].scope[0] == "INI":
             algo.updateInitialization(comp_parameters[i])
-        elif comp_parameters[i].scope[0] == "GD":
-            algo.updateGlobal(comp_parameters[i], "GD")
-        elif comp_parameters[i].scope[0] == "GE":
-            algo.updateGlobal(comp_parameters[i], "GE")
-        elif comp_parameters[i].scope[0] == "LD":
-            algo.updateLocal(comp_parameters[i], "LD")
-        elif comp_parameters[i].scope[0] == "LE":
-            algo.updateLocal(comp_parameters[i], "LE")
+        elif comp_parameters[i].scope[0] == "GDV":
+            algo.updateGlobal(comp_parameters[i], "GDV")
+        elif comp_parameters[i].scope[0] == "GER":
+            algo.updateGlobal(comp_parameters[i], "GER")
+        elif comp_parameters[i].scope[0] == "GET":
+            algo.updateGlobal(comp_parameters[i], "GET")
+        elif comp_parameters[i].scope[0] == "LER":
+            algo.updateLocal(comp_parameters[i], "LER")
         else:
             print("ERRO")
 
