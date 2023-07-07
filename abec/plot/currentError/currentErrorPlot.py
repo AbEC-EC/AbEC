@@ -45,7 +45,7 @@ def configPlot(parameters):
         plt.rcParams["figure.figsize"] = (16, 9)
     elif(THEME == 3):
         plt.rcParams["axes.facecolor"] = "white"
-        plt.rcParams["figure.figsize"] = (8, 8)
+        plt.rcParams["figure.figsize"] = (11, 8)
 
     fig, ax = plt.subplots(1)
     if(parameters["GRID"] == 1):
@@ -62,8 +62,12 @@ def plot(ax, data, label, fStd=0, color="orange", linestyle="-", marker=".", par
     ax.plot(data["nevals"], data["bestError"], color=color, linestyle=linestyle, marker=marker, markersize=0, label=label)
     if(fStd):
         ax.fill_between(data["nevals"], data["bestError"] - data["std"], data["bestError"] + data["std"], color=color, alpha=0.05)
-    ax.set_xlabel("Evaluations", fontsize=15)
-    ax.set_ylabel("Current error", fontsize=15)
+    if parameters["THEME"] == 3:
+        ax.set_xlabel("Evaluations", fontsize=20)
+        ax.set_ylabel("Current error (Ec)", fontsize=20)
+    else:
+        ax.set_xlabel("Evaluations", fontsize=15)
+        ax.set_ylabel("Current error", fontsize=15)
     if(parameters["YLIM"]):
         ax.set_ylim(bottom=parameters["YLIM"][0], top=parameters["YLIM"][1])
     #else:
@@ -87,7 +91,8 @@ def showPlots(fig, ax, parameters, parameters2, path):
             text.set_color("black")
         elif(THEME == 2):
             text.set_color("white")
-        text.set_fontsize(14)
+        elif(THEME == 3):
+            text.set_fontsize(16)
     title = parameters["TITLE"]
     if(parameters["TITLE"] == 0):
         if(parameters["THEME"] == 3):
@@ -106,7 +111,10 @@ def showPlots(fig, ax, parameters, parameters2, path):
                 DIM: {parameters2['NDIM']}\
                 NRUNS: {parameters2['RUNS']}\
                 "
-    ax.set_title(title, fontsize=18)
+    if THEME == 3:
+        ax.set_title(title, fontsize=22)
+    else:
+        ax.set_title(title, fontsize=18)
     plt.savefig(f"{path}/{parameters['NAME']}", format="png")
     plt.show()
 
