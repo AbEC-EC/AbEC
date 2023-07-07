@@ -257,6 +257,7 @@ def abec(algo, parameters, seed):
         globalVar.nevals = 0
         globalVar.gen = 0
         globalVar.mpb = None
+        globalVar.peaks = 0
         globalVar.best = None
         globalVar.eo_sum = 0
         globalVar.flagChangeEnv = 0
@@ -417,7 +418,6 @@ def abec(algo, parameters, seed):
         #####################################
         # End of the run
         #####################################
-
         bestRuns.append(globalVar.best)
 
         if parameters["DEBUG_RUN"]:

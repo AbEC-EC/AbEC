@@ -65,13 +65,14 @@ the 'optima.csv' file. The number of the peaks will be
 NPEAKS_MPB*NCHANGES
 '''
 def saveOptima(parameters):
-    opt = [0]
+    opt = []
     if(parameters["BENCHMARK"] == "MPB"):
-        opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
-        for i in range(parameters["NPEAKS_MPB"]):
-            opt[i] = globalVar.mpb.maximums()[i]
+        #opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
+        for i in range(len(globalVar.mpb.maximums())):
+            print(i)
+            opt.append(globalVar.mpb.maximums()[i])
     elif(parameters["BENCHMARK"] == "H1"):
-        opt[0] = fitFunction([8.6998, 6.7665])[0]
+        opt.append(fitFunction([8.6998, 6.7665])[0])
     with open(f"{globalVar.path}/optima.csv", "a") as f:
         write = csv.writer(f)
         write.writerow(opt)
