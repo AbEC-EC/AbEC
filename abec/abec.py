@@ -226,6 +226,7 @@ def abec(algo, parameters, seed):
 
     header = ["run", "gen", "nevals", "bestId", "bestPos", "bestError", "Eo", "env"]
     filename = f"{globalVar.path}/{parameters['FILENAME']}"
+    header_RUN = ["gen", "nevals", "bestId", "bestPos", "bestError", "Eo", "env"]
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
     filename_LA = f"{globalVar.path}/log_all.csv"
     header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
@@ -236,13 +237,12 @@ def abec(algo, parameters, seed):
     # Headers of the log files
     if(parameters["LOG_ALL"]):
         writeLog(mode=0, filename=filename_LA, header=header_LA)
-    writeLog(mode=0, filename=filename, header=header)
     writeLog(mode=0, filename=filename_OPT, header=header_OPT)
 
     #####################################
     # Main loop of the runs
     #####################################
-
+    print(f"RUN | GEN | NEVALS |                    BEST                   | ERROR")
     for globalVar.run in range(1, parameters["RUNS"]+1):
 
         if parameters["DEBUG_RUN_2"]:
@@ -250,7 +250,7 @@ def abec(algo, parameters, seed):
             print(f"[START][RUN:{globalVar.run:02}]\n[NEVALS:{globalVar.nevals:06}]")
             print(f"==============================================")
 
-        seed = seed*globalVar.run**5
+        seed = int(seed/globalVar.run)
         parameters["SEED"] = seed
 
         globalVar.rng = np.random.default_rng(seed)
@@ -286,8 +286,12 @@ def abec(algo, parameters, seed):
                     print(f"[POP {pop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {globalVar.best['id']:04}: {globalVar.best['pos']}\t\tERROR:{globalVar.best['fit']:.04f}]")
 
         globalVar.gen += 1
-        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
-        writeLog(mode=1, filename=filename, header=header, data=log)
+        #log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
+        #writeLog(mode=1, filename=filename, header=header, data=log)
+        log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
+        filename_RUN = f"{globalVar.path}/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv"
+        writeLog(mode=0, filename=filename_RUN, header=header_RUN)
+        writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
 
         #####################################
@@ -298,8 +302,8 @@ def abec(algo, parameters, seed):
                 print(f"[POP {pop.id:04}][BEST {pop.best['id']:04}: {pop.best['pos']} ERROR:{globalVar.best['fit']}]")
 
         if parameters["DEBUG_GEN"]:
-            print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.04f}][Eo: {Eo:.04f}]")
-
+            #print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.04f}][Eo: {Eo:.04f}]")
+            print(f"[{globalVar.run:02}][{globalVar.gen:04}][{globalVar.nevals:06}][{globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.04f}]")
 
         ###########################################################################
         # LOOP UNTIL FINISH THE RUN
@@ -399,8 +403,8 @@ def abec(algo, parameters, seed):
             #####################################
 
             Eo = globalVar.eo_sum/globalVar.nevals
-            log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
-            writeLog(mode=1, filename=filename, header=header, data=log)
+            log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
+            writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
 
             #####################################
@@ -421,7 +425,8 @@ def abec(algo, parameters, seed):
         bestRuns.append(globalVar.best)
 
         if parameters["DEBUG_RUN"]:
-            print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.4f}][Eo:{Eo:.4f}]")
+            #print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.4f}][Eo:{Eo:.4f}]")
+            print(f"{globalVar.run:02}   {globalVar.gen:05}  {globalVar.nevals:06}  {globalVar.best['id']:04}:{globalVar.best['pos']}  {globalVar.best['fit']:.04f}")
         if parameters["DEBUG_RUN_2"]:
             print(f"\n==============================================")
             print(f"[RUN:{globalVar.run:02}]\n[GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}]")

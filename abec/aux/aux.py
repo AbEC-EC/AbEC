@@ -67,9 +67,10 @@ NPEAKS_MPB*NCHANGES
 def saveOptima(parameters):
     opt = []
     if(parameters["BENCHMARK"] == "MPB"):
+        #print(globalVar.mpb.maximums())
         #opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
         for i in range(len(globalVar.mpb.maximums())):
-            print(i)
+            #print(i)
             opt.append(globalVar.mpb.maximums()[i])
     elif(parameters["BENCHMARK"] == "H1"):
         opt.append(fitFunction([8.6998, 6.7665])[0])

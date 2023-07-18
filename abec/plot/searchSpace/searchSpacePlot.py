@@ -129,9 +129,9 @@ def main():
      # Read the parameters from the config file
         with open(f"{pathTmp}/algoConfig.ini") as f:
             p0 = json.loads(f.read())
-        with open(f"{pathTmp}/benchConfig.ini") as f:
-            p1 = json.loads(f.read())
         with open(f"{pathTmp}/frameConfig.ini") as f:
+            p1 = json.loads(f.read())
+        with open(f"{pathTmp}/problemConfig.ini") as f:
             p2 = json.loads(f.read())
 
         parameters2 = p0 | p1 | p2
@@ -144,14 +144,14 @@ def main():
         data = [[] for i in range( len(pd.unique(df["run"])) )]
         best = [[] for i in range( len(pd.unique(df["run"])) )]
         ind = [[] for i in range( len(pd.unique(df["run"])) )]
-        if(parameters2["COMP_MULTIPOP"]):
+        if(parameters2["COMP_MULTIPOPULATION"]):
             subpops = [[] for i in range( len(pd.unique(df["popId"])) )]
             bsubpop = [[] for i in range( len(pd.unique(df["popId"])) )]
 
         for i in range(len(pd.unique(df["run"])) ):
             data[i] = df[df["run"] == i+1]
             #print(data[i])
-            if parameters2["COMP_MULTIPOP"]:
+            if parameters2["COMP_MULTIPOPULATION"]:
                 for j in range(len(pd.unique(data[i]["popId"])) ): # Get the number of runs
                     subpops[j] = data[i][data[i]["popId"] == j+1]
                     bsubpop[j] = subpops[j].drop_duplicates(subset=["gen"], keep="last")[["popBestPos"]]
