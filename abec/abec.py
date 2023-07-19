@@ -18,6 +18,7 @@ import numbers
 import json
 import shutil
 import numpy as np
+import pandas as pd
 from deap import benchmarks
 # AbEC files
 import aux.globalVar as globalVar
@@ -27,6 +28,7 @@ import optimizers.pso as pso
 import optimizers.de as de
 import optimizers.ga as ga
 import optimizers.es as es
+from metrics.offlineError import offlineError
 
 
 # datetime variables
@@ -65,7 +67,7 @@ def evaluate(x, parameters, be = 0):
     and the global optimum
     '''
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
-    filename_LA = f"{globalVar.path}/log_all.csv"
+    filename_LA = f"{globalVar.path}/results/log_all.csv"
 
     x["fit"] = fitFunction.fitnessFunction(x['pos'], parameters)
     globalVar.nevals += 1
@@ -224,19 +226,20 @@ Framework
 def abec(algo, parameters, seed):
     startTime = time.time()
 
-    header = ["run", "gen", "nevals", "bestId", "bestPos", "bestError", "Eo", "env"]
-    filename = f"{globalVar.path}/{parameters['FILENAME']}"
+    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "bestError", "Eo", "Eo_STD"]
+    filename = f"{globalVar.path}/results/results.csv"
     header_RUN = ["gen", "nevals", "bestId", "bestPos", "bestError", "Eo", "env"]
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
-    filename_LA = f"{globalVar.path}/log_all.csv"
+    filename_LA = f"{globalVar.path}/results/log_all.csv"
     header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
-    filename_OPT = f"{globalVar.path}/optima.csv"
+    filename_OPT = f"{globalVar.path}/results/optima.csv"
 
     bestRuns = []
 
     # Headers of the log files
     if(parameters["LOG_ALL"]):
         writeLog(mode=0, filename=filename_LA, header=header_LA)
+    writeLog(mode=0, filename=filename, header=header)
     writeLog(mode=0, filename=filename_OPT, header=header_OPT)
 
     #####################################
@@ -288,8 +291,9 @@ def abec(algo, parameters, seed):
         globalVar.gen += 1
         #log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
         #writeLog(mode=1, filename=filename, header=header, data=log)
+        Eo = globalVar.eo_sum/globalVar.nevals
         log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
-        filename_RUN = f"{globalVar.path}/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv"
+        filename_RUN = f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv"
         writeLog(mode=0, filename=filename_RUN, header=header_RUN)
         writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
@@ -423,6 +427,10 @@ def abec(algo, parameters, seed):
         # End of the run
         #####################################
         bestRuns.append(globalVar.best)
+        eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv")
+        #df = pd.read_csv(f"{globalVar.path}/results/results.csv")
+        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": eo[0], "Eo_STD": eo[1]}]
+        writeLog(mode=1, filename=filename, header=header, data=log)
 
         if parameters["DEBUG_RUN"]:
             #print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.4f}][Eo:{Eo:.4f}]")
@@ -453,28 +461,29 @@ def abec(algo, parameters, seed):
             bestsPos.append(luffy/len(bPos))
             luffy = 0
 
+        # Offline error
+        df = pd.read_csv(f"{globalVar.path}/results/results.csv")
+        eo_mean = df["Eo"].mean()
+        eo_std = df["Eo_STD"].std()
+
         if parameters["DEBUG_RUN"]:
             print(f"\n==============================================")
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS MEAN: {bestsPos} ]")
-            print(f"[FIT MEAN: {meanBest:.4f}({stdBest:.4f})]")
+            print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
+            print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
             print(f"==============================================\n")
 
     executionTime = (time.time() - startTime)
 
     #print(f"File generated: {path}/data.csv")
     if(parameters["DEBUG_RUN"]):
-        print(f"\nFile generated: {globalVar.path}/data.csv")
+        files = os.listdir(f"{globalVar.path}/results")
+        print(f"\nFiles generated: ")
+        files = sorted(files)
+        for file in files:
+            print(f"- {file}")
         print(f'Time Exec: {str(executionTime)} s\n')
-
-
-    # Evaluate the offline error
-    if(parameters["OFFLINE_ERROR"]):
-        if (parameters["DEBUG_RUN"]):
-            print("\n[METRIC]")
-            os.system(f"python3 {sys.path[0]}/metrics/offlineError.py -p {globalVar.path} -d 1")
-        else:
-            os.system(f"python3 {sys.path[0]}/metrics/offlineError.py -p {globalVar.path}")
 
     if(parameters["BEBC_ERROR"]):
         if (parameters["DEBUG_RUN"]):

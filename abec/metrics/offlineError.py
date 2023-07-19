@@ -19,6 +19,8 @@ import csv
 import sys
 import time
 import getopt
+import aux.globalVar as globalVar
+from aux.aux import *
 
 cDate = datetime.datetime.now()
 year = cDate.year
@@ -37,10 +39,10 @@ def writeTXT(data, name, path, std):
     f.close()
 
 def offlineError(path, std=1):
-    df = pd.read_csv(f"{path}/data.csv")
+    df = pd.read_csv(path)
 
-    luffy = df.drop_duplicates(subset=["run"], keep="last")[["Eo"]]
-    eo = [np.mean(luffy["Eo"]), np.std(luffy["Eo"])]
+    #luffy = df.drop_duplicates(subset=["run"], keep="last")[["Eo"]]
+    eo = [np.mean(df["Eo"]), np.std(df["Eo"])]
 
     if(std):
         return eo
@@ -87,14 +89,17 @@ def main():
 
     # Evaluate the offline error
     Eo = offlineError(path, std = parameters["STD_Eo"])
-    writeTXT(Eo, "offlineError", path, std = parameters["STD_Eo"])
+    #writeTXT(Eo, "offlineError", path, std = parameters["STD_Eo"])
     if(parameters["DEBUG"] and debug):
         if(parameters["STD_Eo"]):
-            print(f"\n[Offline Error]: {Eo[0]:.5f}({Eo[1]:.5f})")
+            print(f"\n[Offline Error]:")
+            print(f"- File: {path}")
+            print(f"- Value: {Eo[0]:.5f}({Eo[1]:.5f})")
         else:
             print(f"\n[Offline Error]: {Eo:.5f}")
 
     executionTime = (time.time() - startTime)
+
     if(parameters["DEBUG"] and debug):
         print(f"File generated: {path}/offlineError.txt")
         print(f'Time Exec: {str(executionTime)} s')

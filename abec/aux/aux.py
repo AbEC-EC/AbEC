@@ -24,9 +24,12 @@ def checkDirs(path):
     path += f"/{year}-{month}-{day}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{hour}-{minute}"
+    path += f"/{hour:02d}-{minute:02d}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
+    pathTmp = path+"/results"
+    if(os.path.isdir(pathTmp) == False):
+        os.mkdir(pathTmp)
     return path
 
 def errorWarning(nError="0.0", file="NONE", parameter="NONE", text="NONE"):
@@ -74,7 +77,7 @@ def saveOptima(parameters):
             opt.append(globalVar.mpb.maximums()[i])
     elif(parameters["BENCHMARK"] == "H1"):
         opt.append(fitFunction([8.6998, 6.7665])[0])
-    with open(f"{globalVar.path}/optima.csv", "a") as f:
+    with open(f"{globalVar.path}/results/optima.csv", "a") as f:
         write = csv.writer(f)
         write.writerow(opt)
 
