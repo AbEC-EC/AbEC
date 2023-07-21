@@ -1,6 +1,8 @@
 import csv
 import os
+import numpy as np
 import datetime
+import pandas as pd
 import aux.globalVar as globalVar
 import importlib
 import sys
@@ -21,7 +23,7 @@ Returns the path
 def checkDirs(path):
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{year}-{month}-{day}"
+    path += f"/{year}-{month:02d}-{day:02d}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
     path += f"/{hour:02d}-{minute:02d}"
@@ -120,6 +122,34 @@ class algoritmo():
         self.comps_global[x.scope[0]].remove(x)
 
 
+def ecMean(path, parameters):
+    ec_mean = []
+    ec_std = []
+    sum = 0
+    data = []
+
+    flist = os.listdir(path)
+    flist = sorted(flist)
+    files = [flist[d] for d in range(parameters["RUNS"])]
+
+    for f in files:
+        data.append(pd.read_csv(f"{path}/{f}"))
+    std = [0 for i in range(len(data))]
+
+    for row in range(len(data[0].index)):
+        for file in range(len(data)):
+            sum += data[file]["ec"][row]
+            std[file] = data[file]["ec"][row]
+        ec_mean.append(sum/len(data))
+        ec_std.append(np.std(std))
+        sum = 0
+        std = [0 for _ in range(len(data))]
+
+    zipped = list(zip(data[0]["nevals"], ec_mean, ec_std))
+    bestMean = pd.DataFrame(zipped, columns=["nevals", "ec", "ec_std"])
+    bestMean.to_csv(f"{globalVar.path}/results/ecMean.csv")
+
+    return f"{globalVar.path}/results/ecMean"
 
 
 '''

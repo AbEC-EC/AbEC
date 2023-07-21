@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 from deap import benchmarks
 # AbEC files
+import plot.currentError as ec
 import aux.globalVar as globalVar
 import aux.fitFunction as fitFunction
 from aux.aux import *
@@ -226,9 +227,9 @@ Framework
 def abec(algo, parameters, seed):
     startTime = time.time()
 
-    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "bestError", "Eo", "Eo_STD"]
+    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std"]
     filename = f"{globalVar.path}/results/results.csv"
-    header_RUN = ["gen", "nevals", "bestId", "bestPos", "bestError", "Eo", "env"]
+    header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "env"]
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
     filename_LA = f"{globalVar.path}/results/log_all.csv"
     header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
@@ -253,7 +254,7 @@ def abec(algo, parameters, seed):
             print(f"[START][RUN:{globalVar.run:02}]\n[NEVALS:{globalVar.nevals:06}]")
             print(f"==============================================")
 
-        seed = int(seed/globalVar.run)
+        seed = int(seed + globalVar.run*2)
         parameters["SEED"] = seed
 
         globalVar.rng = np.random.default_rng(seed)
@@ -292,8 +293,8 @@ def abec(algo, parameters, seed):
         #log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
         #writeLog(mode=1, filename=filename, header=header, data=log)
         Eo = globalVar.eo_sum/globalVar.nevals
-        log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
-        filename_RUN = f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv"
+        log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
+        filename_RUN = f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv"
         writeLog(mode=0, filename=filename_RUN, header=header_RUN)
         writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
@@ -407,7 +408,7 @@ def abec(algo, parameters, seed):
             #####################################
 
             Eo = globalVar.eo_sum/globalVar.nevals
-            log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
+            log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
             writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
 
@@ -427,9 +428,9 @@ def abec(algo, parameters, seed):
         # End of the run
         #####################################
         bestRuns.append(globalVar.best)
-        eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run}_{parameters['SEED']}.csv")
+        eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
         #df = pd.read_csv(f"{globalVar.path}/results/results.csv")
-        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": eo[0], "Eo_STD": eo[1]}]
+        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1]}]
         writeLog(mode=1, filename=filename, header=header, data=log)
 
         if parameters["DEBUG_RUN"]:
@@ -447,9 +448,19 @@ def abec(algo, parameters, seed):
         population.resetId()
 
 
+    # End of the optimization
+    print("\n\n[RESULTS]")
+    executionTime = (time.time() - startTime)
+
+    # Offline error
+    df = pd.read_csv(f"{globalVar.path}/results/results.csv")
+    eo_mean = df["eo"].mean()
+
     if parameters["RUNS"] > 1:
         luffy = 0
         bestsPos = []
+
+        eo_std = df["eo_std"].std()
 
         bests = [d["fit"] for d in bestRuns]
         meanBest = np.mean(bests)
@@ -461,29 +472,40 @@ def abec(algo, parameters, seed):
             bestsPos.append(luffy/len(bPos))
             luffy = 0
 
-        # Offline error
-        df = pd.read_csv(f"{globalVar.path}/results/results.csv")
-        eo_mean = df["Eo"].mean()
-        eo_std = df["Eo_STD"].std()
-
         if parameters["DEBUG_RUN"]:
             print(f"\n==============================================")
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS MEAN: {bestsPos} ]")
             print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
             print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
-            print(f"==============================================\n")
 
-    executionTime = (time.time() - startTime)
 
-    #print(f"File generated: {path}/data.csv")
+        ecMean_csv = ecMean(f"{globalVar.path}/results", parameters)
+        ec.ecPlot(ecMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="ecMean")
+    else:
+
+        eo_std = df["eo_std"][0]   # If only one run just the number
+
+        if parameters["DEBUG_RUN"]:
+            print(f"\n==============================================")
+            print(f"[RUNS:{parameters['RUNS']}]")
+            print(f"[POS : {globalVar.best['pos']}]")
+            print(f"[Ec  : {globalVar.best['fit']:.4f}]")
+            print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
+
+        ec.ecPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
+
+
+    print(f"[RUNTIME: {str(executionTime)} s]")
+    print(f"==============================================\n")
+
     if(parameters["DEBUG_RUN"]):
         files = os.listdir(f"{globalVar.path}/results")
-        print(f"\nFiles generated: ")
+        print(f"\n[FILES GENERATED]\n")
+        print(f"-[PATH] {globalVar.path}/")
         files = sorted(files)
         for file in files:
-            print(f"- {file}")
-        print(f'Time Exec: {str(executionTime)} s\n')
+            print(f"\t-[FILE] {file}")
 
     if(parameters["BEBC_ERROR"]):
         if (parameters["DEBUG_RUN"]):

@@ -42,7 +42,7 @@ def offlineError(path, std=1):
     df = pd.read_csv(path)
 
     #luffy = df.drop_duplicates(subset=["run"], keep="last")[["Eo"]]
-    eo = [np.mean(df["Eo"]), np.std(df["Eo"])]
+    eo = [np.mean(df["eo"]), np.std(df["eo"])]
 
     if(std):
         return eo

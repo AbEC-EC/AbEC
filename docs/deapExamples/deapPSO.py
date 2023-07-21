@@ -24,7 +24,7 @@ from deap import benchmarks
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
 creator.create("Particle", list, fitness=creator.FitnessMax, speed=list, 
     smin=None, smax=None, best=None)
 
@@ -49,13 +49,13 @@ def updateParticle(part, best, phi1, phi2):
     part[:] = list(map(operator.add, part, part.speed))
 
 toolbox = base.Toolbox()
-toolbox.register("particle", generate, size=2, pmin=-100, pmax=100, smin=-3, smax=3)
+toolbox.register("particle", generate, size=5, pmin=-100, pmax=100, smin=-10, smax=10)
 toolbox.register("population", tools.initRepeat, list, toolbox.particle)
 toolbox.register("update", updateParticle, phi1=2.0, phi2=2.0)
-toolbox.register("evaluate", benchmarks.h1)
+toolbox.register("evaluate", benchmarks.schaffer)
 
 def main():
-    pop = toolbox.population(n=5)
+    pop = toolbox.population(n=50)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
     stats.register("std", numpy.std)
