@@ -16,6 +16,8 @@ flagChangeEnv = 0
 path = "."
 peaks = 0
 randomInit = [0]
+seedInit = 0
+npops = 0
 
 '''
 # datetime variables

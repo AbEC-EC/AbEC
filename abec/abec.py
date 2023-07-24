@@ -21,7 +21,9 @@ import numpy as np
 import pandas as pd
 from deap import benchmarks
 # AbEC files
-import plot.currentError as ec
+import plot.currentError as ecPlot
+import plot.offlineError as eoPlot
+import plot.searchSpace as spPlot
 import aux.globalVar as globalVar
 import aux.fitFunction as fitFunction
 from aux.aux import *
@@ -68,7 +70,7 @@ def evaluate(x, parameters, be = 0):
     and the global optimum
     '''
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
-    filename_LA = f"{globalVar.path}/results/log_all.csv"
+    filename_LA = f"{globalVar.path}/results/log_all_{globalVar.seedInit}.csv"
 
     x["fit"] = fitFunction.fitnessFunction(x['pos'], parameters)
     globalVar.nevals += 1
@@ -101,13 +103,17 @@ class population():
     '''
         Class of the population
     '''
-    newid = itertools.count(1).__next__    # Get a new id for the population
+    # Get a new id for the population
+    newid = itertools.count(1).__next__
 
     def __init__(self, parameters, id = 1, fill = 1):
         if(id == 0):    # Temporary population doesnt have an id
             self.id = 0
         else:
-            self.id = population.newid()
+            if globalVar.npops > 1:
+                self.id = population.newid() - ((globalVar.run-1)*globalVar.npops)
+            else:
+                self.id = population.newid()
 
         self.popsize = parameters["POPSIZE"]
 
@@ -227,11 +233,12 @@ Framework
 def abec(algo, parameters, seed):
     startTime = time.time()
 
+    globalVar.seedInit = parameters["SEED"]
     header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std"]
     filename = f"{globalVar.path}/results/results.csv"
     header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "env"]
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
-    filename_LA = f"{globalVar.path}/results/log_all.csv"
+    filename_LA = f"{globalVar.path}/results/log_all_{globalVar.seedInit}.csv"
     header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
     filename_OPT = f"{globalVar.path}/results/optima.csv"
 
@@ -254,7 +261,8 @@ def abec(algo, parameters, seed):
             print(f"[START][RUN:{globalVar.run:02}]\n[NEVALS:{globalVar.nevals:06}]")
             print(f"==============================================")
 
-        seed = int(seed + globalVar.run*2)
+        seed = int(seed + (globalVar.run*2) -2 )
+        #seed = int(seed + globalVar.run*2)
         parameters["SEED"] = seed
 
         globalVar.rng = np.random.default_rng(seed)
@@ -317,6 +325,14 @@ def abec(algo, parameters, seed):
 
         while finishRun(parameters) == 0:
 
+            '''
+            for pop in pops:
+                print(pop.ind[0])
+                pop.ind[0]["pos"] = [51.97040, 61.228639]
+                evaluate(pop.ind[0], parameters)
+                print(pop.ind[0])
+                e()
+            '''
 
             ###########################################
             # Apply the Global Diversity Components
@@ -445,7 +461,10 @@ def abec(algo, parameters, seed):
             print(f"==============================================")
 
 
-        population.resetId()
+        #population.resetId()
+        #for pop in pops:
+        #    del pop
+        globalVar.npops = len(pops)
 
 
     # End of the optimization
@@ -481,7 +500,9 @@ def abec(algo, parameters, seed):
 
 
         ecMean_csv = ecMean(f"{globalVar.path}/results", parameters)
-        ec.ecPlot(ecMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="ecMean")
+        eoMean_csv = eoMean(f"{globalVar.path}/results", parameters)
+        ecPlot.ecPlot(ecMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="ecMean")
+        eoPlot.eoPlot(eoMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="eoMean")
     else:
 
         eo_std = df["eo_std"][0]   # If only one run just the number
@@ -493,8 +514,9 @@ def abec(algo, parameters, seed):
             print(f"[Ec  : {globalVar.best['fit']:.4f}]")
             print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
 
-        ec.ecPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
-
+        ecPlot.ecPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
+        eoPlot.eoPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
+        spPlot.spPlot(f"{globalVar.path}/results/log_all_{globalVar.seedInit}", parameters, pathSave = f"{globalVar.path}/results")
 
     print(f"[RUNTIME: {str(executionTime)} s]")
     print(f"==============================================\n")
@@ -502,7 +524,7 @@ def abec(algo, parameters, seed):
     if(parameters["DEBUG_RUN"]):
         files = os.listdir(f"{globalVar.path}/results")
         print(f"\n[FILES GENERATED]\n")
-        print(f"-[PATH] {globalVar.path}/")
+        print(f"-[PATH] {globalVar.path}/results/")
         files = sorted(files)
         for file in files:
             print(f"\t-[FILE] {file}")

@@ -152,6 +152,36 @@ def ecMean(path, parameters):
     return f"{globalVar.path}/results/ecMean"
 
 
+def eoMean(path, parameters):
+    eo_mean = []
+    eo_std = []
+    sum = 0
+    data = []
+
+    flist = os.listdir(path)
+    flist = sorted(flist)
+    files = [flist[d] for d in range(parameters["RUNS"])]
+
+    for f in files:
+        data.append(pd.read_csv(f"{path}/{f}"))
+    std = [0 for i in range(len(data))]
+
+    for row in range(len(data[0].index)):
+        for file in range(len(data)):
+            sum += data[file]["eo"][row]
+            std[file] = data[file]["eo"][row]
+        eo_mean.append(sum/len(data))
+        eo_std.append(np.std(std))
+        sum = 0
+        std = [0 for _ in range(len(data))]
+
+    zipped = list(zip(data[0]["nevals"], eo_mean, eo_std))
+    bestMean = pd.DataFrame(zipped, columns=["nevals", "eo", "eo_std"])
+    bestMean.to_csv(f"{globalVar.path}/results/eoMean.csv")
+
+    return f"{globalVar.path}/results/eoMean"
+
+
 '''
 Update algo with the parameters
 '''

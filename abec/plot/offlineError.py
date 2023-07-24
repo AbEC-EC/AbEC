@@ -39,16 +39,16 @@ def configLegend(fig, ax, THEME):
 
 def loadPlot(path, fig, ax, parameters, multi, THEME):
     df = pd.read_csv(path)
-    ax.plot(df["nevals"], df["ec"], label=f"Algorithm")
+    ax.plot(df["nevals"], df["eo"], label=f"Algorithm")
 
     if multi:
-        ax.fill_between(df["nevals"], df["ec"] - df["ec_std"], df["ec"]+ df["ec_std"], alpha=0.05)
+        ax.fill_between(df["nevals"], df["eo"] - df["eo_std"], df["eo"]+ df["eo_std"], alpha=0.05)
 
     # Axes labels and limits
     ax.set_xlabel("Evaluations", fontsize=20)
-    ax.set_ylabel("Current error (Ec)", fontsize=20)
+    ax.set_ylabel("Offline error (Eo)", fontsize=20)
     ax.set_xlim(df["nevals"].iloc[0], df["nevals"].iloc[-1])
-    ax.set_ylim(0, df["ec"].max()+1)
+    ax.set_ylim(df["eo"].min(), df["eo"].max()+1)
 
     # Title content
     if parameters:
@@ -68,7 +68,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     return fig, ax
 
 
-def ecPlot(path, parameters = 0, type = 1, multi = 0, THEME = 1, pathSave = ".", name = "ec"):
+def eoPlot(path, parameters = 0, type = 1, multi = 0, THEME = 1, pathSave = ".", name = "eo"):
     fig, ax = configPlot(THEME)
 
     fig, ax = loadPlot(f"{path}.csv", fig, ax, parameters, multi, THEME)
