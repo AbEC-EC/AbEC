@@ -6,6 +6,7 @@ import pandas as pd
 import aux.globalVar as globalVar
 import importlib
 import sys
+import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 
@@ -350,4 +351,3 @@ def problemConfig():
         "LAMBDA_MPB": 0 \
     }
     return config
-

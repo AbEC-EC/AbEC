@@ -76,4 +76,4 @@ def ecPlot(path, parameters = 0, type = 1, multi = 0, THEME = 1, pathSave = ".",
     fig, ax = configLegend(fig, ax, THEME)
 
     plt.savefig(f"{pathSave}/{name}.png", format="png")
-    plt.show()
+    #plt.show()

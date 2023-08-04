@@ -26,14 +26,13 @@ import plot.offlineError as eoPlot
 import plot.searchSpace as spPlot
 import aux.globalVar as globalVar
 import aux.fitFunction as fitFunction
-import plot.rtPlot as rtPlot
-import gui.gui as gui
 from aux.aux import *
 import optimizers.pso as pso
 import optimizers.de as de
 import optimizers.ga as ga
 import optimizers.es as es
 from metrics.offlineError import offlineError
+
 
 # datetime variables
 cDate = datetime.datetime.now()
@@ -231,7 +230,7 @@ def finishRun(parameters):
 '''
 Framework
 '''
-def abec(algo, parameters, seed, layout = 0):
+def abec(algo, parameters, seed):
     startTime = time.time()
 
     globalVar.seedInit = parameters["SEED"]
@@ -280,12 +279,6 @@ def abec(algo, parameters, seed, layout = 0):
         flagEnv = 0
         Eo = 0
         change = 0
-        rtPlotNevals = []
-        rtPlotError = []
-
-        #d = rtPlot.plotUpdate(parameters)
-        #d.on_launch(parameters)
-        #d()
 
         # Create the population with POPSIZE individuals
         pops, globalVar.best = createPopulation(algo, parameters)
@@ -313,10 +306,6 @@ def abec(algo, parameters, seed, layout = 0):
         writeLog(mode=0, filename=filename_RUN, header=header_RUN)
         writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
 
-        rtPlotNevals.append(globalVar.nevals)
-        rtPlotError.append(globalVar.best["fit"])
-        #d.on_running(rtPlotNevals, rtPlotError)
-        layout.run(rtPlotNevals, rtPlotError)
 
         #####################################
         # Debug in pop and generation level
@@ -437,10 +426,7 @@ def abec(algo, parameters, seed, layout = 0):
             Eo = globalVar.eo_sum/globalVar.nevals
             log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
             writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
-            rtPlotNevals.append(globalVar.nevals)
-            rtPlotError.append(globalVar.best["fit"])
-            #d.on_running(rtPlotNevals, rtPlotError)
-            layout.run(rtPlotNevals, rtPlotError)
+
 
             #####################################
             # Debug in pop and generation level
@@ -484,12 +470,6 @@ def abec(algo, parameters, seed, layout = 0):
     # End of the optimization
     print("\n\n[RESULTS]")
     executionTime = (time.time() - startTime)
-
-    try:
-        input("\n\n[Press enter to start...]")
-    except SyntaxError:
-        pass
-
 
     # Offline error
     df = pd.read_csv(f"{globalVar.path}/results/results.csv")
@@ -578,7 +558,6 @@ def main():
         elif opt in ("-p", "--path"):
             globalVar.path = arg
 
-
     parameters0, algo = algoConfig()
     parameters1 = frameConfig()
     parameters2 = problemConfig()
@@ -608,9 +587,6 @@ def main():
                 parameters2[f"{p2[i][0]}"] = p2[i][1]
 
     parameters = parameters0 | parameters1 | parameters2
-
-    layout = gui.interface(parameters)
-    layout.launch(parameters)
 
     algo = updateAlgo(algo, parameters)
 
@@ -677,7 +653,8 @@ def main():
 
     if parameters["DEBUG_RUN"]:
         print("\n[START]\n")
-    abec(algo, parameters, seed, layout)
+
+    abec(algo, parameters, seed)
     # Copy the config.ini file to the experiment dir
     if(parameters["CONFIG_COPY"]):
         f = open(f"{globalVar.path}/algoConfig.ini","w")
