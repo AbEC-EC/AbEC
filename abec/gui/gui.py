@@ -43,12 +43,9 @@ class interface():
 
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
 
-        self.col2 = sg.Column([[sg.Frame("Graphs:", [[sg.Text('Current Error (Ec)', size=(40, 1),
+        self.col2 = sg.Column([[sg.Frame("Graphs:", [[sg.Text('Optimization curves', size=(40, 1),
                         justification='center', font='Helvetica 20')],
-                      [sg.Canvas(size=(600, 400), key='-CANVAS-')],
-                      [sg.Text('Number os Evaluations (NEVALS)')],
-                      [sg.Slider(range=(0, NUM_DATAPOINTS), size=(60, 10),
-                        orientation='h', key='-SLIDER-')]])]]
+                      [sg.Canvas(size=(900, 700), key='-CANVAS-')]])]]
         )
 
         '''
@@ -65,21 +62,21 @@ class interface():
 
         self.col1 = sg.Column([
             # Categories sg.Frame
-            [sg.Frame('Categories:',[[ sg.Radio('Websites', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
+            [sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
                                     sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
             # Information sg.Frame
-            [sg.Frame('Information:', [[sg.Text(), sg.Column([[sg.Text('Account:')],
+            [sg.Frame('Components:', [[sg.Text(), sg.Column([[sg.Text('Optimizers:')],
                                      [sg.Input(key='-ACCOUNT-IN-', size=(19,1))],
-                                     [sg.Text('User Id:')],
+                                     [sg.Text('Components:')],
                                      [sg.Input(key='-USERID-IN-', size=(19,1)),
                                       sg.Button('Copy', key='-USERID-')],
-                                     [sg.Text('Password:')],
+                                     [sg.Text('Limits:')],
                                      [sg.Input(key='-PW-IN-', size=(19,1)),
                                       sg.Button('Copy', key='-PASS-')],
-                                     [sg.Text('Location:')],
+                                     [sg.Text('NEVALS:')],
                                      [sg.Input(key='-LOC-IN-', size=(19,1)),
                                       sg.Button('Copy', key='-LOC-')],
-                                     [sg.Text('Notes:')],
+                                     [sg.Text('Filename')],
                                      [sg.Multiline(key='-NOTES-', size=(25,5))],
                                      ], size=(235,350), pad=(0,0))]])], ], pad=(0,0))
 
@@ -105,35 +102,35 @@ class interface():
                     self.layout, finalize=True)
 
         self.canvas_elem = self.window["-CANVAS-"]
-        self.slider_elem = self.window['-SLIDER-']
-        self.slider_elem.update(0)       # slider shows "progress" through the data points
         self.canvas = self.canvas_elem.TKCanvas
 
         # Configure colors
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"
         plt.rcParams["savefig.facecolor"] = "#1c1c1c"
-        plt.rcParams["figure.figsize"] = (6, 4)
+        plt.rcParams["figure.figsize"] = (9, 7)
 
-        #self.fig, self.ax = plt.subplots(1)
-        self.fig = Figure()
-        self.ax = self.fig.add_subplot(111)
-        self.ax.grid(True)
+        self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
+        #self.fig = Figure()
+        #self.ax = self.fig.add_subplot(111)
+        self.ax[0].grid(True)
+        self.ax[1].grid(True)
         plt.grid(which="major", color="dimgrey", linewidth=0.8)
         plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
 
-        self.ax.set_xlabel("NEVALS")
-        self.ax.set_ylabel("Current Error (Ec)")
-        self.ax.set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
+        self.ax[0].set_ylabel("Current Error (Ec)")
+        self.ax[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
+        self.ax[1].set_xlabel("NEVALS")
+        self.ax[1].set_ylabel("Offline Error (Ec)")
         self.fig_agg = draw_figure(self.canvas, self.fig)
 
 
-    def run(self, x, y):
+    def run(self, x, y1, y2):
         #dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
         #self.ax.cla()
         event, values = self.window.read(timeout=10)
-        self.ax.plot(x, y, c="orange")
-        self.slider_elem.update(x[-1])       # slider shows "progress" through the data points
+        self.ax[0].plot(x, y1, c="orange")
+        self.ax[1].plot(x, y2, c="orange")
         self.fig_agg.draw()
 
     '''

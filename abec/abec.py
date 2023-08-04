@@ -282,6 +282,7 @@ def abec(algo, parameters, seed, layout = 0):
         change = 0
         rtPlotNevals = []
         rtPlotError = []
+        rtPlotEo = []
 
         #d = rtPlot.plotUpdate(parameters)
         #d.on_launch(parameters)
@@ -315,8 +316,9 @@ def abec(algo, parameters, seed, layout = 0):
 
         rtPlotNevals.append(globalVar.nevals)
         rtPlotError.append(globalVar.best["fit"])
+        rtPlotEo.append(Eo)
         #d.on_running(rtPlotNevals, rtPlotError)
-        layout.run(rtPlotNevals, rtPlotError)
+        layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
 
         #####################################
         # Debug in pop and generation level
@@ -439,8 +441,9 @@ def abec(algo, parameters, seed, layout = 0):
             writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
             rtPlotNevals.append(globalVar.nevals)
             rtPlotError.append(globalVar.best["fit"])
+            rtPlotEo.append(Eo)
             #d.on_running(rtPlotNevals, rtPlotError)
-            layout.run(rtPlotNevals, rtPlotError)
+            layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
 
             #####################################
             # Debug in pop and generation level
