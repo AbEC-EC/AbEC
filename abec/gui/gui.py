@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import plot.rtPlot as rtPlot
+import matplotlib.colors as mcolors
 
 #plt.ion()
 sg.theme("DarkGray")
@@ -27,10 +28,43 @@ sg.theme("DarkGray")
     
     Copyright 2021 PySimpleGUI
 """
+sg.set_options(font = "FreeMono 10")
+
+SYMBOL_UP =    '+'
+SYMBOL_DOWN =  '-'
+
+
+
+def collapse(layout, key):
+    """
+    Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
+    :param layout: The layout for the section
+    :param key: Key used to make this seciton visible / invisible
+    :return: A pinned column that can be placed directly into your layout
+    :rtype: sg.pin
+    """
+    return sg.pin(sg.Column(layout, key=key))
+
+
+opt1 = [[sg.Input('Input opt 1', key='-IN1-')],
+[sg.Input(key='-IN11-')],
+[sg.Button('Button1',  button_color='yellow on green')]]
+
+opt2 = [[sg.I('Input opt 2', k='-IN2-')],
+[sg.I(k='-IN21-')],
+[sg.B('Button1',  button_color=('yellow', 'purple'))]]
+
+
+c1 = [[sg.Input('Input c 1', key='-IN1-')],
+[sg.Input(key='-IN11-')],
+[sg.Button('Button1',  button_color='yellow on green')]]
+
+c2 = [[sg.I('Input c 2', k='-IN2-')],
+[sg.I(k='-IN21-')],
+[sg.B('Button1',  button_color=('yellow', 'purple'))]]
 
 
 # Yet another usage of MatPlotLib with animations.
-
 def draw_figure(canvas, figure, loc=(0, 0)):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
@@ -43,9 +77,9 @@ class interface():
 
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
 
-        self.col2 = sg.Column([[sg.Frame("Graphs:", [[sg.Text('Optimization curves', size=(40, 1),
-                        justification='center', font='Helvetica 20')],
-                      [sg.Canvas(size=(900, 700), key='-CANVAS-')]])]]
+        self.col2 = sg.Column([[sg.Frame("Analysis curves:",
+                                [[sg.Canvas(size=(1000, 800), key='-CANVAS-')]]
+                             )]]
         )
 
         '''
@@ -62,27 +96,39 @@ class interface():
 
         self.col1 = sg.Column([
             # Categories sg.Frame
-            [sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
-                                    sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
-            # Information sg.Frame
-            [sg.Frame('Components:', [[sg.Text(), sg.Column([[sg.Text('Optimizers:')],
-                                     [sg.Input(key='-ACCOUNT-IN-', size=(19,1))],
-                                     [sg.Text('Components:')],
-                                     [sg.Input(key='-USERID-IN-', size=(19,1)),
-                                      sg.Button('Copy', key='-USERID-')],
-                                     [sg.Text('Limits:')],
-                                     [sg.Input(key='-PW-IN-', size=(19,1)),
-                                      sg.Button('Copy', key='-PASS-')],
-                                     [sg.Text('NEVALS:')],
-                                     [sg.Input(key='-LOC-IN-', size=(19,1)),
-                                      sg.Button('Copy', key='-LOC-')],
-                                     [sg.Text('Filename')],
-                                     [sg.Multiline(key='-NOTES-', size=(25,5))],
-                                     ], size=(235,350), pad=(0,0))]])], ], pad=(0,0))
+            #[sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
+            #                        sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
+            [sg.Frame('Algorithm:',[[sg.Text('Name:')],
+                                     [sg.Input(key='-USERID-IN-', size=(19,1))],
+                                     [sg.Text('Search space:')],
+                                     [sg.Text('Min:'),sg.Input(key='-USERID-IN-', size=(5,1)),
+                                        sg.Text('Max:'),sg.Input(key='-USERID-IN-', size=(5,1))]
+                                    ],size=(300,120))],
+
+            [sg.Frame('Components:',[[sg.Frame("Optimizers:",
+                                        [[sg.T(SYMBOL_UP, enable_events=True, k='-OPEN OPT1-'),
+                                            sg.T('Optimizer', enable_events=True, font = "FreeMono 10", k='-OPEN OPT1-TEXT')],
+                                        [collapse(opt1, '-OPT1-')],
+                                         #### Section 2 part ####
+                                        [sg.T(SYMBOL_UP, enable_events=True, k='-OPEN OPT2-'),
+                                            sg.T('Optimizer', enable_events=True, font = "FreeMono 10", k='-OPEN OPT2-TEXT')],
+                                        [collapse(opt2, '-OPT2-')]
+                                        ])],
+                                        [sg.Frame("Global:",
+                                        [[sg.T(SYMBOL_UP, enable_events=True, k='-OPEN C1-'),
+                                            sg.T('Component', enable_events=True, font = "FreeMono 10", k='-OPEN C1-TEXT')],
+                                        [collapse(c1, '-C1-')],
+                                         #### Section 2 part ####
+                                        [sg.T(SYMBOL_UP, enable_events=True, k='-OPEN C2-'),
+                                            sg.T('Component', enable_events=True, font = "FreeMono 10", k='-OPEN C2-TEXT')],
+                                        [collapse(c2, '-C2-')]
+                                        ])]
+                                    ], size=(300,696))]
+            ])
 
         self.col3 = sg.Column([[sg.Frame('Actions:',
-                                    [[sg.Column([[sg.Button('Save'), sg.Button('Clear'), sg.Button('Delete'), ]],
-                                                size=(450,45), pad=(0,0))]])]], pad=(0,0))
+                                    [[sg.Column([[sg.Button('Start'), sg.Button('Clear'), ]],
+                                                size=(1335,45), pad=(0,0))]])]], pad=(0,0))
 
         # The final layout is a simple one
         self.layout = [[self.col1, self.col2],
@@ -98,7 +144,7 @@ class interface():
 
     def launch(self, parameters):
        # create the form and show it without the plot
-        self.window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
+        self.window = sg.Window("AbEC - Ajustable Evolutionary Components",
                     self.layout, finalize=True)
 
         self.canvas_elem = self.window["-CANVAS-"]
@@ -108,7 +154,7 @@ class interface():
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"
         plt.rcParams["savefig.facecolor"] = "#1c1c1c"
-        plt.rcParams["figure.figsize"] = (9, 7)
+        plt.rcParams["figure.figsize"] = (10, 8)
 
         self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
         #self.fig = Figure()
@@ -118,37 +164,40 @@ class interface():
         plt.grid(which="major", color="dimgrey", linewidth=0.8)
         plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
 
-        self.ax[0].set_ylabel("Current Error (Ec)")
+        self.ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
         self.ax[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
-        self.ax[1].set_xlabel("NEVALS")
-        self.ax[1].set_ylabel("Offline Error (Ec)")
+        self.ax[1].set_xlabel("NEVALS", fontsize=16)
+        self.ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
         self.fig_agg = draw_figure(self.canvas, self.fig)
 
 
-    def run(self, x, y1, y2):
+    def run(self, x, y1, y2, r=0):
         #dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
         #self.ax.cla()
         event, values = self.window.read(timeout=10)
-        self.ax[0].plot(x, y1, c="orange")
-        self.ax[1].plot(x, y2, c="orange")
+        self.ax[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
+        self.ax[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
         self.fig_agg.draw()
 
-    '''
-    def __call__(self):
-        for i in range(len(dpts)):
+    def set(self):
+        opened1, opened2 = False, False
+        self.window['-OPT1-'].update(visible=False)
+        self.window['-OPT2-'].update(visible=False)
+        while(True):
+            event, values = self.window.read()
+            print(event, values)
+            if event == 'Start':
+                break
+            if event.startswith('-OPEN OPT1-'):
+                opened1 = not opened1
+                self.window['-OPEN OPT1-'].update(SYMBOL_DOWN if opened1 else SYMBOL_UP)
+                self.window['-OPT1-'].update(visible=opened1)
 
-            event, values = window.read(timeout=10)
-            if event in ('Exit', None):
-                exit(69)
-            
-            ax.cla()                    # clear the subplot
-            ax.grid()                   # draw the grid
-            ax.set_xlim(0, 1000)
-            #data_points = int(values['-SLIDER-DATAPOINTS-']) # draw this many data points (on next line)
-            #ax.plot(0, dpts[i:i+data_points],  color='purple')
-            ax.plot(range(i), dpts[0:i],  color='purple')
-            fig_agg.draw()
-    '''
+            if event.startswith('-OPEN OPT2-'):
+                opened2 = not opened2
+                self.window['-OPEN OPT2-'].update(SYMBOL_DOWN if opened2 else SYMBOL_UP)
+                #self.window['-OPEN SEC2-CHECKBOX'].update(not opened2)
+                self.window['-OPT2-'].update(visible=opened2)
 
     #window.close()
 

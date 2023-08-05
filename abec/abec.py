@@ -443,7 +443,7 @@ def abec(algo, parameters, seed, layout = 0):
             rtPlotError.append(globalVar.best["fit"])
             rtPlotEo.append(Eo)
             #d.on_running(rtPlotNevals, rtPlotError)
-            layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
+            layout.run(rtPlotNevals, rtPlotError, rtPlotEo, globalVar.run)
 
             #####################################
             # Debug in pop and generation level
@@ -674,7 +674,8 @@ def main():
 
     time.sleep(1)
     try:
-        input("\n\n[Press enter to start...]")
+        layout.set()
+        #input("\n\n[Press enter to start...]")
     except SyntaxError:
         pass
 
