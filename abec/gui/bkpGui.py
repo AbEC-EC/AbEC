@@ -5,7 +5,6 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import plot.rtPlot as rtPlot
 import matplotlib.colors as mcolors
-import os
 
 #plt.ion()
 sg.theme("DarkGray")
@@ -29,7 +28,7 @@ sg.theme("DarkGray")
     
     Copyright 2021 PySimpleGUI
 """
-sg.set_options(font = "FreeMono 14")
+sg.set_options(font = "FreeMono 10")
 
 SYMBOL_UP =    '+'
 SYMBOL_DOWN =  '-'
@@ -79,7 +78,7 @@ class interface():
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
 
         self.col2 = sg.Column([[sg.Frame("Analysis curves:",
-                                [[sg.Canvas(size=(800, 600), key='-CANVAS-')]]
+                                [[sg.Canvas(size=(1000, 800), key='-CANVAS-')]]
                              )]]
         )
 
@@ -99,31 +98,37 @@ class interface():
             # Categories sg.Frame
             #[sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
             #                        sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
-            [sg.Frame('Emperiment:',[[sg.Button("Configuration", key="-EXP-")]
-                                    ],size=(300, 60))],
+            [sg.Frame('Algorithm:',[[sg.Text('Name:')],
+                                     [sg.Input(key='-USERID-IN-', size=(19,1))],
+                                     [sg.Text('Search space:')],
+                                     [sg.Text('Min:'),sg.Input(key='-USERID-IN-', size=(5,1)),
+                                        sg.Text('Max:'),sg.Input(key='-USERID-IN-', size=(5,1))]
+                                    ],size=(300,120))],
 
-            [sg.Frame('Algorithm:',[[sg.Button("Configuration", key="-ALGO-")]
-                                    ],size=(300, 60))],
-
-
-            [sg.Frame('Problem:',[[sg.Button("Configuration", key="-PRO-")],
-                                    [sg.Text("Choose the file", key="butao")],
-                                    [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input file")]
-                                  ],size=(300, 130))],
-
-            [sg.Frame('Resume:',
-                                [[sg.Text("Resumo da opera")]],
-                                                size=(300, 361))]
+            [sg.Frame('Components:',[[sg.Frame("Optimizers:",
+                                        [[sg.T(SYMBOL_UP, enable_events=True, k='-OPEN OPT1-'),
+                                            sg.T('Optimizer', enable_events=True, font = "FreeMono 10", k='-OPEN OPT1-TEXT')],
+                                        [collapse(opt1, '-OPT1-')],
+                                         #### Section 2 part ####
+                                        [sg.T(SYMBOL_UP, enable_events=True, k='-OPEN OPT2-'),
+                                            sg.T('Optimizer', enable_events=True, font = "FreeMono 10", k='-OPEN OPT2-TEXT')],
+                                        [collapse(opt2, '-OPT2-')]
+                                        ])],
+                                        [sg.Frame("Global:",
+                                        [[sg.T(SYMBOL_UP, enable_events=True, k='-OPEN C1-'),
+                                            sg.T('Component', enable_events=True, font = "FreeMono 10", k='-OPEN C1-TEXT')],
+                                        [collapse(c1, '-C1-')],
+                                         #### Section 2 part ####
+                                        [sg.T(SYMBOL_UP, enable_events=True, k='-OPEN C2-'),
+                                            sg.T('Component', enable_events=True, font = "FreeMono 10", k='-OPEN C2-TEXT')],
+                                        [collapse(c2, '-C2-')]
+                                        ])]
+                                    ], size=(300,696))]
             ])
 
-
-        self.col3 = sg.Column([
-            [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font='FreeMono 14')],
-                [sg.Button('Continue')]
-               ], size=(1140, 250))
-           ]
-        ])
+        self.col3 = sg.Column([[sg.Frame('Actions:',
+                                    [[sg.Column([[sg.Button('Start'), sg.Button('Clear'), ]],
+                                                size=(1335,45), pad=(0,0))]])]], pad=(0,0))
 
         # The final layout is a simple one
         self.layout = [[self.col1, self.col2],
@@ -149,7 +154,7 @@ class interface():
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"
         plt.rcParams["savefig.facecolor"] = "#1c1c1c"
-        plt.rcParams["figure.figsize"] = (8, 6)
+        plt.rcParams["figure.figsize"] = (10, 8)
 
         self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
         #self.fig = Figure()
@@ -175,23 +180,24 @@ class interface():
         self.fig_agg.draw()
 
     def set(self):
+        opened1, opened2 = False, False
+        self.window['-OPT1-'].update(visible=False)
+        self.window['-OPT2-'].update(visible=False)
         while(True):
             event, values = self.window.read()
-            #print(event, values)
-            if event == 'EXIT' or event == sg.WIN_CLOSED:
-                self.window.close()
-            elif event == 'Continue':
+            print(event, values)
+            if event == 'Start':
                 break
-            elif event == '-EXP-':
-                os.system("open ./frameConfig.ini")
-            elif event == '-ALGO-':
-                os.system("open ./algoConfig.ini")
-            elif event == '-PRO-':
-                os.system("open ./problemConfig.ini")
-            elif(event == "-FILE-"):
-                filename = values["-FILE-"].split("/")[-1]
-                #self.window("butao").update(f"{filename}")
-                print(f'You chose: {filename}')
+            if event.startswith('-OPEN OPT1-'):
+                opened1 = not opened1
+                self.window['-OPEN OPT1-'].update(SYMBOL_DOWN if opened1 else SYMBOL_UP)
+                self.window['-OPT1-'].update(visible=opened1)
+
+            if event.startswith('-OPEN OPT2-'):
+                opened2 = not opened2
+                self.window['-OPEN OPT2-'].update(SYMBOL_DOWN if opened2 else SYMBOL_UP)
+                #self.window['-OPEN SEC2-CHECKBOX'].update(not opened2)
+                self.window['-OPT2-'].update(visible=opened2)
 
     #window.close()
 

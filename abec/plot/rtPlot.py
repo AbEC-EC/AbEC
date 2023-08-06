@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 
-plt.ion()
+#plt.ion()
 
 
 class plotUpdate():

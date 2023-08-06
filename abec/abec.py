@@ -485,11 +485,13 @@ def abec(algo, parameters, seed, layout = 0):
 
 
     # End of the optimization
-    print("\n\n[RESULTS]")
+    print("\n[RESULTS]")
     executionTime = (time.time() - startTime)
 
     try:
-        input("\n\n[Press enter to start...]")
+        print("\n[Press continue to calculate the metrics...]")
+        layout.set()
+        #input()
     except SyntaxError:
         pass
 
@@ -586,6 +588,22 @@ def main():
     parameters1 = frameConfig()
     parameters2 = problemConfig()
 
+    parameters = parameters0 | parameters1 | parameters2
+
+    layout = gui.interface(parameters)
+    layout.launch(parameters)
+
+    print(f"======================================================")
+    print(f"      AbEC -> Ajustable Evolutionary Components        ")
+    print(f"        A framework for Optimization Problems         ")
+    print(f"======================================================\n")
+    try:
+        print("[Please check if the configuration files are ok and then press continue...]")
+        layout.set()
+    except SyntaxError:
+        pass
+
+
    # Read the parameters from the config file
     if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
         with open(f"{globalVar.path}/algoConfig.ini") as f:
@@ -612,9 +630,6 @@ def main():
 
     parameters = parameters0 | parameters1 | parameters2
 
-    layout = gui.interface(parameters)
-    layout.launch(parameters)
-
     algo = updateAlgo(algo, parameters)
 
     if parameters["SEED"] >= 0:
@@ -628,10 +643,6 @@ def main():
 
 
     if parameters["DEBUG_RUN"]:
-        print(f"======================================================")
-        print(f"      AbEC -> Ajustable Evolutionary Components        ")
-        print(f"        A framework for Optimization Problems         ")
-        print(f"======================================================\n")
         print(f"[ALGORITHM SETUP]")
         print(f"- Name: {parameters['ALGORITHM']}")
         print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
@@ -674,8 +685,8 @@ def main():
 
     time.sleep(1)
     try:
+        print("[Press continue to start...]")
         layout.set()
-        #input("\n\n[Press enter to start...]")
     except SyntaxError:
         pass
 
@@ -693,7 +704,8 @@ def main():
         f = open(f"{globalVar.path}/problemConfig.ini","w")
         f.write(json.dumps(parameters2))
         f.close()
-    print("\n[END]\nThx :)\n")
+    print("\n[END]\nThx :)")
+    layout.set()
 
 
 if __name__ == "__main__":
