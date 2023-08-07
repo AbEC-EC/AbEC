@@ -165,8 +165,9 @@ class interface():
         while(True):
             event, values = self.window.read()
             #print(event, values)
-            if event == 'EXIT' or event == sg.WIN_CLOSED:
-                self.window.close()
+            if event in ('EXIT', sg.WIN_CLOSED):
+                self.window.Close()
+                exit()
             elif event == 'Continue':
                 if step == 1:
                     break
