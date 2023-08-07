@@ -566,10 +566,11 @@ def abec(algo, parameters, seed, layout = 0):
 
 def main():
     seed = minute
-    arg_help = "{0} -s <seed> -p <path>".format(sys.argv[0])
+    interface = 1
+    arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:p:", ["help", "seed=", "path="])
+        opts, args = getopt.getopt(sys.argv[1:], "his:p:", ["help", "interface=", "seed=", "path="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -578,6 +579,8 @@ def main():
         if opt in ("-h", "--help"):
             print(arg_help)  # print the help message
             sys.exit(2)
+        elif opt in ("-i", "--interface"):
+            interface = int(arg)
         elif opt in ("-s", "--seed"):
             seed = int(arg)
         elif opt in ("-p", "--path"):
@@ -590,18 +593,23 @@ def main():
 
     parameters = parameters0 | parameters1 | parameters2
 
-    layout = gui.interface(parameters)
-    layout.launch(parameters)
+    if interface:
+        layout = gui.interface(parameters)
+        layout.launch(parameters)
 
     print(f"======================================================")
     print(f"      AbEC -> Ajustable Evolutionary Components        ")
     print(f"        A framework for Optimization Problems         ")
     print(f"======================================================\n")
-    try:
-        print("[Please check if the configuration files are ok and then press continue...]")
-        layout.set()
-    except SyntaxError:
-        pass
+
+    if interface:
+        try:
+            print("[Please check if the configuration files are ok and then press continue...]")
+            layout.set()
+            print("\n[Loading configuration files...]")
+            layout.window.refresh()
+        except SyntaxError:
+            pass
 
 
    # Read the parameters from the config file
@@ -631,6 +639,24 @@ def main():
     parameters = parameters0 | parameters1 | parameters2
 
     algo = updateAlgo(algo, parameters)
+
+    if interface:
+        try:
+            time.sleep(1)
+            print("[Loaded]\n")
+            components = []
+            for i in range(len(algo.components)):
+                components.append(algo.components[i][0])
+            layout.window["program.sr"].update(visible=True)
+            layout.window["program.ct"].update(visible=True)
+            layout.window["-COMPS-"].update(value="", values=components)
+            layout.window.refresh()
+            print("[Select a program and then press continue...]")
+            layout.window.refresh()
+            layout.set(step=3)
+        except SyntaxError:
+            pass
+
 
     if parameters["SEED"] >= 0:
         seed = parameters["SEED"]
@@ -685,7 +711,7 @@ def main():
 
     time.sleep(1)
     try:
-        print("[Press continue to start...]")
+        print("\n[Press continue to start...]")
         layout.set()
     except SyntaxError:
         pass

@@ -30,6 +30,7 @@ sg.theme("DarkGray")
     Copyright 2021 PySimpleGUI
 """
 sg.set_options(font = "FreeMono 14")
+sg.theme_background_color("#1c1c1c")
 
 SYMBOL_UP =    '+'
 SYMBOL_DOWN =  '-'
@@ -45,24 +46,6 @@ def collapse(layout, key):
     :rtype: sg.pin
     """
     return sg.pin(sg.Column(layout, key=key))
-
-
-opt1 = [[sg.Input('Input opt 1', key='-IN1-')],
-[sg.Input(key='-IN11-')],
-[sg.Button('Button1',  button_color='yellow on green')]]
-
-opt2 = [[sg.I('Input opt 2', k='-IN2-')],
-[sg.I(k='-IN21-')],
-[sg.B('Button1',  button_color=('yellow', 'purple'))]]
-
-
-c1 = [[sg.Input('Input c 1', key='-IN1-')],
-[sg.Input(key='-IN11-')],
-[sg.Button('Button1',  button_color='yellow on green')]]
-
-c2 = [[sg.I('Input c 2', k='-IN2-')],
-[sg.I(k='-IN21-')],
-[sg.B('Button1',  button_color=('yellow', 'purple'))]]
 
 
 # Yet another usage of MatPlotLib with animations.
@@ -111,15 +94,18 @@ class interface():
                                     [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input file")]
                                   ],size=(300, 130))],
 
-            [sg.Frame('Resume:',
-                                [[sg.Text("Resumo da opera")]],
-                                                size=(300, 361))]
+            [sg.Frame('Programs:',
+                                [[sg.Radio("Simple Run", "program", key="program.sr", enable_events=True, visible=False)],
+                                [sg.Radio("Component Test", "program", enable_events=True, key="program.ct", visible=False)],
+                                [sg.Combo([], key="-COMPS-", visible=False, size=(30, 10))]
+                                ],
+                                size=(300, 361), visible = True, key="-PROGRAMS-")]
             ])
 
 
         self.col3 = sg.Column([
             [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font='FreeMono 14')],
+                [[sg.Output(size=(300, 10), font='FreeMono 14', background_color = "#1c1c1c", text_color="green")],
                 [sg.Button('Continue')]
                ], size=(1140, 250))
            ]
@@ -170,28 +156,40 @@ class interface():
         #dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
         #self.ax.cla()
         event, values = self.window.read(timeout=10)
+        self.ax[0].set_xlim(x[0])
         self.ax[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
         self.ax[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
         self.fig_agg.draw()
 
-    def set(self):
+    def set(self, step = 1):
         while(True):
             event, values = self.window.read()
             #print(event, values)
             if event == 'EXIT' or event == sg.WIN_CLOSED:
                 self.window.close()
             elif event == 'Continue':
-                break
+                if step == 1:
+                    break
+                elif step == 2:
+                    break
+                elif step == 3:
+                    if values["program.sr"] or values["program.ct"]:
+                        break
             elif event == '-EXP-':
                 os.system("open ./frameConfig.ini")
             elif event == '-ALGO-':
                 os.system("open ./algoConfig.ini")
             elif event == '-PRO-':
                 os.system("open ./problemConfig.ini")
+            elif event == 'program.sr':
+                self.window["-COMPS-"].update(visible=False)
+                self.window.refresh()
+            elif event == 'program.ct':
+                self.window["-COMPS-"].update(visible=True)
+                self.window.refresh()
             elif(event == "-FILE-"):
                 filename = values["-FILE-"].split("/")[-1]
-                #self.window("butao").update(f"{filename}")
-                print(f'You chose: {filename}')
+                self.window["butao"].update(f"{filename}")
 
     #window.close()
 
