@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import plot.rtPlot as rtPlot
 import matplotlib.colors as mcolors
 import os
+import sys
 
 #plt.ion()
 sg.theme("DarkGray")
@@ -60,7 +61,7 @@ class interface():
     def __init__(self, parameters):
 
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
-
+        self.reset = 0
         self.col2 = sg.Column([[sg.Frame("Analysis curves:",
                                 [[sg.Canvas(size=(800, 600), key='-CANVAS-')]]
                              )]]
@@ -82,16 +83,16 @@ class interface():
             # Categories sg.Frame
             #[sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
             #                        sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
-            [sg.Frame('Emperiment:',[[sg.Button("Configuration", key="-EXP-")]
+            [sg.Frame('Emperiment:',[[sg.Button("Configuration File", key="-EXP-", disabled=False)]
                                     ],size=(300, 60))],
 
-            [sg.Frame('Algorithm:',[[sg.Button("Configuration", key="-ALGO-")]
+            [sg.Frame('Algorithm:',[[sg.Button("Configuration File", key="-ALGO-", disabled=False)]
                                     ],size=(300, 60))],
 
 
-            [sg.Frame('Problem:',[[sg.Button("Configuration", key="-PRO-")],
-                                    [sg.Text("Choose the file", key="butao")],
-                                    [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input file")]
+            [sg.Frame('Problem:',[[sg.Button("Configuration File", key="-PRO-", disabled=False)],
+                                    [sg.Text("Choose the file", visible = False, key="butao")],
+                                    [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input Fitness Function", visible=False, key="browseFit")]
                                   ],size=(300, 130))],
 
             [sg.Frame('Programs:',
@@ -105,8 +106,8 @@ class interface():
 
         self.col3 = sg.Column([
             [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font='FreeMono 14', background_color = "#1c1c1c", text_color="green")],
-                [sg.Button('Continue')]
+                [[sg.Output(size=(300, 10), font='FreeMono 14', background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
+                [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT")]
                ], size=(1140, 250))
            ]
         ])
@@ -168,7 +169,7 @@ class interface():
             if event in ('EXIT', sg.WIN_CLOSED):
                 self.window.Close()
                 exit()
-            elif event == 'Continue':
+            elif event == 'continueBT':
                 if step == 1:
                     break
                 elif step == 2:
@@ -176,6 +177,11 @@ class interface():
                 elif step == 3:
                     if values["program.sr"] or values["program.ct"]:
                         break
+            elif event == "resetBT":
+                self.reset = 1
+                break
+                #python = sys.executable
+                #os.execl(python, python, * sys.argv)
             elif event == '-EXP-':
                 os.system("open ./frameConfig.ini")
             elif event == '-ALGO-':

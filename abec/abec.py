@@ -561,177 +561,221 @@ def abec(algo, parameters, seed, layout = 0):
         else:
             os.system(f"python3 {sys.path[0]}/metrics/bestBeforeChange.py -p {globalVar.path}")
 
-
-
+def initializeInterface(layout):
+    layout.window["-OUTPUT-"].update("")
+    layout.window["-EXP-"].update(disabled=False)
+    layout.window["-ALGO-"].update(disabled=False)
+    layout.window["-PRO-"].update(disabled=False)
+    layout.window["butao"].update(visible=False)
+    layout.window["browseFit"].update(visible=False)
+    layout.window["program.sr"].update(visible=False)
+    layout.window["program.ct"].update(visible=False)
 
 def main():
-    seed = minute
-    interface = 1
-    arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
+    while(True):
+        seed = minute
+        interface = 1
+        arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "his:p:", ["help", "interface=", "seed=", "path="])
-    except:
-        print(arg_help)
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            print(arg_help)  # print the help message
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "his:p:", ["help", "interface=", "seed=", "path="])
+        except:
+            print(arg_help)
             sys.exit(2)
-        elif opt in ("-i", "--interface"):
-            interface = int(arg)
-        elif opt in ("-s", "--seed"):
-            seed = int(arg)
-        elif opt in ("-p", "--path"):
-            globalVar.path = arg
+
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                print(arg_help)  # print the help message
+                sys.exit(2)
+            elif opt in ("-i", "--interface"):
+                interface = int(arg)
+            elif opt in ("-s", "--seed"):
+                seed = int(arg)
+            elif opt in ("-p", "--path"):
+                globalVar.path = arg
 
 
-    parameters0, algo = algoConfig()
-    parameters1 = frameConfig()
-    parameters2 = problemConfig()
+        parameters0, algo = algoConfig()
+        parameters1 = frameConfig()
+        parameters2 = problemConfig()
 
-    parameters = parameters0 | parameters1 | parameters2
+        parameters = parameters0 | parameters1 | parameters2
 
-    if interface:
-        layout = gui.interface(parameters)
-        layout.launch(parameters)
+        if interface:
+            if "layout" not in locals():
+                layout = gui.interface(parameters)
+                layout.launch(parameters)
+            else:
+                layout.reset = 0
+                initializeInterface(layout)
+                step = 0
 
-    print(f"======================================================")
-    print(f"      AbEC -> Ajustable Evolutionary Components        ")
-    print(f"        A framework for Optimization Problems         ")
-    print(f"======================================================\n")
+        print(f"======================================================")
+        print(f"      AbEC -> Ajustable Evolutionary Components        ")
+        print(f"        A framework for Optimization Problems         ")
+        print(f"======================================================\n")
 
-    if interface:
+        if interface:
+            try:
+                print("[Please check if the configuration files are ok and then press continue...]")
+                layout.set()
+                if layout.reset:
+                    continue
+                print("\n[Loading configuration files...]")
+                layout.window.refresh()
+            except SyntaxError:
+                pass
+
+
+       # Read the parameters from the config file
+        if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
+            with open(f"{globalVar.path}/algoConfig.ini") as f:
+                p0 = list(json.loads(f.read()).items())
+                for i in range(len(p0)):
+                    #print(p0[i][0])
+                    parameters0[f"{p0[i][0]}"] = p0[i][1]
+        else:
+            errorWarning(0.1, "algoConfig.ini", "FILE_NOT_FIND", "The algoConfig.ini file is mandatory!")
+
+        if os.path.isfile(f"{globalVar.path}/frameConfig.ini"):
+            with open(f"{globalVar.path}/frameConfig.ini") as f:
+                p1 = list(json.loads(f.read()).items())
+                for i in range(len(p1)):
+                    #print(p1[i][0])
+                    parameters1[f"{p1[i][0]}"] = p1[i][1]
+
+        if os.path.isfile(f"{globalVar.path}/problemConfig.ini"):
+            with open(f"{globalVar.path}/problemConfig.ini") as f:
+                p2 = list(json.loads(f.read()).items())
+                for i in range(len(p2)):
+                    #print(p2[i][0])
+                    parameters2[f"{p2[i][0]}"] = p2[i][1]
+
+        parameters = parameters0 | parameters1 | parameters2
+
+        if interface:
+            layout.window["-EXP-"].update(disabled=True)
+            layout.window["-ALGO-"].update(disabled=True)
+            layout.window["-PRO-"].update(disabled=True)
+
+        bench = parameters["BENCHMARK"].upper()
+
+        if interface and bench == "CUSTOM":
+            try:
+                time.sleep(1)
+                print("[Loaded]\n")
+                layout.window["butao"].update(visible=True)
+                layout.window["browseFit"].update(visible=True)
+                print("[Input the fitness function file and press continue...]")
+                layout.set()
+                if layout.reset:
+                    continue
+                print("\n[Loading Fitness Function file...]")
+                layout.window["browseFit"].update(disabled=True)
+                layout.window.refresh()
+            except SyntaxError:
+                pass
+
+
+        algo = updateAlgo(algo, parameters)
+
+        if interface:
+            try:
+                time.sleep(1)
+                print("[Loaded]\n")
+                components = []
+                for i in range(len(algo.components)):
+                    components.append(algo.components[i][0])
+                layout.window["program.sr"].update(visible=True)
+                layout.window["program.ct"].update(visible=True)
+                layout.window["-COMPS-"].update(value="", values=components)
+                layout.window.refresh()
+                print("[Select a program and then press continue...]")
+                layout.window.refresh()
+                layout.set(step=3)
+                if layout.reset:
+                    continue
+            except SyntaxError:
+                pass
+
+
+        if parameters["SEED"] >= 0:
+            seed = parameters["SEED"]
+
+        if globalVar.path == ".":
+            if not os.path.isdir(f"{parameters['PATH']}"):
+                os.mkdir(f"{parameters['PATH']}")
+            globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+            globalVar.path = checkDirs(globalVar.path)
+
+
+        if parameters["DEBUG_RUN"]:
+            print(f"[ALGORITHM SETUP]")
+            print(f"- Name: {parameters['ALGORITHM']}")
+            print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
+
+            print(f"- [OPTIMIZERS]:")
+            for opt in algo.optimizers:
+                print(f"-- [{opt[0]}]")
+                value = parameters[f"{opt[0]}_POP_PERC"]
+                print(f"---- % of POP: {value*100}%")
+                for i in opt[1].params:
+                    value = parameters[f"{opt[0]}_{i}"]
+                    print(f"---- {i}: {value}")
+
+            print()
+            print(f"- [COMPONENTS]:")
+            for comp in algo.components:
+                print(f"-- [{comp[0]}]")
+                print(f"---- SCOPE: {comp[1].scope[0]}")
+                for i in comp[1].params:
+                    value = parameters[f"COMP_{comp[0]}_{i}"]
+                    print(f"---- {i}: {value}")
+
+            print()
+            print(f"[FRAMEWORK SETUP]")
+            print(f"- RUNS:\t\t {parameters['RUNS']}")
+            if parameters["FINISH_RUN_MODE"] == 0:
+                print(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}")
+            else:
+                print(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}")
+            print(f"- SEED:\t\t {parameters['SEED']}")
+
+
+            print()
+            print(f"[PROBLEM SETUP]")
+            if parameters["BENCHMARK"] == "NONE":
+                print(f"- Name: Fitness Function")
+            else:
+                print(f"- Name: {parameters['BENCHMARK']}")
+            print(f"- NDIM: {parameters['NDIM']}")
+
+        time.sleep(1)
         try:
-            print("[Please check if the configuration files are ok and then press continue...]")
+            print("\n[Press continue to start...]")
             layout.set()
-            print("\n[Loading configuration files...]")
-            layout.window.refresh()
         except SyntaxError:
             pass
 
-
-   # Read the parameters from the config file
-    if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
-        with open(f"{globalVar.path}/algoConfig.ini") as f:
-            p0 = list(json.loads(f.read()).items())
-            for i in range(len(p0)):
-                #print(p0[i][0])
-                parameters0[f"{p0[i][0]}"] = p0[i][1]
-    else:
-        errorWarning(0.1, "algoConfig.ini", "FILE_NOT_FIND", "The algoConfig.ini file is mandatory!")
-
-    if os.path.isfile(f"{globalVar.path}/frameConfig.ini"):
-        with open(f"{globalVar.path}/frameConfig.ini") as f:
-            p1 = list(json.loads(f.read()).items())
-            for i in range(len(p1)):
-                #print(p1[i][0])
-                parameters1[f"{p1[i][0]}"] = p1[i][1]
-
-    if os.path.isfile(f"{globalVar.path}/problemConfig.ini"):
-        with open(f"{globalVar.path}/problemConfig.ini") as f:
-            p2 = list(json.loads(f.read()).items())
-            for i in range(len(p2)):
-                #print(p2[i][0])
-                parameters2[f"{p2[i][0]}"] = p2[i][1]
-
-    parameters = parameters0 | parameters1 | parameters2
-
-    algo = updateAlgo(algo, parameters)
-
-    if interface:
-        try:
-            time.sleep(1)
-            print("[Loaded]\n")
-            components = []
-            for i in range(len(algo.components)):
-                components.append(algo.components[i][0])
-            layout.window["program.sr"].update(visible=True)
-            layout.window["program.ct"].update(visible=True)
-            layout.window["-COMPS-"].update(value="", values=components)
-            layout.window.refresh()
-            print("[Select a program and then press continue...]")
-            layout.window.refresh()
-            layout.set(step=3)
-        except SyntaxError:
-            pass
-
-
-    if parameters["SEED"] >= 0:
-        seed = parameters["SEED"]
-
-    if globalVar.path == ".":
-        if not os.path.isdir(f"{parameters['PATH']}"):
-            os.mkdir(f"{parameters['PATH']}")
-        globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-        globalVar.path = checkDirs(globalVar.path)
-
-
-    if parameters["DEBUG_RUN"]:
-        print(f"[ALGORITHM SETUP]")
-        print(f"- Name: {parameters['ALGORITHM']}")
-        print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
-
-        print(f"- [OPTIMIZERS]:")
-        for opt in algo.optimizers:
-            print(f"-- [{opt[0]}]")
-            value = parameters[f"{opt[0]}_POP_PERC"]
-            print(f"---- % of POP: {value*100}%")
-            for i in opt[1].params:
-                value = parameters[f"{opt[0]}_{i}"]
-                print(f"---- {i}: {value}")
-
-        print()
-        print(f"- [COMPONENTS]:")
-        for comp in algo.components:
-            print(f"-- [{comp[0]}]")
-            print(f"---- SCOPE: {comp[1].scope[0]}")
-            for i in comp[1].params:
-                value = parameters[f"COMP_{comp[0]}_{i}"]
-                print(f"---- {i}: {value}")
-
-        print()
-        print(f"[FRAMEWORK SETUP]")
-        print(f"- RUNS:\t\t {parameters['RUNS']}")
-        if parameters["FINISH_RUN_MODE"] == 0:
-            print(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}")
-        else:
-            print(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}")
-        print(f"- SEED:\t\t {parameters['SEED']}")
-
-
-        print()
-        print(f"[PROBLEM SETUP]")
-        if parameters["BENCHMARK"] == "NONE":
-            print(f"- Name: Fitness Function")
-        else:
-            print(f"- Name: {parameters['BENCHMARK']}")
-        print(f"- NDIM: {parameters['NDIM']}")
-
-    time.sleep(1)
-    try:
-        print("\n[Press continue to start...]")
+        if parameters["DEBUG_RUN"]:
+            print("\n[START]\n")
+        abec(algo, parameters, seed, layout)
+        # Copy the config.ini file to the experiment dir
+        if(parameters["CONFIG_COPY"]):
+            f = open(f"{globalVar.path}/algoConfig.ini","w")
+            f.write(json.dumps(parameters0))
+            f.close()
+            f = open(f"{globalVar.path}/frameConfig.ini","w")
+            f.write(json.dumps(parameters1))
+            f.close()
+            f = open(f"{globalVar.path}/problemConfig.ini","w")
+            f.write(json.dumps(parameters2))
+            f.close()
+        print("\n[END]\nThx :)")
+        layout.window["continueBT"].update(disabled=True)
         layout.set()
-    except SyntaxError:
-        pass
-
-    if parameters["DEBUG_RUN"]:
-        print("\n[START]\n")
-    abec(algo, parameters, seed, layout)
-    # Copy the config.ini file to the experiment dir
-    if(parameters["CONFIG_COPY"]):
-        f = open(f"{globalVar.path}/algoConfig.ini","w")
-        f.write(json.dumps(parameters0))
-        f.close()
-        f = open(f"{globalVar.path}/frameConfig.ini","w")
-        f.write(json.dumps(parameters1))
-        f.close()
-        f = open(f"{globalVar.path}/problemConfig.ini","w")
-        f.write(json.dumps(parameters2))
-        f.close()
-    print("\n[END]\nThx :)")
-    layout.set()
+        if layout.reset:
+            continue
 
 
 if __name__ == "__main__":
