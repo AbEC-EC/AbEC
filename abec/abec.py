@@ -568,8 +568,10 @@ def initializeInterface(layout):
     layout.window["-PRO-"].update(disabled=False)
     layout.window["butao"].update(visible=False)
     layout.window["browseFit"].update(visible=False)
+    layout.window["-COMPS-"].update(visible=False)
     layout.window["program.sr"].update(visible=False)
     layout.window["program.ct"].update(visible=False)
+    layout.window["continueBT"].update(disabled=False)
 
 def main():
     while(True):
