@@ -484,7 +484,6 @@ def abec(algo, parameters, seed, layout = 0):
     try:
         print("\n[Press continue to calculate the metrics...]")
         layout.set()
-        #input()
     except SyntaxError:
         pass
 
@@ -642,7 +641,9 @@ def main():
                 layout.set()
                 if layout.reset:
                     continue
-                print("\n[Loading configuration files...]")
+                layout.window["-OUTPUT-"].update("")
+                layout.window.refresh()
+                print("[Loading configuration files...]")
                 layout.window.refresh()
             except SyntaxError:
                 pass
@@ -686,6 +687,10 @@ def main():
             try:
                 time.sleep(1)
                 print("[Loaded]\n")
+                layout.window.refresh()
+                time.sleep(0.3)
+                layout.window["-OUTPUT-"].update("")
+                layout.window.refresh()
                 layout.window["butao"].update(visible=True)
                 layout.window["browseFit"].update(visible=True)
                 print("[Input the fitness function file and press continue...]")
@@ -693,7 +698,9 @@ def main():
                 layout.set()
                 if layout.reset:
                     continue
-                print("\n[Loading Fitness Function file...]")
+                layout.window["-OUTPUT-"].update("")
+                layout.window.refresh()
+                print("[Loading Fitness Function file...]")
                 layout.window["browseFit"].update(disabled=True)
                 layout.window.refresh()
             except SyntaxError:
@@ -706,6 +713,8 @@ def main():
             try:
                 time.sleep(1)
                 print("[Loaded]\n")
+                layout.window.refresh()
+                time.sleep(0.3)
                 components = []
                 for i in range(len(algo.components)):
                     components.append(algo.components[i][0])
@@ -722,10 +731,14 @@ def main():
                 layout.set(step=3)
                 if layout.reset:
                     continue
-                print("\n[Preparing to run...]")
+                layout.window["-OUTPUT-"].update("")
                 layout.window.refresh()
-                time.sleep(1)
-                print()
+                print("[Preparing to run...]")
+                layout.window.refresh()
+                time.sleep(0.5)
+                print("[Ready]")
+                layout.window.refresh()
+                time.sleep(0.5)
             except SyntaxError:
                 pass
 
@@ -741,6 +754,8 @@ def main():
 
 
         if parameters["DEBUG_RUN"]:
+            layout.window["-OUTPUT-"].update("")
+            layout.window.refresh()
             print(f"[ALGORITHM SETUP]")
             print(f"- Name: {parameters['ALGORITHM']}")
             print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
@@ -781,10 +796,14 @@ def main():
                 print(f"- Name: {parameters['BENCHMARK']}")
             print(f"- NDIM: {parameters['NDIM']}")
 
-        time.sleep(1)
         try:
+            layout.window.refresh()
             print("\n[Press continue to start...]")
             layout.set()
+            if layout.reset:
+                continue
+            layout.window["resetBT"].update(disabled=True)
+            layout.window.refresh()
         except SyntaxError:
             pass
 
@@ -804,6 +823,7 @@ def main():
             f.close()
         print("\n[END]\nThx :)")
         layout.window["continueBT"].update(disabled=True)
+        layout.window["resetBT"].update(disabled=False)
         layout.set()
         if layout.reset:
             continue
