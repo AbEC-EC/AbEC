@@ -30,7 +30,7 @@ sg.theme("DarkGray")
     
     Copyright 2021 PySimpleGUI
 """
-sg.set_options(font = "FreeMono 14")
+sg.set_options(font = ("FreeMono", 14, "bold"))
 sg.theme_background_color("#1c1c1c")
 
 SYMBOL_UP =    '+'
@@ -55,6 +55,22 @@ def draw_figure(canvas, figure, loc=(0, 0)):
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
+
+
+def configAxes(ax):
+    ax[0].clear()
+    ax[1].clear()
+    ax[0].grid(True)
+    ax[1].grid(True)
+    plt.grid(which="major", color="dimgrey", linewidth=0.8)
+    plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+
+    ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
+    ax[0].set_xlim(0, 666)
+    ax[1].set_xlabel("NEVALS", fontsize=16)
+    ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
+
+    return ax
 
 class interface():
 
@@ -83,22 +99,23 @@ class interface():
             # Categories sg.Frame
             #[sg.Frame('Algorithm:',[[ sg.Radio('', 'radio1', default=True, key='-WEBSITES-', size=(10,1)),
             #                        sg.Radio('Software', 'radio1', key='-SOFTWARE-',  size=(10,1))]],)],
-            [sg.Frame('Emperiment:',[[sg.Button("Configuration File", key="-EXP-", disabled=False)]
+            [sg.Frame('Experiment:',[[sg.Button("Configuration File", key="-EXP-", disabled=True)]
                                     ],size=(300, 60))],
 
-            [sg.Frame('Algorithm:',[[sg.Button("Configuration File", key="-ALGO-", disabled=False)]
+            [sg.Frame('Algorithm:',[[sg.Button("Configuration File", key="-ALGO-", disabled=True)]
                                     ],size=(300, 60))],
 
 
-            [sg.Frame('Problem:',[[sg.Button("Configuration File", key="-PRO-", disabled=False)],
+            [sg.Frame('Problem:',[[sg.Button("Configuration File", key="-PRO-", disabled=True)],
                                     [sg.Text("Choose the file", visible = False, key="butao")],
                                     [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input Fitness Function", visible=False, key="browseFit")]
                                   ],size=(300, 130))],
 
             [sg.Frame('Programs:',
                                 [[sg.Radio("Simple Run", "program", key="program.sr", enable_events=True, visible=False)],
-                                [sg.Radio("Component Test", "program", enable_events=True, key="program.ct", visible=False)],
-                                [sg.Combo([], key="-COMPS-", visible=False, size=(30, 10))]
+                                [sg.Radio("Component Evaluation", "program", enable_events=True, key="program.ct", visible=False)],
+                                [sg.Combo([], key="-COMPS-", visible=False, size=(30, 10))],
+                                [sg.Radio("Auto Algorithm Design", "program", key="program.aad", enable_events=True, visible=False)]
                                 ],
                                 size=(300, 361), visible = True, key="-PROGRAMS-")]
             ])
@@ -106,8 +123,8 @@ class interface():
 
         self.col3 = sg.Column([
             [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font='FreeMono 14', background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
-                [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT")]
+                [[sg.Output(size=(300, 10), font=("FreeMono", 14, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
+                [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT", disabled=True)]
                ], size=(1140, 250))
            ]
         ])
@@ -121,13 +138,14 @@ class interface():
         # layout = [sg.vtop([col1, col2]),
         #           [col3]]
 
+       # create the form and show it without the plot
+        self.window = sg.Window("AbEC - Ajustable Evolutionary Components",
+                    self.layout, finalize=True)
+
 
    # window = sg.Window('Columns and Frames', layout)
 
     def launch(self, parameters):
-       # create the form and show it without the plot
-        self.window = sg.Window("AbEC - Ajustable Evolutionary Components",
-                    self.layout, finalize=True)
 
         self.canvas_elem = self.window["-CANVAS-"]
         self.canvas = self.canvas_elem.TKCanvas
@@ -139,17 +157,9 @@ class interface():
         plt.rcParams["figure.figsize"] = (8, 6)
 
         self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-        #self.fig = Figure()
-        #self.ax = self.fig.add_subplot(111)
-        self.ax[0].grid(True)
-        self.ax[1].grid(True)
-        plt.grid(which="major", color="dimgrey", linewidth=0.8)
-        plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
 
-        self.ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
-        self.ax[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
-        self.ax[1].set_xlabel("NEVALS", fontsize=16)
-        self.ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
+        self.ax = configAxes(self.ax)
+
         self.fig_agg = draw_figure(self.canvas, self.fig)
 
 
@@ -157,6 +167,7 @@ class interface():
         #dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
         #self.ax.cla()
         event, values = self.window.read(timeout=10)
+        #self.ax.cla()
         self.ax[0].set_xlim(x[0])
         self.ax[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
         self.ax[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
@@ -170,12 +181,14 @@ class interface():
                 self.window.Close()
                 exit()
             elif event == 'continueBT':
-                if step == 1:
+                if step == 1 or step == 0:
                     break
                 elif step == 2:
                     break
                 elif step == 3:
-                    if values["program.sr"] or values["program.ct"]:
+                    if  values["program.sr"] or \
+                            values["program.ct"] or \
+                            values["program.aad"]:
                         break
             elif event == "resetBT":
                 self.reset = 1
@@ -193,6 +206,9 @@ class interface():
                 self.window.refresh()
             elif event == 'program.ct':
                 self.window["-COMPS-"].update(visible=True)
+                self.window.refresh()
+            elif event == 'program.aad':
+                self.window["-COMPS-"].update(visible=False)
                 self.window.refresh()
             elif(event == "-FILE-"):
                 filename = values["-FILE-"].split("/")[-1]

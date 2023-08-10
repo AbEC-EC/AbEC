@@ -35,13 +35,6 @@ import optimizers.ga as ga
 import optimizers.es as es
 from metrics.offlineError import offlineError
 
-# datetime variables
-cDate = datetime.datetime.now()
-year = cDate.year
-month = cDate.month
-day = cDate.day
-hour = cDate.hour
-minute = cDate.minute
 
 #nevals = 0
 
@@ -563,18 +556,29 @@ def abec(algo, parameters, seed, layout = 0):
 
 def initializeInterface(layout):
     layout.window["-OUTPUT-"].update("")
-    layout.window["-EXP-"].update(disabled=False)
-    layout.window["-ALGO-"].update(disabled=False)
-    layout.window["-PRO-"].update(disabled=False)
+    layout.window["-EXP-"].update(disabled=True)
+    layout.window["-ALGO-"].update(disabled=True)
+    layout.window["-PRO-"].update(disabled=True)
     layout.window["butao"].update(visible=False)
     layout.window["browseFit"].update(visible=False)
     layout.window["-COMPS-"].update(visible=False)
-    layout.window["program.sr"].update(visible=False)
-    layout.window["program.ct"].update(visible=False)
+    layout.window["program.sr"].update(False, visible=False)
+    layout.window["program.ct"].update(False, visible=False)
+    layout.window["program.aad"].update(False, visible=False)
     layout.window["continueBT"].update(disabled=False)
+    layout.window["resetBT"].update(disabled=True)
 
 def main():
     while(True):
+        # datetime variables
+        cDate = datetime.datetime.now()
+        year = cDate.year
+        month = cDate.month
+        day = cDate.day
+        hour = cDate.hour
+        minute = cDate.minute
+        globalVar.cleanGlobalVars()
+
         seed = minute
         interface = 1
         arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
@@ -608,18 +612,33 @@ def main():
                 layout = gui.interface(parameters)
                 layout.launch(parameters)
             else:
+                layout.ax = gui.configAxes(layout.ax)
                 layout.reset = 0
                 initializeInterface(layout)
                 step = 0
 
-        print(f"======================================================")
-        print(f"      AbEC -> Ajustable Evolutionary Components        ")
-        print(f"        A framework for Optimization Problems         ")
-        print(f"======================================================\n")
-
+        print(f"====================================================================================================")
+        print(f"                               AbEC -> Ajustable Evolutionary Components        ")
+        print(f"                                 A framework for Optimization Problems         ")
+        print(f"====================================================================================================")
+        print("*                                                                                                  *")
+        print("*                                                                                                  *")
+        print("*                                          I hope you enjoy!                                       *")
+        print("*                                                                                                  *")
+        print("*                                                                                                  *")
         if interface:
             try:
+                layout.window.refresh()
+                time.sleep(1)
+                layout.set(step = 0)
+                layout.window["-EXP-"].update(disabled=False)
+                layout.window["-ALGO-"].update(disabled=False)
+                layout.window["-PRO-"].update(disabled=False)
+                layout.window["resetBT"].update(disabled=False)
                 print("[Please check if the configuration files are ok and then press continue...]")
+                print("\n[ - Experiment configuration file: Framework parameters (e.g. number of runs, path of the files, number of evaluations, ...)]")
+                print("\n[ - Algorithm configuration file: Functioning of the algorithm itself (e.g. Population size, optimizers, ...)]")
+                print("\n[ - Problem configuration file: e.g. number of dimensions, dynamic or not, ...]")
                 layout.set()
                 if layout.reset:
                     continue
@@ -659,6 +678,7 @@ def main():
             layout.window["-EXP-"].update(disabled=True)
             layout.window["-ALGO-"].update(disabled=True)
             layout.window["-PRO-"].update(disabled=True)
+            layout.ax[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
 
         bench = parameters["BENCHMARK"].upper()
 
@@ -669,6 +689,7 @@ def main():
                 layout.window["butao"].update(visible=True)
                 layout.window["browseFit"].update(visible=True)
                 print("[Input the fitness function file and press continue...]")
+                print("\n[ - The function should be defined in a python script, which will evaluate the solutions of the algorithm]")
                 layout.set()
                 if layout.reset:
                     continue
@@ -690,13 +711,21 @@ def main():
                     components.append(algo.components[i][0])
                 layout.window["program.sr"].update(visible=True)
                 layout.window["program.ct"].update(visible=True)
+                layout.window["program.aad"].update(visible=True)
                 layout.window["-COMPS-"].update(value="", values=components)
                 layout.window.refresh()
-                print("[Select a program and then press continue...]")
+                print("[Select a program and press continue...]")
+                print("\n[ - Simple Run: A simple test of how the algorithm performs on the problem]")
+                print("\n[ - Component Evaluation: How a specific component performs. It will be done a bench of test with the component with and without other components and a personalized evaluation will be done on it]")
+                print("\n[ - Auto Algorithm Design: It will be find a good algorithm configuration which solves good for the specified problem]")
                 layout.window.refresh()
                 layout.set(step=3)
                 if layout.reset:
                     continue
+                print("\n[Preparing to run...]")
+                layout.window.refresh()
+                time.sleep(1)
+                print()
             except SyntaxError:
                 pass
 
