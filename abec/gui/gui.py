@@ -58,6 +58,7 @@ def draw_figure(canvas, figure, loc=(0, 0)):
 
 
 def configAxes(ax):
+    #plt.clf()
     ax[0].clear()
     ax[1].clear()
     ax[0].grid(True)
@@ -138,18 +139,18 @@ class interface():
         # layout = [sg.vtop([col1, col2]),
         #           [col3]]
 
+
+
        # create the form and show it without the plot
         self.window = sg.Window("AbEC - Ajustable Evolutionary Components",
                     self.layout, finalize=True)
 
+        self.canvas_elem = self.window["-CANVAS-"]
+        self.canvas = self.canvas_elem.TKCanvas
 
    # window = sg.Window('Columns and Frames', layout)
 
     def launch(self, parameters):
-
-        self.canvas_elem = self.window["-CANVAS-"]
-        self.canvas = self.canvas_elem.TKCanvas
-
         # Configure colors
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"
@@ -157,7 +158,6 @@ class interface():
         plt.rcParams["figure.figsize"] = (8, 6)
 
         self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-
         self.ax = configAxes(self.ax)
 
         self.fig_agg = draw_figure(self.canvas, self.fig)

@@ -78,6 +78,12 @@ def fitnessFunction(x, parameters):
             #if(globalVar.peaks <= len(parameters["NPEAKS_MPB"])): # Save the optima values
             aux.saveOptima(parameters)
             #globalVar.peaks += 1
+        if parameters["CHANGES"] and globalVar.nevals in parameters["CHANGES_NEVALS"]:
+            globalVar.mpb.changePeaks()
+            aux.saveOptima(parameters)
+            globalVar.change = 1
+            globalVar.changeEV = 0 # block the evaluation until the first pop
+            #print(f"[Change Env: {globalVar.nevals}]")
         globalOP = globalVar.mpb.maximums()[0][0]
         fitInd = globalVar.mpb(x)[0]
     elif(parameters["BENCHMARK"] == "NONE"):

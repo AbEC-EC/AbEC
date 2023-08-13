@@ -18,6 +18,8 @@ peaks = 0
 randomInit = [0]
 seedInit = 0
 npops = 0
+change = 0
+changeEV = 1
 
 def cleanGlobalVars():
     global nevals
@@ -51,6 +53,8 @@ def cleanGlobalVars():
     randomInit = [0]
     seedInit = 0
     npops = 0
+    change = 0
+    changeEV = 1
 
 '''
 # datetime variables

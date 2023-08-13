@@ -44,6 +44,8 @@ def updateBest(ind, best):
     '''
     Update the global best individual
     '''
+    #print(f"ind type: {type(ind)} {ind['pop_id']} {ind['id']} {ind['fit']} {globalVar.nevals}")
+    #print(f"best type: {type(best)} {best['fit']}")
     if not isinstance(best["fit"], numbers.Number) or (best["fit"] > ind["fit"]): # If first gen, just copy the ind
         best = ind.copy()
 
@@ -66,8 +68,18 @@ def evaluate(x, parameters, be = 0):
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
     filename_LA = f"{globalVar.path}/results/log_all_{globalVar.seedInit}.csv"
 
-    x["fit"] = fitFunction.fitnessFunction(x['pos'], parameters)
-    globalVar.nevals += 1
+    # If a dynamic problem, there will be changes in the env
+
+    if not parameters["CHANGES"] or globalVar.changeEV:
+        x["fit"] = fitFunction.fitnessFunction(x['pos'], parameters)
+        globalVar.nevals += 1
+    else:
+        if x["fit"] == "NaN":
+            print(f"{x}")
+        if not be:
+            return x
+        else:
+            return x["fit"]
 
     if not be: # If it is a best evaluation does not log
 
@@ -110,6 +122,8 @@ class population():
                 self.id = population.newid()
 
         self.popsize = parameters["POPSIZE"]
+
+        self.change = 0
 
         self.ind = []
         if fill == 1:
@@ -310,8 +324,9 @@ def abec(algo, parameters, seed, layout = 0):
         rtPlotNevals.append(globalVar.nevals)
         rtPlotError.append(globalVar.best["fit"])
         rtPlotEo.append(Eo)
-        #d.on_running(rtPlotNevals, rtPlotError)
-        layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
+
+        if layout:
+            layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
 
         #####################################
         # Debug in pop and generation level
@@ -368,15 +383,28 @@ def abec(algo, parameters, seed, layout = 0):
                 globalVar.best = algo.comps_global["GET"][i].component(globalVar.best, parameters)
 
 
+            # Verification if all pops were reeavluated after change
+            sumPops = 0
+            for pop in pops:
+                sumPops += pop.change
+
+            #print(f"sumpops: {sumPops} {globalVar.nevals} {len(pops)}")
+            if sumPops == len(pops):
+                for pop in pops:
+                    pop.change = 0
+                globalVar.change = 0
+                #print("CABOU")
+
             for pop in pops:
 
                 # Change detection component in the environment
-                if(parameters["COMP_REEVALUATION"] == 1):
-                    if change == 0:
-                        change = changeDetection.detection(pop, parameters)
-                    if change:
-                        globalVar.best["fit"] = "NaN"
+                if globalVar.change:
+                    #print(f"Change: {globalVar.nevals}")
+                    globalVar.best["fit"] = "NaN"
+                    globalVar.changeEV = 1
+                    if pop.change == 0:
                         pop, globalVar.best = evaluatePop(pop, globalVar.best, parameters)
+                        pop.change = 1
                         if flagEnv == 0:
                             env += 1
                             genChangeEnv = globalVar.gen
@@ -384,8 +412,6 @@ def abec(algo, parameters, seed, layout = 0):
                         for ind in pop.ind:
                             ind["ae"] = 0 # Allow new evaluation
                         continue
-                elif(parameters["COMP_REEVALUATION"] != 0):
-                    errorWarning(0.1, "algoConfig.ini", "COMP_CHANGE_DETECTION", "Component Change Detection should be 0 or 1")
 
                 #####################################
                 # Apply the optimizers in the pops
@@ -435,8 +461,9 @@ def abec(algo, parameters, seed, layout = 0):
             rtPlotNevals.append(globalVar.nevals)
             rtPlotError.append(globalVar.best["fit"])
             rtPlotEo.append(Eo)
-            #d.on_running(rtPlotNevals, rtPlotError)
-            layout.run(rtPlotNevals, rtPlotError, rtPlotEo, globalVar.run)
+
+            if layout:
+                layout.run(rtPlotNevals, rtPlotError, rtPlotEo, globalVar.run)
 
             #####################################
             # Debug in pop and generation level
@@ -461,7 +488,10 @@ def abec(algo, parameters, seed, layout = 0):
 
         if parameters["DEBUG_RUN"]:
             #print(f"[RUN:{globalVar.run:02}][GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}][POP {globalVar.best['pop_id']:04}][BEST {globalVar.best['id']:04}:{globalVar.best['pos']}][ERROR:{globalVar.best['fit']:.4f}][Eo:{Eo:.4f}]")
-            print(f"{globalVar.run:02}   {globalVar.gen:05}  {globalVar.nevals:06}  {globalVar.best['id']:04}:{globalVar.best['pos']}  {globalVar.best['fit']:.04f}")
+            pos = []
+            for p in globalVar.best["pos"]:
+                pos.append(float(f"{p:.2f}"))
+            print(f"{globalVar.run:02}   {globalVar.gen:05}  {globalVar.nevals:06}  {globalVar.best['id']:04}:{pos}  {globalVar.best['fit']:.04f}")
         if parameters["DEBUG_RUN_2"]:
             print(f"\n==============================================")
             print(f"[RUN:{globalVar.run:02}]\n[GEN:{globalVar.gen:04}][NEVALS:{globalVar.nevals:06}]")
@@ -481,11 +511,12 @@ def abec(algo, parameters, seed, layout = 0):
     print("\n[RESULTS]")
     executionTime = (time.time() - startTime)
 
-    try:
-        print("\n[Press continue to calculate the metrics...]")
-        layout.set()
-    except SyntaxError:
-        pass
+    if layout:
+        try:
+            print("\n[Press continue to calculate the metrics...]")
+            layout.set()
+        except SyntaxError:
+            pass
 
 
     # Offline error
@@ -583,7 +614,7 @@ def main():
         arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
 
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "his:p:", ["help", "interface=", "seed=", "path="])
+            opts, args = getopt.getopt(sys.argv[1:], "hi:s:p:", ["help", "interface=", "seed=", "path="])
         except:
             print(arg_help)
             sys.exit(2)
@@ -755,8 +786,9 @@ def main():
 
 
         if parameters["DEBUG_RUN"]:
-            layout.window["-OUTPUT-"].update("")
-            layout.window.refresh()
+            if interface:
+                layout.window["-OUTPUT-"].update("")
+                layout.window.refresh()
             print(f"[ALGORITHM SETUP]")
             print(f"- Name: {parameters['ALGORITHM']}")
             print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
@@ -797,20 +829,25 @@ def main():
                 print(f"- Name: {parameters['BENCHMARK']}")
             print(f"- NDIM: {parameters['NDIM']}")
 
-        try:
-            layout.window.refresh()
-            print("\n[Press continue to start...]")
-            layout.set()
-            if layout.reset:
-                continue
-            layout.window["resetBT"].update(disabled=True)
-            layout.window.refresh()
-        except SyntaxError:
-            pass
+        if interface:
+            try:
+                layout.window.refresh()
+                print("\n[Press continue to start...]")
+                layout.set()
+                if layout.reset:
+                    continue
+                layout.window["resetBT"].update(disabled=True)
+                layout.window.refresh()
+            except SyntaxError:
+                pass
 
         if parameters["DEBUG_RUN"]:
             print("\n[START]\n")
-        abec(algo, parameters, seed, layout)
+
+        if interface:
+            abec(algo, parameters, seed, layout)
+        else:
+            abec(algo, parameters, seed)
         # Copy the config.ini file to the experiment dir
         if(parameters["CONFIG_COPY"]):
             f = open(f"{globalVar.path}/algoConfig.ini","w")
@@ -823,11 +860,14 @@ def main():
             f.write(json.dumps(parameters2))
             f.close()
         print("\n[END]\nThx :)")
-        layout.window["continueBT"].update(disabled=True)
-        layout.window["resetBT"].update(disabled=False)
-        layout.set()
-        if layout.reset:
-            continue
+        if interface:
+            layout.window["continueBT"].update(disabled=True)
+            layout.window["resetBT"].update(disabled=False)
+            layout.set()
+            if layout.reset:
+                continue
+        else:
+            break
 
 
 if __name__ == "__main__":

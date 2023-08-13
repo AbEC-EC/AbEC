@@ -10,18 +10,18 @@ import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 
-cDate = datetime.datetime.now()
-year = cDate.year
-month = cDate.month
-day = cDate.day
-hour = cDate.hour
-minute = cDate.minute
 
 '''
 Check if the dirs already exist, and if not, create them
 Returns the path
 '''
 def checkDirs(path):
+    cDate = datetime.datetime.now()
+    year = cDate.year
+    month = cDate.month
+    day = cDate.day
+    hour = cDate.hour
+    minute = cDate.minute
     if(os.path.isdir(path) == False):
         os.mkdir(path)
     path += f"/{year}-{month:02d}-{day:02d}"
