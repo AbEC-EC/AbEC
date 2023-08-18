@@ -57,19 +57,29 @@ def draw_figure(canvas, figure, loc=(0, 0)):
     return figure_canvas_agg
 
 
-def configAxes(ax):
-    #plt.clf()
-    ax[0].clear()
-    ax[1].clear()
-    ax[0].grid(True)
-    ax[1].grid(True)
-    plt.grid(which="major", color="dimgrey", linewidth=0.8)
-    plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+def configAxes(ax, type = 1):
+    if type == 1:
+        ax[0].clear()
+        ax[1].clear()
+        ax[0].grid(True)
+        ax[1].grid(True)
+        plt.grid(which="major", color="dimgrey", linewidth=0.8)
+        plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
 
-    ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
-    ax[0].set_xlim(0, 666)
-    ax[1].set_xlabel("NEVALS", fontsize=16)
-    ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
+        ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
+        ax[0].set_xlim(0, 666)
+        ax[1].set_xlabel("NEVALS", fontsize=16)
+        ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
+
+    elif type == 2:
+        ax.clear()
+        ax.grid(True)
+        plt.grid(which="major", color="dimgrey", linewidth=0.8)
+        plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+
+        ax.set_ylabel("Y", fontsize=16)
+        ax.set_xlim(0, 666)
+        ax.set_xlabel("X", fontsize=16)
 
     return ax
 
@@ -79,10 +89,10 @@ class interface():
 
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
         self.reset = 0
-        self.col2 = sg.Column([[sg.Frame("Analysis curves:",
-                                [[sg.Canvas(size=(800, 600), key='-CANVAS-')]]
-                             )]]
-        )
+        self.enablePF = 1
+        self.enableSS = 1
+
+
 
         '''
          # For now will only show the name of the file that was chosen
@@ -121,6 +131,23 @@ class interface():
                                 size=(300, 361), visible = True, key="-PROGRAMS-")]
             ])
 
+        performGraph = [
+            [sg.Checkbox("Enable performance curves", enable_events=True, key='-HAB-PF')],
+            [sg.Canvas(size=(800, 600), key='-CANVAS-PF-')]]
+
+        sSpaceGraph = [
+            [sg.Checkbox("Enable search spaces curves", enable_events=True, key='-HAB-SS')],
+            [sg.Canvas(size=(800, 600), key='-CANVAS-SS-')]]
+
+
+        self.col2 = sg.Column([
+            [sg.TabGroup([
+                [sg.Tab("Performance", performGraph)],
+                [sg.Tab("Search Space", sSpaceGraph)]], size=(815, 600)
+                )
+            ]
+        ])
+
 
         self.col3 = sg.Column([
             [sg.Frame('Terminal:',
@@ -140,13 +167,17 @@ class interface():
         #           [col3]]
 
 
-
        # create the form and show it without the plot
         self.window = sg.Window("AbEC - Ajustable Evolutionary Components",
                     self.layout, finalize=True)
 
-        self.canvas_elem = self.window["-CANVAS-"]
-        self.canvas = self.canvas_elem.TKCanvas
+        self.window["-HAB-PF"].update(True)
+        self.window["-HAB-SS"].update(True)
+
+        self.canvas_elem_pf = self.window["-CANVAS-PF-"]
+        self.canvas_elem_ss = self.window["-CANVAS-SS-"]
+        self.canvas_pf = self.canvas_elem_pf.TKCanvas
+        self.canvas_ss = self.canvas_elem_ss.TKCanvas
 
    # window = sg.Window('Columns and Frames', layout)
 
@@ -157,21 +188,38 @@ class interface():
         plt.rcParams["savefig.facecolor"] = "#1c1c1c"
         plt.rcParams["figure.figsize"] = (8, 6)
 
-        self.fig, self.ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-        self.ax = configAxes(self.ax)
+        self.fig_pf, self.ax_pf = plt.subplots(nrows=2, ncols=1, sharex=True)
+        self.fig_ss, self.ax_ss = plt.subplots(nrows=1, ncols=1, sharex=True)
 
-        self.fig_agg = draw_figure(self.canvas, self.fig)
+        self.ax_pf = configAxes(self.ax_pf, 1)
+        self.ax_ss = configAxes(self.ax_ss, 2)
+
+        self.fig_agg_pf = draw_figure(self.canvas_pf, self.fig_pf)
+        self.fig_agg_ss = draw_figure(self.canvas_ss, self.fig_ss)
 
 
-    def run(self, x, y1, y2, r=0):
-        #dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
-        #self.ax.cla()
+    def run(self, x, y1, y2 = 0, type = 1, r=0):
         event, values = self.window.read(timeout=10)
-        #self.ax.cla()
-        self.ax[0].set_xlim(x[0])
-        self.ax[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
-        self.ax[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
-        self.fig_agg.draw()
+        if event == '-HAB-PF':
+            if values["-HAB-PF"] == True:
+                self.enablePF = 1
+            else:
+                self.enablePF = 0
+        elif event == '-HAB-SS':
+            if values["-HAB-SS"] == True:
+                self.enableSS = 1
+            else:
+                self.enableSS = 0
+        if type == 1:
+            self.ax_pf[0].set_xlim(x[0])
+            self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
+            self.ax_pf[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
+            self.fig_agg_pf.draw()
+        elif type == 2:
+            self.ax_ss.set_xlim(0, 100)
+            self.ax_ss.set_ylim(0, 100)
+            #self.ax_ss.scatter(x, y1, c="orange", label=f"ind",s=10, alpha=0.5)
+            self.fig_agg_ss.draw()
 
     def set(self, step = 1):
         while(True):
@@ -193,14 +241,22 @@ class interface():
             elif event == "resetBT":
                 self.reset = 1
                 break
-                #python = sys.executable
-                #os.execl(python, python, * sys.argv)
             elif event == '-EXP-':
                 os.system("open ./frameConfig.ini")
             elif event == '-ALGO-':
                 os.system("open ./algoConfig.ini")
             elif event == '-PRO-':
                 os.system("open ./problemConfig.ini")
+            elif event == '-HAB-PF':
+                if values["-HAB-PF"] == True:
+                    self.enablePF = 1
+                else:
+                    self.enablePF = 0
+            elif event == '-HAB-SS':
+                if values["-HAB-SS"] == True:
+                    self.enableSS = 1
+                else:
+                    self.enableSS = 0
             elif event == 'program.sr':
                 self.window["-COMPS-"].update(visible=False)
                 self.window.refresh()

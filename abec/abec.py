@@ -20,6 +20,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from deap import benchmarks
+import matplotlib.colors as mcolors
 # AbEC files
 import plot.currentError as ecPlot
 import plot.offlineError as eoPlot
@@ -193,10 +194,12 @@ def randInit(pop, parameters):
     '''
         Random initialization of the individuals
     '''
+    #print(f"REINIT {pop.id}")
     for ind in pop.ind:
         ind["pos"] = [float(globalVar.rng.choice(range(parameters['MIN_POS'], parameters['MAX_POS']))) for _ in range(parameters["NDIM"])]
         if ind["type"] == "PSO":
             ind["vel"] = [float(globalVar.rng.choice(range(parameters["PSO_MIN_VEL"], parameters["PSO_MAX_VEL"]))) for _ in range(parameters["NDIM"])]
+    pop.best = pop.ind[0].copy()
     return pop
 
 
@@ -234,6 +237,19 @@ def finishRun(parameters):
         else:
             return 1
 
+
+def getSearchSpace(pops, layout):
+    x = []
+    y = []
+    i = 0
+    for pop in pops:
+        x = [d["pos"][0] for d in pop.ind]
+        y = [d["pos"][1] for d in pop.ind]
+        layout.ax_ss.scatter(x, y, c=list(mcolors.CSS4_COLORS)[i], alpha=0.5)
+        layout.ax_ss.scatter(pop.best["pos"][0], pop.best["pos"][1], c=list(mcolors.CSS4_COLORS)[i], s=80, alpha=0.8 )
+        #print(f"{pop.best['pos']}, {pop.best['fit']}")
+        i += 1
+    return x, y
 
 '''
 Framework
@@ -291,10 +307,6 @@ def abec(algo, parameters, seed, layout = 0):
         rtPlotError = []
         rtPlotEo = []
 
-        #d = rtPlot.plotUpdate(parameters)
-        #d.on_launch(parameters)
-        #d()
-
         # Create the population with POPSIZE individuals
         pops, globalVar.best = createPopulation(algo, parameters)
 
@@ -313,8 +325,6 @@ def abec(algo, parameters, seed, layout = 0):
                     print(f"[POP {pop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {globalVar.best['id']:04}: {globalVar.best['pos']}\t\tERROR:{globalVar.best['fit']:.04f}]")
 
         globalVar.gen += 1
-        #log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "bestError": globalVar.best["fit"], "Eo": Eo, "env": env}]
-        #writeLog(mode=1, filename=filename, header=header, data=log)
         Eo = globalVar.eo_sum/globalVar.nevals
         log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
         filename_RUN = f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv"
@@ -326,7 +336,12 @@ def abec(algo, parameters, seed, layout = 0):
         rtPlotEo.append(Eo)
 
         if layout:
-            layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
+            layout.window.refresh()
+            if layout.enablePF:
+                layout.run(rtPlotNevals, rtPlotError, rtPlotEo)
+            if layout.enableSS:
+                xSS, ySS = getSearchSpace(pops, layout)
+                layout.run(x = xSS, y1 = ySS, type = 2)
 
         #####################################
         # Debug in pop and generation level
@@ -362,6 +377,7 @@ def abec(algo, parameters, seed, layout = 0):
             for i in range(len(algo.comps_global["GDV"])):
                 globalVar.randomInit = algo.comps_global["GDV"][i].component(pops, parameters, globalVar.randomInit)
 
+            #print(globalVar.randomInit)
             for id, i in enumerate(globalVar.randomInit, 0):
                 if i:
                     pops[id] = randInit(pops[id], parameters)
@@ -435,7 +451,8 @@ def abec(algo, parameters, seed, layout = 0):
                 # Evaluate all the individuals that have no been yet in the pop and update the bests
                 pop, globalVar.best = evaluatePop(pop, globalVar.best, parameters)
 
-
+                if layout:
+                    layout.ax_ss.scatter(pop.best['pos'][0], pop.best['pos'][1], c="white")
                 for ind in pop.ind:
                     ind["ae"] = 0 # Allow new evaluation
                     # Debug in individual level
@@ -463,7 +480,13 @@ def abec(algo, parameters, seed, layout = 0):
             rtPlotEo.append(Eo)
 
             if layout:
-                layout.run(rtPlotNevals, rtPlotError, rtPlotEo, globalVar.run)
+                layout.window.refresh()
+                if layout.enablePF:
+                    layout.run(rtPlotNevals, rtPlotError, rtPlotEo, r = globalVar.run)
+                if layout.enableSS:
+                    xSS, ySS = getSearchSpace(pops, layout)
+                    layout.ax_ss.scatter(globalVar.best["pos"][0], globalVar.best["pos"][1], c="red", s=80 )
+                    layout.run(x = xSS, y1 = ySS, type = 2)
 
             #####################################
             # Debug in pop and generation level
@@ -512,6 +535,7 @@ def abec(algo, parameters, seed, layout = 0):
     executionTime = (time.time() - startTime)
 
     if layout:
+        layout.window.refresh()
         try:
             print("\n[Press continue to calculate the metrics...]")
             layout.set()
@@ -642,7 +666,8 @@ def main():
                 layout = gui.interface(parameters)
                 layout.launch(parameters)
             else:
-                layout.ax = gui.configAxes(layout.ax)
+                layout.ax_pf = gui.configAxes(layout.ax_pf)
+                layout.ax_ss = gui.configAxes(layout.ax_ss, type = 2)
                 layout.reset = 0
                 initializeInterface(layout)
                 step = 0
@@ -710,7 +735,7 @@ def main():
             layout.window["-EXP-"].update(disabled=True)
             layout.window["-ALGO-"].update(disabled=True)
             layout.window["-PRO-"].update(disabled=True)
-            layout.ax[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
+            layout.ax_pf[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
 
         bench = parameters["BENCHMARK"].upper()
 

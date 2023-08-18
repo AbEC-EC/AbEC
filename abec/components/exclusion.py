@@ -35,10 +35,12 @@ def component(pop, parameters, randomInit):
             for x1, x2 in zip(pop[sp1].best["pos"], pop[sp2].best["pos"]):
                 dist += (x1 - x2)**2
             dist = np.sqrt(dist)
-            if dist < rexcl:
+            if dist <= rexcl:
                 if pop[sp1].best["fit"] <= pop[sp2].best["fit"]:
                     randomInit[sp1] = 1
                 else:
                     randomInit[sp2] = 1
+            #else:
+                #print(f"{pop[sp1].id} {pop[sp1].best['pos']} -- {pop[sp2].id} {pop[sp2].best['pos']}")
 
     return randomInit

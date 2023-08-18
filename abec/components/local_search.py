@@ -5,6 +5,7 @@ Apply LS on the best
 import sys
 import copy
 import abec
+import numbers
 import aux.globalVar as globalVar
 from aux.aux import errorWarning
 
@@ -28,7 +29,7 @@ def component(best, parameters):
         for i in range(parameters["NDIM"]):
             bp["pos"][i] = bp["pos"][i] + globalVar.rng.uniform(-1, 1)*parameters["COMP_LOCAL_SEARCH_RLS"]
         bp["fit"] = abec.evaluate(bp, parameters, be = 1)
-        if bp["fit"] < best["fit"]:
+        if not isinstance(best["fit"], numbers.Number) or bp["fit"] < best["fit"]:
             best = copy.deepcopy(bp)
     return best
 

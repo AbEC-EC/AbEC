@@ -33,13 +33,18 @@ def component(pop, parameters, randomInit):
     wsubpop = None
     nconv = 0
     for subpopId, subpop in enumerate(pop):
+        #print(f"POP: {subpop.id} {len(subpop.ind)}")
         # Compute the diameter of the swarm
-        for ind1Id, ind1 in enumerate(subpop.ind, 1):
-            for ind2Id, ind2 in enumerate(subpop.ind, 1):
-                if (ind1 == ind2):
+        for ind1 in subpop.ind:
+            for ind2 in subpop.ind:
+                if nconv:
                     break
+                #print(f"{ind1['id']} {ind1['pos']} - {ind2['id']} {ind2['pos']}")
+                if (ind1["id"] == ind2["id"]):
+                    continue
                 for x1, x2 in zip(ind1["pos"], ind2["pos"]):
                     d = np.sqrt( (x1 - x2)**2 ) # Euclidean distance between the components
+                    #print(d)
                     if d >= rconv:  # If any is greater or equal rconv, not converged
                         nconv += 1
                         break
@@ -50,6 +55,7 @@ def component(pop, parameters, randomInit):
 
     # If all swarms have converged, remember to randomize the worst
     if nconv == 0:
+        #print("CONVERGIU")
         randomInit[wsubpopId] = 1
 
     return randomInit
