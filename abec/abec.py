@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 '''
 Base code for AbEC framework
@@ -35,6 +35,7 @@ import optimizers.de as de
 import optimizers.ga as ga
 import optimizers.es as es
 from metrics.offlineError import offlineError
+from metrics.fillingRate import fillingRate
 
 
 #nevals = 0
@@ -68,6 +69,16 @@ def evaluate(x, parameters, be = 0):
     '''
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
     filename_LA = f"{globalVar.path}/results/log_all_{globalVar.seedInit}.csv"
+
+    position = []
+    for i in x["pos"]:
+        pos = round(i, globalVar.res)
+        position.append(pos)
+    if position not in globalVar.sspace:
+        globalVar.sspace.append(position)
+    #print(globalVar.sspace)
+    globalVar.Fr = (len(globalVar.sspace)/globalVar.tot_pos)*100
+    print(globalVar.Fr)
 
     # If a dynamic problem, there will be changes in the env
 
@@ -245,8 +256,8 @@ def getSearchSpace(pops, layout):
     for pop in pops:
         x = [d["pos"][0] for d in pop.ind]
         y = [d["pos"][1] for d in pop.ind]
-        layout.ax_ss.scatter(x, y, c=list(mcolors.CSS4_COLORS)[i], alpha=0.5)
-        layout.ax_ss.scatter(pop.best["pos"][0], pop.best["pos"][1], c=list(mcolors.CSS4_COLORS)[i], s=80, alpha=0.8 )
+        layout.ax_ss.scatter(x, y, c=list(mcolors.CSS4_COLORS)[i], s=0.5, alpha=0.5)
+        #layout.ax_ss.scatter(pop.best["pos"][0], pop.best["pos"][1], c=list(mcolors.CSS4_COLORS)[i], s=80, alpha=0.8 )
         #print(f"{pop.best['pos']}, {pop.best['fit']}")
         i += 1
     return x, y
@@ -258,9 +269,9 @@ def abec(algo, parameters, seed, layout = 0):
     startTime = time.time()
 
     globalVar.seedInit = parameters["SEED"]
-    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std"]
+    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std", "fr", "fr_std"]
     filename = f"{globalVar.path}/results/results.csv"
-    header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "env"]
+    header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "fr", "env"]
     header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
     filename_LA = f"{globalVar.path}/results/log_all_{globalVar.seedInit}.csv"
     header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
@@ -290,22 +301,28 @@ def abec(algo, parameters, seed, layout = 0):
         parameters["SEED"] = seed
 
         globalVar.rng = np.random.default_rng(seed)
+        globalVar.sspace = []
         globalVar.nevals = 0
         globalVar.gen = 0
         globalVar.mpb = None
         globalVar.peaks = 0
         globalVar.best = None
         globalVar.eo_sum = 0
+        globalVar.Fr = 0
+        globalVar.res = 2
         globalVar.flagChangeEnv = 0
+        globalVar.tot_pos = (parameters["MAX_POS"]-parameters["MIN_POS"])**parameters["NDIM"] * (10**globalVar.res)
 
         genChangeEnv = 0
         env = 0
         flagEnv = 0
         Eo = 0
+        Fr = 0
         change = 0
         rtPlotNevals = []
         rtPlotError = []
         rtPlotEo = []
+        rtPlotFr = []
 
         # Create the population with POPSIZE individuals
         pops, globalVar.best = createPopulation(algo, parameters)
@@ -326,7 +343,7 @@ def abec(algo, parameters, seed, layout = 0):
 
         globalVar.gen += 1
         Eo = globalVar.eo_sum/globalVar.nevals
-        log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
+        log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "fr": globalVar.Fr, "env": env}]
         filename_RUN = f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv"
         writeLog(mode=0, filename=filename_RUN, header=header_RUN)
         writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
@@ -334,6 +351,7 @@ def abec(algo, parameters, seed, layout = 0):
         rtPlotNevals.append(globalVar.nevals)
         rtPlotError.append(globalVar.best["fit"])
         rtPlotEo.append(Eo)
+        rtPlotFr.append(globalVar.Fr)
 
         if layout:
             layout.window.refresh()
@@ -452,7 +470,7 @@ def abec(algo, parameters, seed, layout = 0):
                 pop, globalVar.best = evaluatePop(pop, globalVar.best, parameters)
 
                 if layout:
-                    layout.ax_ss.scatter(pop.best['pos'][0], pop.best['pos'][1], c="white")
+                    layout.ax_ss.scatter(pop.best['pos'][0], pop.best['pos'][1], c="white", s=0.5)
                 for ind in pop.ind:
                     ind["ae"] = 0 # Allow new evaluation
                     # Debug in individual level
@@ -473,11 +491,12 @@ def abec(algo, parameters, seed, layout = 0):
             #####################################
 
             Eo = globalVar.eo_sum/globalVar.nevals
-            log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "env": env}]
+            log = [{"gen": globalVar.gen, "nevals":globalVar.nevals, "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": Eo, "fr": globalVar.Fr, "env": env}]
             writeLog(mode=1, filename=filename_RUN, header=header_RUN, data=log)
             rtPlotNevals.append(globalVar.nevals)
             rtPlotError.append(globalVar.best["fit"])
             rtPlotEo.append(Eo)
+            rtPlotFr.append(globalVar.Fr)
 
             if layout:
                 layout.window.refresh()
@@ -485,7 +504,7 @@ def abec(algo, parameters, seed, layout = 0):
                     layout.run(rtPlotNevals, rtPlotError, rtPlotEo, r = globalVar.run)
                 if layout.enableSS:
                     xSS, ySS = getSearchSpace(pops, layout)
-                    layout.ax_ss.scatter(globalVar.best["pos"][0], globalVar.best["pos"][1], c="red", s=80 )
+                    layout.ax_ss.scatter(globalVar.best["pos"][0], globalVar.best["pos"][1], c="red", s=50 )
                     layout.run(x = xSS, y1 = ySS, type = 2)
 
             #####################################
@@ -505,8 +524,9 @@ def abec(algo, parameters, seed, layout = 0):
         #####################################
         bestRuns.append(globalVar.best)
         eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
+        fr = fillingRate(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
         #df = pd.read_csv(f"{globalVar.path}/results/results.csv")
-        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1]}]
+        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1], "fr":fr[0], "fr_std":fr[1]}]
         writeLog(mode=1, filename=filename, header=header, data=log)
 
         if parameters["DEBUG_RUN"]:
@@ -531,6 +551,8 @@ def abec(algo, parameters, seed, layout = 0):
 
 
     # End of the optimization
+    print(len(globalVar.sspace))
+    print(globalVar.tot_pos)
     print("\n[RESULTS]")
     executionTime = (time.time() - startTime)
 
@@ -546,6 +568,8 @@ def abec(algo, parameters, seed, layout = 0):
     # Offline error
     df = pd.read_csv(f"{globalVar.path}/results/results.csv")
     eo_mean = df["eo"].mean()
+    fr_mean = df["fr"].mean()
+    fr_std = df["fr"].std()
 
     if parameters["RUNS"] > 1:
         luffy = 0
@@ -568,6 +592,7 @@ def abec(algo, parameters, seed, layout = 0):
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS MEAN: {bestsPos} ]")
             print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
+            print(f"[Fr  MEAN: {fr_mean:.4f}({fr_std:.4f})]")
             print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
 
 
@@ -584,10 +609,12 @@ def abec(algo, parameters, seed, layout = 0):
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS : {globalVar.best['pos']}]")
             print(f"[Ec  : {globalVar.best['fit']:.4f}]")
+            print(f"[Fr  : {globalVar.Fr:.4f} %]")
             print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
 
         ecPlot.ecPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
         eoPlot.eoPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
+        #frPlot.frPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
         spPlot.spPlot(f"{globalVar.path}/results/log_all_{globalVar.seedInit}", parameters, pathSave = f"{globalVar.path}/results")
 
     print(f"[RUNTIME: {str(executionTime)} s]")

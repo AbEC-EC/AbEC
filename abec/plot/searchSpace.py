@@ -1,5 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import seaborn as sns
+import ast
 
 def configPlot(THEME = 1, GRID = 1):
     # Configure colors
@@ -60,15 +65,46 @@ def plotOptima(path, fig, ax):
     return fig, ax
 
 def loadPlot(path, fig, ax, parameters, multi, THEME):
-    df = pd.read_csv(path)
+    df = pd.read_csv(path).indPos.to_frame()
     x = []
     y = []
+    print(df.head())
+
+    #Convert the column with the pos to a dataframe where each dimension
+    # is a column
+    x = df["indPos"].to_list()
+    for i in range(len(x)):
+        x[i] = ast.literal_eval(x[i])
+    df2 = pd.DataFrame(x, columns=['d1','d2', "d3"])
+    print(df2.head())
+
+    scalar = StandardScaler()
+    scaled_data = pd.DataFrame(scalar.fit_transform(df2)) #scaling the data
+    print(scaled_data)
+    #sns.heatmap(scaled_data.corr())
+    #plt.show()
+
+    pca = PCA(n_components = 2)
+    pca.fit(scaled_data)
+    data_pca = pca.transform(scaled_data)
+    data_pca = pd.DataFrame(data_pca,columns=['PC1','PC2'])
+    print(data_pca.head())
+    #sns.heatmap(data_pca.corr())
+    #plt.show()
+
+    #x = pca.inverse_transform(data_pca)
+    #print(x)
+    x = data_pca["PC1"].to_list()
+    y = data_pca["PC2"].to_list()
+
+    '''
     for row in df["indPos"]:
         pos = row.strip('][').split(', ')
         x.append(float(pos[0]))
         y.append(float(pos[1]))
+    '''
 
-    ax.scatter(x, y, label=f"Ind", s=30, alpha=0.5)
+    ax.scatter(x, y, label=f"Ind", s=0.5, alpha=0.5)
 
     if multi:
         ax.fill_between(df["nevals"], df["eo"] - df["eo_std"], df["eo"]+ df["eo_std"], alpha=0.05)
@@ -78,8 +114,12 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     ax.set_ylabel("Y", fontsize=20)
     ax.set_xticks([-100, -75, -50, -25, 0, 25, 50, 75, 100])
     ax.set_yticks([-100, -75, -50, -25, 0, 25, 50, 75, 100])
-    ax.set_xlim(parameters["MIN_POS"], parameters["MAX_POS"])
-    ax.set_ylim(parameters["MIN_POS"], parameters["MAX_POS"])
+    #ax.set_xlim(parameters["MIN_POS"], parameters["MAX_POS"])
+    #ax.set_ylim(parameters["MIN_POS"], parameters["MAX_POS"])
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-5, 5)
+    print(f"x: {min(x)}, {max(x)}")
+    print(f"y: {min(y)}, {max(y)}")
 
     # Title content
     if parameters:

@@ -20,6 +20,10 @@ seedInit = 0
 npops = 0
 change = 0
 changeEV = 1
+tot_pos = 0
+sspace = []
+res = 0.5
+Fr = 0
 
 def cleanGlobalVars():
     global nevals
@@ -37,6 +41,12 @@ def cleanGlobalVars():
     global randomInit
     global seedInit
     global npops
+    global change
+    global changeEV
+    global tot_pos
+    global sspace
+    global res
+    global Fr
 
     nevals = 0
     run = 0
@@ -55,6 +65,10 @@ def cleanGlobalVars():
     npops = 0
     change = 0
     changeEV = 1
+    tot_pos = 0
+    sspace = []
+    res = 0.5
+    Fr = 0
 
 '''
 # datetime variables
