@@ -70,6 +70,16 @@ def configAxes(ax, type = 1):
         ax[0].set_xlim(0, 666)
         ax[1].set_xlabel("NEVALS", fontsize=16)
         ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
+        '''
+        ax.clear()
+        ax.grid(True)
+        plt.grid(which="major", color="dimgrey", linewidth=0.8)
+        plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+
+        ax.set_ylabel("Current Error (Ec)", fontsize=16)
+        ax.set_xlim(0, 666)
+        ax.set_xlabel("NEVALS", fontsize=16)
+        '''
 
     elif type == 2:
         ax.clear()
@@ -90,7 +100,7 @@ class interface():
         NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
         self.reset = 0
         self.enablePF = 1
-        self.enableSS = 1
+        self.enableSS = 0
 
 
 
@@ -172,7 +182,7 @@ class interface():
                     self.layout, finalize=True)
 
         self.window["-HAB-PF"].update(True)
-        self.window["-HAB-SS"].update(True)
+        self.window["-HAB-SS"].update(False)
 
         self.canvas_elem_pf = self.window["-CANVAS-PF-"]
         self.canvas_elem_ss = self.window["-CANVAS-SS-"]
@@ -189,6 +199,7 @@ class interface():
         plt.rcParams["figure.figsize"] = (8, 6)
 
         self.fig_pf, self.ax_pf = plt.subplots(nrows=2, ncols=1, sharex=True)
+        #self.fig_pf, self.ax_pf = plt.subplots(nrows=1, ncols=1, sharex=True)
         self.fig_ss, self.ax_ss = plt.subplots(nrows=1, ncols=1, sharex=True)
 
         self.ax_pf = configAxes(self.ax_pf, 1)
@@ -211,9 +222,18 @@ class interface():
             else:
                 self.enableSS = 0
         if type == 1:
+            
             self.ax_pf[0].set_xlim(x[0])
             self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
             self.ax_pf[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
+            #self.ax_pf[0].set_yscale('log')
+            
+            '''
+            self.ax_pf.set_xlim(x[0])
+            self.ax_pf.plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
+            self.ax_pf.plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r], linestyle="--")
+            self.ax_pf.set_yscale('log')
+            '''
             self.fig_agg_pf.draw()
         elif type == 2:
             self.ax_ss.set_xlim(0, 100)

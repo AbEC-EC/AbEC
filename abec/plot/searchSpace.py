@@ -75,27 +75,38 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     x = df["indPos"].to_list()
     for i in range(len(x)):
         x[i] = ast.literal_eval(x[i])
-    df2 = pd.DataFrame(x, columns=['d1','d2', "d3"])
+    df2 = pd.DataFrame(x, columns=['d1','d2', "d3", "d4", "d5"])
     print(df2.head())
 
     scalar = StandardScaler()
     scaled_data = pd.DataFrame(scalar.fit_transform(df2)) #scaling the data
-    print(scaled_data)
+    #print(scaled_data)
     #sns.heatmap(scaled_data.corr())
     #plt.show()
 
-    pca = PCA(n_components = 2)
+    pca = PCA()
+    #pca = PCA(n_components = 2)
     pca.fit(scaled_data)
-    data_pca = pca.transform(scaled_data)
-    data_pca = pd.DataFrame(data_pca,columns=['PC1','PC2'])
-    print(data_pca.head())
+
+    autovalores = pca.explained_variance_
+    autovetores = pca.components_
+
+    #data_pca = pca.transform(scaled_data)
+    #data_pca = pd.DataFrame(data_pca,columns=['PC1','PC2'])
+    #print(data_pca.head())
     #sns.heatmap(data_pca.corr())
     #plt.show()
 
+    fatores_x = ['F1','F2','F3', 'F4','F5']
+    fig.set_figheight(10)
+    fig.set_figwidth(10)
+    ax.bar(x=fatores_x, height= autovalores)
+    plt.show()
+
     #x = pca.inverse_transform(data_pca)
     #print(x)
-    x = data_pca["PC1"].to_list()
-    y = data_pca["PC2"].to_list()
+    #x = data_pca["PC1"].to_list()
+    #y = data_pca["PC2"].to_list()
 
     '''
     for row in df["indPos"]:
@@ -104,7 +115,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
         y.append(float(pos[1]))
     '''
 
-    ax.scatter(x, y, label=f"Ind", s=0.5, alpha=0.5)
+    #ax.scatter(x, y, label=f"Ind", s=0.5, alpha=0.5)
 
     if multi:
         ax.fill_between(df["nevals"], df["eo"] - df["eo_std"], df["eo"]+ df["eo_std"], alpha=0.05)
@@ -118,8 +129,8 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     #ax.set_ylim(parameters["MIN_POS"], parameters["MAX_POS"])
     ax.set_xlim(-5, 5)
     ax.set_ylim(-5, 5)
-    print(f"x: {min(x)}, {max(x)}")
-    print(f"y: {min(y)}, {max(y)}")
+    #print(f"x: {min(x)}, {max(x)}")
+    #print(f"y: {min(y)}, {max(y)}")
 
     # Title content
     if parameters:
