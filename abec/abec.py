@@ -533,9 +533,10 @@ def abec(algo, parameters, seed, layout = 0):
         #####################################
         bestRuns.append(globalVar.best)
         eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
-        fr = fillingRate(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
+        #fr = fillingRate(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
         #df = pd.read_csv(f"{globalVar.path}/results/results.csv")
-        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1], "fr":fr[0], "fr_std":fr[1]}]
+        #log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1], "fr":fr[0], "fr_std":fr[1]}]
+        log = [{"run": globalVar.run, "gen": globalVar.gen, "nevals":globalVar.nevals, "popId": globalVar.best["pop_id"], "bestId": globalVar.best["id"], "bestPos": globalVar.best["pos"], "ec": globalVar.best["fit"], "eo": eo[0], "eo_std": eo[1]}]
         writeLog(mode=1, filename=filename, header=header, data=log)
 
         if parameters["DEBUG_RUN"]:
@@ -560,8 +561,8 @@ def abec(algo, parameters, seed, layout = 0):
 
 
     # End of the optimization
-    print(len(globalVar.sspace))
-    print(globalVar.tot_pos)
+    #print(len(globalVar.sspace))
+    #print(globalVar.tot_pos)
     print("\n[RESULTS]")
     executionTime = (time.time() - startTime)
 
@@ -578,8 +579,8 @@ def abec(algo, parameters, seed, layout = 0):
     # Offline error
     df = pd.read_csv(f"{globalVar.path}/results/results.csv")
     eo_mean = df["eo"].mean()
-    fr_mean = df["fr"].mean()
-    fr_std = df["fr"].std()
+    #fr_mean = df["fr"].mean()
+    #fr_std = df["fr"].std()
 
     if parameters["RUNS"] > 1:
         luffy = 0
@@ -608,7 +609,7 @@ def abec(algo, parameters, seed, layout = 0):
         ecPlot.ecPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
         eoPlot.eoPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
         #frPlot.frPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
-        spPlot.spPlot(f"{globalVar.path}/results/log_all_{globalVar.seedInit}", parameters, pathSave = f"{globalVar.path}/results")
+        #spPlot.spPlot(f"{globalVar.path}/results/log_all_{globalVar.seedInit}", parameters, pathSave = f"{globalVar.path}/results")
 
 
     if parameters["DEBUG_RUN"]:
@@ -624,14 +625,14 @@ def abec(algo, parameters, seed, layout = 0):
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS MEAN: {bestsPos} ]")
             print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
-            print(f"[Fr  MEAN: {fr_mean:.4f}({fr_std:.4f})]")
+            #print(f"[Fr  MEAN: {fr_mean:.4f}({fr_std:.4f})]")
             print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
         else:
             print(f"\n==============================================")
             print(f"[RUNS:{parameters['RUNS']}]")
             print(f"[POS : {globalVar.best['pos']}]")
             print(f"[Ec  : {globalVar.best['fit']:.4f}]")
-            print(f"[Fr  : {globalVar.Fr:.4f} %]")
+            #print(f"[Fr  : {globalVar.Fr:.4f} %]")
             print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
 
         print(f"[RUNTIME: {str(executionTime)} s]")
@@ -807,6 +808,7 @@ def main():
 
             algo = updateAlgo(algo, parameters)
 
+            '''
             if interface:
                 try:
                     time.sleep(1)
@@ -840,7 +842,7 @@ def main():
                     time.sleep(0.5)
                 except SyntaxError:
                     pass
-
+            '''
 
             if parameters["SEED"] >= 0:
                 seed = parameters["SEED"]
