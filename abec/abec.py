@@ -661,7 +661,7 @@ def initializeInterface(layout):
     layout.window["resetBT"].update(disabled=True)
 
 def main():
-    LOG_FILENAME = './logging_example.out'
+    LOG_FILENAME = './docs/log/log_last_run.out'
     logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
     logging.debug('This message should go to the log file')
     while(True):
