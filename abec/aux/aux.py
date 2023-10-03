@@ -315,7 +315,7 @@ def frameConfig():
         "CONFIG_COPY": 1, \
         "OFFLINE_ERROR": 0, \
         "BEBC_ERROR": 0, \
-        "PATH": "../examples", \
+        "PATH": "../experiments", \
         "FILENAME": "data.csv", \
         "LOG_ALL": 0, \
         "DEBUG_RUN": 1, \
