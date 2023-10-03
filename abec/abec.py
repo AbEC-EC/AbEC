@@ -297,7 +297,7 @@ def abec(algo, parameters, seed, layout = 0):
             print(f"[START][RUN:{globalVar.run:02}]\n[NEVALS:{globalVar.nevals:06}]")
             print(f"==============================================")
 
-        seed = int(seed + (globalVar.run*2) -2 )
+        seed = int(seed + (globalVar.run*2) -2)
         parameters["SEED"] = seed
 
         globalVar.rng = np.random.default_rng(seed)
@@ -380,9 +380,10 @@ def abec(algo, parameters, seed, layout = 0):
         # LOOP UNTIL FINISH THE RUN
         ###########################################################################
 
-
+        #total_gen = int(parameters["FINISH_RUN_MODE_VALUE"]/(parameters["POPSIZE"]*len(pops)))
+        #progress_bar = tqdm(total=total_gen, desc=f"Run {globalVar.run:02d}... ")
         while finishRun(parameters) == 0:
-
+            #progress_bar.update(1)
             '''
             for pop in pops:
                 print(pop.ind[0])
@@ -531,6 +532,7 @@ def abec(algo, parameters, seed, layout = 0):
         #####################################
         # End of the run
         #####################################
+        #progress_bar.close()
         bestRuns.append(globalVar.best)
         eo = offlineError(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
         #fr = fillingRate(f"{globalVar.path}/results/{parameters['ALGORITHM']}_{globalVar.run:02d}_{parameters['SEED']}.csv")
@@ -660,7 +662,7 @@ def initializeInterface(layout):
     layout.window["resetBT"].update(disabled=True)
 
 def main():
-    LOG_FILENAME = './docs/log/log_last_run.out'
+    LOG_FILENAME = "./aux/log/log_last_run.txt"
     logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
     logging.debug('This message should go to the log file')
     while(True):
@@ -853,7 +855,7 @@ def main():
                 if not os.path.isdir(f"{parameters['PATH']}"):
                     os.mkdir(f"{parameters['PATH']}")
                 globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-                globalVar.path = checkDirs(globalVar.path)
+            globalVar.path = checkDirs(globalVar.path)
 
 
             if parameters["DEBUG_RUN"]:
@@ -913,7 +915,7 @@ def main():
                     pass
 
             if parameters["DEBUG_RUN"]:
-                print("\n[START]\n")
+                print("\n[RUNNING]\n")
 
             if interface:
                 abec(algo, parameters, seed, layout)
