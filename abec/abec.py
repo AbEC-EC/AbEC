@@ -651,9 +651,8 @@ def initializeInterface(layout):
     layout.window["-EXP-"].update(disabled=True)
     layout.window["-ALGO-"].update(disabled=True)
     layout.window["-PRO-"].update(disabled=True)
-    layout.window["butao"].update(visible=False)
-    layout.window["browseFit"].update(visible=False)
     layout.window["-COMPS-"].update(visible=False)
+    layout.window["browseFit"].update(disabled=True)
     layout.window["program.sr"].update(False, visible=False)
     layout.window["program.ct"].update(False, visible=False)
     layout.window["program.aad"].update(False, visible=False)
@@ -692,10 +691,14 @@ def main():
                 elif opt in ("-i", "--interface"):
                     interface = int(arg)
                 elif opt in ("-s", "--seed"):
-                    seed = int(arg)
+                    if seed >= 0:
+                        seed = int(arg)
                 elif opt in ("-p", "--path"):
-                    globalVar.path = arg
+                    if arg != "./":
+                        globalVar.path = arg
 
+            print(f"\n\nAbEC running parameters:")
+            print(f"Graphical Interface: {interface}\nPath: {globalVar.path}\nSeed: {seed}\n")
 
             parameters0, algo = algoConfig()
             parameters1 = frameConfig()
@@ -790,8 +793,7 @@ def main():
                     time.sleep(0.3)
                     layout.window["-OUTPUT-"].update("")
                     layout.window.refresh()
-                    layout.window["butao"].update(visible=True)
-                    layout.window["browseFit"].update(visible=True)
+                    layout.window["browseFit"].update(disabled=False)
                     print("[Input the fitness function file and press continue...]")
                     print("\n[ - The function should be defined in a python script, which will evaluate the solutions of the algorithm]")
                     layout.set()

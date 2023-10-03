@@ -1,5 +1,40 @@
 #!/bin/sh
 
+interface=1
+pathAbec="./"
+seed=42
+i=1
+pos=0
+v=("$@")
+
+if [ "$#" -eq  "0" ]
+    then
+    echo "Default parameters is gonna be used"
+else
+    echo "User parameters is gonna be used"
+    for arg in $v[@]
+    do
+        case $arg in
+        "-i" )
+            pos=$(($i+1))
+            aee=(${v[$pos]})
+            interface=$aee;;
+        "-p" )
+            pos=$(($i+1))
+            aee=(${v[$pos]})
+            pathAbec=$aee;;
+        "-s" )
+            pos=$(($i+1))
+            aee=(${v[$pos]})
+            seed=$aee;;
+        esac
+        i=$(($i+1))
+    done
+fi
+
+# echo "Interface: $interface";
+# echo "Path: $pathAbec";
+# echo "Seed: $seed";
 
 DIRECTORY="../docs/install/venv-abec/"
 
@@ -11,6 +46,7 @@ else
     source ../docs/install/venv-abec/bin/activate
     # echo $VIRTUAL_ENV
     echo "Running the framework"
-    ./abec.py
+    echo "./abec.py -i $interface -p $pathAbec -s $seed"
+    ./abec.py -i $interface -p $pathAbec -s $seed
     deactivate
 fi

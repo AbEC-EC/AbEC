@@ -128,8 +128,8 @@ class interface():
 
 
             [sg.Frame('Problem:',[[sg.Button("Configuration File", key="-PRO-", disabled=True)],
-                                    [sg.Text("Choose the file", visible = False, key="butao")],
-                                    [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input Fitness Function", visible=False, key="browseFit")]
+                                    [sg.Text("Choose the file", visible = True, key="butao")],
+                                    [sg.Input(key='-FILE-', visible=False, enable_events=True), sg.FileBrowse("Input Fitness Function", visible=True, disabled=True, key="browseFit")]
                                   ],size=(300, 130))],
 
             [sg.Frame('Programs:',
