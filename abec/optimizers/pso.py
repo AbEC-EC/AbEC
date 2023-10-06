@@ -2,7 +2,6 @@ import math
 import operator
 import sys
 from aux.aux import errorWarning
-import aux.globalVar as globalVar
 
 '''
 Apply PSO on the particle
@@ -22,11 +21,11 @@ def cp(parameters):
         sys.exit()
 
 
-def optimizer(pop, best, parameters):
+def optimizer(pop, best, runVars, parameters):
     for i in range(len(pop.ind)):
         W = (parameters["PSO_W"] for _ in range(len(pop.ind[i]["pos"])))
-        u1 = (globalVar.rng.uniform(0, parameters["PSO_PHI1"]) for _ in range(len(pop.ind[i]["pos"])))
-        u2 = (globalVar.rng.uniform(0, parameters["PSO_PHI2"]) for _ in range(len(pop.ind[i]["pos"])))
+        u1 = (runVars.rng.uniform(0, parameters["PSO_PHI1"]) for _ in range(len(pop.ind[i]["pos"])))
+        u2 = (runVars.rng.uniform(0, parameters["PSO_PHI2"]) for _ in range(len(pop.ind[i]["pos"])))
         v_u1 = map(operator.mul, u1, map(operator.sub, pop.ind[i]["best_pos"], pop.ind[i]["pos"]))
         v_u2 = map(operator.mul, u2, map(operator.sub, pop.best["pos"], pop.ind[i]["pos"]))
         pop.ind[i]["vel"] = list(map(operator.mul, map(operator.add, pop.ind[i]["vel"], map(operator.add, v_u1, v_u2)), W))
@@ -42,4 +41,4 @@ def optimizer(pop, best, parameters):
             elif pop.ind[i]["pos"][j] < parameters["MIN_POS"]:
                 pop.ind[i]["pos"][j] = parameters["MIN_POS"]
 
-    return pop
+    return pop, runVars

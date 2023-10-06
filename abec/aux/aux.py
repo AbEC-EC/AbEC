@@ -10,24 +10,23 @@ import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 
-
+'''
+Check if a dir existis and if not, create it
+'''
+def checkCreateDir(path):
+    if(os.path.isdir(path) == False):
+        os.mkdir(path)
 '''
 Check if the dirs already exist, and if not, create them
 Returns the path
 '''
 def checkDirs(path):
-    cDate = datetime.datetime.now()
-    year = cDate.year
-    month = cDate.month
-    day = cDate.day
-    hour = cDate.hour
-    minute = cDate.minute
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{year}-{month:02d}-{day:02d}"
+    path += f"/{globalVar.year}-{globalVar.month:02d}-{globalVar.day:02d}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{hour:02d}-{minute:02d}"
+    path += f"/{globalVar.hour:02d}-{globalVar.minute:02d}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
     pathTmp = path+"/results"
@@ -70,17 +69,17 @@ Write the position and fitness of the peaks on
 the 'optima.csv' file. The number of the peaks will be
 NPEAKS_MPB*NCHANGES
 '''
-def saveOptima(parameters):
+def saveOptima(runVars, parameters):
     opt = []
     if(parameters["BENCHMARK"] == "MPB"):
         #print(globalVar.mpb.maximums())
         #opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
-        for i in range(len(globalVar.mpb.maximums())):
+        for i in range(len(runVars.mpb.maximums())):
             #print(i)
-            opt.append(globalVar.mpb.maximums()[i])
-    elif(parameters["BENCHMARK"] == "H1"):
-        opt.append(fitFunction([8.6998, 6.7665])[0])
-    with open(f"{globalVar.path}/results/optima.csv", "a") as f:
+            opt.append(runVars.mpb.maximums()[i])
+    #elif(parameters["BENCHMARK"] == "H1"):
+        #opt.append(fitFunction([8.6998, 6.7665])[0])
+    with open(f"{runVars.filename_OPT}", "a") as f:
         write = csv.writer(f)
         write.writerow(opt)
 
@@ -129,12 +128,15 @@ def ecMean(path, parameters):
     sum = 0
     data = []
 
+    # get the run data files of each run in the dirs
     flist = os.listdir(path)
-    flist = sorted(flist)
-    files = [flist[d] for d in range(parameters["RUNS"])]
+    flist = sorted(flist)[:parameters["RUNS"]]
+    flist = [f"{path}/{d}" for d in flist]
+    files = [f"{pdir}/{sorted(os.listdir(pdir))[-1]}" for pdir in flist]
+    
 
     for f in files:
-        data.append(pd.read_csv(f"{path}/{f}"))
+        data.append(pd.read_csv(f))
     std = [0 for i in range(len(data))]
 
     for row in range(len(data[0].index)):
@@ -150,7 +152,7 @@ def ecMean(path, parameters):
     bestMean = pd.DataFrame(zipped, columns=["nevals", "ec", "ec_std"])
     bestMean.to_csv(f"{globalVar.path}/results/ecMean.csv")
 
-    return f"{globalVar.path}/results/ecMean"
+    return f"{globalVar.path}/results/ecMean.csv"
 
 
 def eoMean(path, parameters):
@@ -158,13 +160,15 @@ def eoMean(path, parameters):
     eo_std = []
     sum = 0
     data = []
-
+    
+    # get the run data files of each run in the dirs
     flist = os.listdir(path)
-    flist = sorted(flist)
-    files = [flist[d] for d in range(parameters["RUNS"])]
+    flist = sorted(flist)[:parameters["RUNS"]]
+    flist = [f"{path}/{d}" for d in flist]
+    files = [f"{pdir}/{sorted(os.listdir(pdir))[-1]}" for pdir in flist]
 
     for f in files:
-        data.append(pd.read_csv(f"{path}/{f}"))
+        data.append(pd.read_csv(f))
     std = [0 for i in range(len(data))]
 
     for row in range(len(data[0].index)):
@@ -180,7 +184,7 @@ def eoMean(path, parameters):
     bestMean = pd.DataFrame(zipped, columns=["nevals", "eo", "eo_std"])
     bestMean.to_csv(f"{globalVar.path}/results/eoMean.csv")
 
-    return f"{globalVar.path}/results/eoMean"
+    return f"{globalVar.path}/results/eoMean.csv"
 
 
 '''

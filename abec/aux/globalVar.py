@@ -3,31 +3,24 @@
     Global vars used in the framework
 '''
 
-nevals = 0
-run = 0
-gen = 0
-eo_sum = 0
-mpb = None
-rng = None
-best = None
-alreadyEvaluated = []
-changeEnv = 0
-flagChangeEnv = 0
 path = "."
-peaks = 0
-randomInit = [0]
+header = ""
+filename = ""
+runs = []
+bestRuns = []
+best = None
 seedInit = 0
-npops = 0
-change = 0
-changeEV = 1
-tot_pos = 0
-sspace = []
-res = 0.5
-Fr = 0
+year = 0
+month = 0
+day = 0
+hour = 0
+minute = 0
+
 
 def cleanGlobalVars():
     global nevals
     global run
+    global runs
     global gen
     global eo_sum
     global mpb
@@ -50,6 +43,7 @@ def cleanGlobalVars():
 
     nevals = 0
     run = 0
+    runs = []
     gen = 0
     eo_sum = 0
     mpb = None
@@ -72,10 +66,10 @@ def cleanGlobalVars():
 
 '''
 # datetime variables
-cDate = datetime.datetime.now()
-year = cDate.year
-month = cDate.month
-day = cDate.day
-hour = cDate.hour
-minute = cDate.minute
+= datetime.datetime.now()
+year = year
+month = month
+day = day
+hour = hour
+minute = minute
 '''

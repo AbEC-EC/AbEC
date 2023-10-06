@@ -205,7 +205,7 @@ def main():
             ax = plot(ax, data=bestMean, label=f"{parameters2['ALGORITHM']}", color=colors[j-2], linestyle=lineStyles[j-2], marker=markers[j-2], fStd=1, parameters=parameters)
 
 
-    changesEnv = parameters2["CHANGES_NEVALS"]
+    #changesEnv = parameters2["CHANGES_NEVALS"]
     #changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
     #if(parameters["THEME"] != 3):
         #for i in changesEnv:
