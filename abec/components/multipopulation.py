@@ -25,11 +25,11 @@ def cp(parameters):
     else:
         return 0
 
-def component(pop, parameters):
+def component(pop, runVars, parameters):
     for _ in range (parameters["COMP_MULTIPOPULATION_N"]):
-        pop.append(abec.population(parameters))
+        pop.append(abec.population(runVars, parameters))
 
-    globalVar.randomInit = [0 for _ in range(1, parameters["COMP_MULTIPOPULATION_N"]+2)]
+    runVars.randomInit = [0 for _ in range(1, parameters["COMP_MULTIPOPULATION_N"]+2)]
 
-    return pop
+    return pop, runVars
 

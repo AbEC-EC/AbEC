@@ -121,12 +121,12 @@ class population():
     # Get a new id for the population
     newid = itertools.count(1).__next__
 
-    def __init__(self, parameters, id = 1, fill = 1):
+    def __init__(self, runVars, parameters, id = 1, fill = 1):
         if(id == 0):    # Temporary population doesnt have an id
             self.id = 0
         else:
-            if globalVar.npops > 1:
-                self.id = population.newid() - ((globalVar.run-1)*globalVar.npops)
+            if runVars.npops > 1:
+                self.id = population.newid() - ((runVars.id()-1)*runVars.npops)
             else:
                 self.id = population.newid()
 
@@ -175,10 +175,10 @@ def createPopulation(algo, runVars, parameters):
     pop = []
 
     for i in range(len(algo.comps_initialization)):
-        pop = algo.comps_initialization[i].component(pop, parameters)
+        pop, runVars = algo.comps_initialization[i].component(pop, runVars, parameters)
 
     if not pop:
-        pop.append(population(parameters))
+        pop.append(population(runVars, parameters))
         runVars.randomInit = [0]
 
     best = pop[0].ind[0].copy()
@@ -259,10 +259,10 @@ def getSearchSpace(pop, layout):
     return x, y
 
 class runVariables():
-    def __init__(self, run, parameters):
-        self.__id = run["id"]
-        self.__seed = run["seed"]
-        self.done = run["done"]
+    def __init__(self, run, seed, parameters):
+        self.__id = run
+        self.__seed = seed
+        self.done = 0
         self.rng = np.random.default_rng(self.__seed)
         self.gen = 0
         self.nevals = 0
@@ -273,10 +273,11 @@ class runVariables():
         self.mpb = None
         self.peaks = 0
         self.eo_sum = 0
+        self.npops = 0
         self.Fr = 0
         self.res = 2
         self.flagChangeEnv = 0
-        self.tot_pos = (parameters["MAX_POS"]-parameters["MIN_POS"])**parameters["NDIM"] * (10**globalVar.res)
+        self.tot_pos = (parameters["MAX_POS"]-parameters["MIN_POS"])**parameters["NDIM"] * (10**self.res)
         self.startTime = 0
         self.bestRuns = []
         self.header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "fr", "env"]  
@@ -291,6 +292,7 @@ class runVariables():
         self.Eo = 0
         self.Fr = 0
         self.change = 0
+        self.changeEV = 0
         self.rtPlotNevals = []
         self.rtPlotError = []
         self.rtPlotEo = []
@@ -301,30 +303,58 @@ class runVariables():
     
     def seed(self):
         return self.__seed
-    
+
 
 '''
 Framework
 '''
-def abec(algo, parameters, run, layout = 0):
+def abec(run, seed, path, layout = 0):
+    
+    #####################################
+    # initilize the algorithm with the parameters
+    #####################################
+    parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+    parameters0, algo = algoConfig()
+    parameters = parameters0 | frameConfig() | problemConfig()
+    
+    for file in parametersFiles:
+        with open(f"{path}/{file}") as f:
+            p0 = list(json.loads(f.read()).items())
+            for i in range(len(p0)):
+                parameters[f"{p0[i][0]}"] = p0[i][1]
+    
+    algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
 
-    runVars = runVariables(run, parameters)
-        #Initialize the logs
-    checkCreateDir(f"{globalVar.path}/results/{runVars.id():04}") # Check if the run dir exists, if not, create it
-    runVars.filename_LA = f"{globalVar.path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_LOGALL.csv"
-    runVars.filename_OPT = f"{globalVar.path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_OPTIMA.csv"
-    runVars.filename_RUN = f"{globalVar.path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_RUN.csv"
-    if(parameters["LOG_ALL"]):
+    runVars = runVariables(run, seed, parameters)
+    
+    
+    #####################################
+    # initialize and configure the logs
+    #####################################
+    checkCreateDir(f"{path}/results/{runVars.id():04}") # Check if the run dir exists, if not, create it
+    
+    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std", "fr", "fr_std", "execTime"]
+    filename = f"{path}/results/results.csv"
+    
+    
+    if parameters["LOG_ALL"]: # log each individual and its positions
+        runVars.filename_LA = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_LOGALL.csv"
         writeLog(mode=0, filename=runVars.filename_LA, header=runVars.header_LA)
-    writeLog(mode=0, filename=runVars.filename_OPT, header=runVars.header_OPT)
+    if parameters["BENCHMARK"] != "CUSTOM" or parameters["BENCHMARK"] != "custom": # if benchmark sabe the optima points
+        runVars.filename_OPT = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_OPTIMA.csv"
+        writeLog(mode=0, filename=runVars.filename_OPT, header=runVars.header_OPT)
+        
+    runVars.filename_RUN = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_RUN.csv"  
     writeLog(mode=0, filename=runVars.filename_RUN, header=runVars.header_RUN)
 
-    
     if parameters["DEBUG_RUN_2"]:
         print(f"\n==============================================")
         print(f"[START][RUN:{runVars.id():02}]\n[NEVALS:{runVars.nevals:06}]")
         print(f"==============================================")
 
+    #####################################
+    # Start the algorithm
+    #####################################
     runVars.startTime = time.time()
     # Create the population with POPSIZE individuals
     runVars.pop, runVars.best, runVars = createPopulation(algo, runVars, parameters)
@@ -384,23 +414,7 @@ def abec(algo, parameters, run, layout = 0):
     ###########################################################################
     # LOOP UNTIL FINISH THE RUN
     ###########################################################################
-
-    if not layout:
-        total_gen = int(parameters["FINISH_RUN_MODE_VALUE"]/(parameters["POPSIZE"]*len(runVars.pop)))
-        progress_bar = tqdm(total=total_gen, desc=f"Run {runVars.id():02d}... ")
-        progress_bar.update(1)
     while finishRun(runVars, parameters) == 0:
-        if not layout:
-            progress_bar.update(1)
-        '''
-        for subpop in pop:
-            print(subpop.ind[0])
-            subpop.ind[0]["pos"] = [51.97040, 61.228639]
-            evaluate(subpop.ind[0], parameters)
-            print(subpop.ind[0])
-            e()
-        '''
-
         ###########################################
         # Apply the Global Diversity Components
         ###########################################
@@ -542,18 +556,13 @@ def abec(algo, parameters, run, layout = 0):
 
     #####################################
     # End of the run
-    #####################################
-    executionTime = (time.time() - runVars.startTime)
-    progress_bar.close()
-    globalVar.bestRuns.append(runVars.best)
-    if runVars.id() == 1 or runVars.best["fit"] < globalVar.best["fit"]:
-        globalVar.best = copy.deepcopy(runVars.best)
+    ####################################
+    executionTime = (time.time() - runVars.startTime) 
+    
+    # write the results in the log
     runVars.eo = offlineError(f"{runVars.filename_RUN}")
-    #fr = fillingRate(f"{runVars.path}/results/{parameters['ALGORITHM']}_{runVars.run:02d}_{parameters['SEED']}.csv")
-    #df = pd.read_csv(f"{runVars.path}/results/results.csv")
-    #log = [{"run": runVars.run, "gen": runVars.gen, "nevals":runVars.nevals, "popId": runVars.best["pop_id"], "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "ec": runVars.best["fit"], "eo": eo[0], "eo_std": eo[1], "fr":fr[0], "fr_std":fr[1]}]
     log = [{"run": runVars.id(), "gen": runVars.gen, "nevals":runVars.nevals, "popId": runVars.best["pop_id"], "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "ec": runVars.best["fit"], "eo": runVars.eo[0], "eo_std": runVars.eo[1], "execTime": executionTime}]
-    writeLog(mode=1, filename=globalVar.filename, header=globalVar.header, data=log)
+    writeLog(mode=1, filename=filename, header=header, data=log)
 
     if parameters["DEBUG_RUN"]:
         #print(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.4f}][Eo:{Eo:.4f}]")
@@ -574,419 +583,30 @@ def abec(algo, parameters, run, layout = 0):
     runVars.npops = len(runVars.pop)
 
 
+if __name__ == '__main__':
+    run = 1
+    seed = 42
+    interface = 0
+    
+    arg_help = "{0} -r <run> -s <seed> -p <path> -i <interface>".format(sys.argv[0])
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hr:s:p:i:", ["help", "run=", "seed=", "path=", "interface="])
+    except:
+        print(arg_help)
+        sys.exit(2)
 
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(arg_help)  # print the help message
+            sys.exit(2)
+        elif opt in ("-r", "--run"):
+            run = int(arg)
+        elif opt in ("-s", "--seed"):
+            if seed >= 0:
+                seed = int(arg)
+        elif opt in ("-p", "--path"):
+                path = arg
+        elif opt in ("-i", "--interface"):
+            interface = int(arg)
 
-def initializeInterface(layout):
-    layout.window["-OUTPUT-"].update("")
-    layout.window["-EXP-"].update(disabled=True)
-    layout.window["-ALGO-"].update(disabled=True)
-    layout.window["-PRO-"].update(disabled=True)
-    layout.window["-COMPS-"].update(visible=False)
-    layout.window["browseFit"].update(disabled=True)
-    layout.window["program.sr"].update(False, visible=False)
-    layout.window["program.ct"].update(False, visible=False)
-    layout.window["program.aad"].update(False, visible=False)
-    layout.window["continueBT"].update(disabled=False)
-    layout.window["resetBT"].update(disabled=True)
-
-def analysis(parameters):
-    # End of the optimization
-    #print(len(runVars.sspace))
-    #print(runVars.tot_pos)
-    print("\n[RESULTS]")
-
-    '''
-    if layout:
-        layout.window.refresh()
-        try:
-            print("\n[Press continue to calculate the metrics...]")
-            layout.set()
-        except SyntaxError:
-            pass
-    '''
-
-    # Offline error
-    df = pd.read_csv(f"{globalVar.path}/results/results.csv")
-    eo_mean = df["eo"].mean()
-    totalTime = df["execTime"].sum()
-    #fr_mean = df["fr"].mean()
-    #fr_std = df["fr"].std()
-
-    if parameters["RUNS"] > 1:
-        luffy = 0
-        bestsPos = []
-
-        eo_std = df["eo_std"].std()
-
-        bests = [d["fit"] for d in globalVar.bestRuns]
-        meanBest = np.mean(bests)
-        stdBest = np.std(bests)
-        bPos = [d["pos"] for d in globalVar.bestRuns]
-        for i in range(len(bPos[0])):
-            for j in range(len(bPos)):
-                luffy += bPos[j][i]
-            bestsPos.append(luffy/len(bPos))
-            luffy = 0
-
-        ecMean_csv = ecMean(f"{globalVar.path}/results", parameters)
-        eoMean_csv = eoMean(f"{globalVar.path}/results", parameters)
-        ecPlot.ecPlot(ecMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="ecMean")
-        eoPlot.eoPlot(eoMean_csv, parameters, multi = 1, pathSave = f"{globalVar.path}/results", name="eoMean")
-    else:
-
-        eo_std = df["eo_std"][0]   # If only one run just the number
-        # get the run data file of the run
-        flist = os.listdir(f"{globalVar.path}/results")
-        pdir = f"{globalVar.path}/results/{sorted(flist)[0]}"
-        runFile = f"{pdir}/{sorted(os.listdir(pdir))[-1]}"
-        ecPlot.ecPlot(runFile, parameters, pathSave = f"{globalVar.path}/results/0001")
-        eoPlot.eoPlot(runFile, parameters, pathSave = f"{globalVar.path}/results/0001")
-        #frPlot.frPlot(f"{globalVar.path}/results/{parameters['ALGORITHM']}_01_{parameters['SEED']}", parameters, pathSave = f"{globalVar.path}/results")
-        #spPlot.spPlot(f"{globalVar.path}/results/log_all_{globalVar.seedInit}", parameters, pathSave = f"{globalVar.path}/results")
-
-
-    if parameters["DEBUG_RUN"]:
-        files = os.listdir(f"{globalVar.path}/results")
-        print(f"\n[FILES GENERATED]\n")
-        print(f"-[PATH] {globalVar.path}/results/")
-        files = sorted(files)
-        for file in files:
-            print(f"\t-[FILE] {file}")
-
-        if parameters["RUNS"] > 1:
-            print(f"\n==============================================")
-            print(f"[RUNS:{parameters['RUNS']}]")
-            print(f"[BEST RUN POS : {globalVar.best['pos']}]")
-            print(f"[BEST RUN FIT : {globalVar.best['fit']}]")
-            print(f"[POS MEAN: {bestsPos} ]")
-            print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
-            #print(f"[Fr  MEAN: {fr_mean:.4f}({fr_std:.4f})]")
-            print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
-        else:
-            print(f"\n==============================================")
-            print(f"[RUNS:{parameters['RUNS']}]")
-            print(f"[POS : {globalVar.best['pos']}]")
-            print(f"[Ec  : {globalVar.best['fit']:.4f}]")
-            #print(f"[Fr  : {globalVar.Fr:.4f} %]")
-            print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
-
-        print(f"[RUNTIME: {str(totalTime)} s]")
-        print(f"==============================================")
-
-
-    if(parameters["BEBC_ERROR"]):
-        if (parameters["DEBUG_RUN"]):
-            print("\n[METRICS]")
-            os.system(f"python3 {sys.path[0]}/metrics/bestBeforeChange.py -p {globalVar.path} -d 1")
-        else:
-            os.system(f"python3 {sys.path[0]}/metrics/bestBeforeChange.py -p {globalVar.path}")
-
-
-def main():
-    LOG_FILENAME = "./aux/log/log_last_run.txt"
-    logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
-    logging.debug('This message should go to the log file')
-    while(True):
-        try:
-            # datetime variables
-            cDate = datetime.datetime.now()
-            globalVar.year = cDate.year
-            globalVar.month = cDate.month
-            globalVar.day = cDate.day
-            globalVar.hour = cDate.hour
-            globalVar.minute = cDate.minute
-            globalVar.cleanGlobalVars()
-
-            seed = globalVar.minute
-            interface = 1
-            arg_help = "{0} -i <interface> -s <seed> -p <path>".format(sys.argv[0])
-
-            try:
-                opts, args = getopt.getopt(sys.argv[1:], "hi:s:p:", ["help", "interface=", "seed=", "path="])
-            except:
-                print(arg_help)
-                sys.exit(2)
-
-            for opt, arg in opts:
-                if opt in ("-h", "--help"):
-                    print(arg_help)  # print the help message
-                    sys.exit(2)
-                elif opt in ("-i", "--interface"):
-                    interface = int(arg)
-                elif opt in ("-s", "--seed"):
-                    if seed >= 0:
-                        seed = int(arg)
-                elif opt in ("-p", "--path"):
-                    if arg != "./":
-                        globalVar.path = arg
-
-            print(f"\n\nAbEC running parameters:")
-            print(f"Graphical Interface: {interface}\nPath: {globalVar.path}\nSeed: {seed}\n")
-
-            parameters0, algo = algoConfig()
-            parameters1 = frameConfig()
-            parameters2 = problemConfig()
-
-            parameters = parameters0 | parameters1 | parameters2
-
-            if interface:
-                if "layout" not in locals():
-                    layout = gui.interface(parameters)
-                    layout.launch(parameters)
-                else:
-                    layout.ax_pf = gui.configAxes(layout.ax_pf)
-                    layout.ax_ss = gui.configAxes(layout.ax_ss, type = 2)
-                    layout.reset = 0
-                    initializeInterface(layout)
-                    step = 0
-
-            print(f"====================================================================================================")
-            print(f"                               AbEC -> Ajustable Evolutionary Components        ")
-            print(f"                                 A framework for Optimization Problems         ")
-            print(f"====================================================================================================")
-            print("*                                                                                                  *")
-            print("*                                                                                                  *")
-            print("*                                          I hope you enjoy!                                       *")
-            print("*                                                                                                  *")
-            print("*                                                                                                  *")
-            if interface:
-                try:
-                    layout.window.refresh()
-                    time.sleep(1)
-                    layout.set(step = 0)
-                    layout.window["-EXP-"].update(disabled=False)
-                    layout.window["-ALGO-"].update(disabled=False)
-                    layout.window["-PRO-"].update(disabled=False)
-                    layout.window["resetBT"].update(disabled=False)
-                    print("[Please check if the configuration files are ok and then press continue...]")
-                    print("\n[ - Experiment configuration file: Framework parameters (e.g. number of runs, path of the files, number of evaluations, ...)]")
-                    print("\n[ - Algorithm configuration file: Functioning of the algorithm itself (e.g. Population size, optimizers, ...)]")
-                    print("\n[ - Problem configuration file: e.g. number of dimensions, dynamic or not, ...]")
-                    layout.set()
-                    if layout.reset:
-                        continue
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    print("[Loading configuration files...]")
-                    layout.window.refresh()
-                except SyntaxError:
-                    pass
-
-
-           # Read the parameters from the config file
-            if os.path.isfile(f"{globalVar.path}/algoConfig.ini"):
-                with open(f"{globalVar.path}/algoConfig.ini") as f:
-                    p0 = list(json.loads(f.read()).items())
-                    for i in range(len(p0)):
-                        #print(p0[i][0])
-                        parameters0[f"{p0[i][0]}"] = p0[i][1]
-            else:
-                errorWarning(0.1, "algoConfig.ini", "FILE_NOT_FIND", "The algoConfig.ini file is mandatory!")
-
-            if os.path.isfile(f"{globalVar.path}/frameConfig.ini"):
-                with open(f"{globalVar.path}/frameConfig.ini") as f:
-                    p1 = list(json.loads(f.read()).items())
-                    for i in range(len(p1)):
-                        #print(p1[i][0])
-                        parameters1[f"{p1[i][0]}"] = p1[i][1]
-
-            if os.path.isfile(f"{globalVar.path}/problemConfig.ini"):
-                with open(f"{globalVar.path}/problemConfig.ini") as f:
-                    p2 = list(json.loads(f.read()).items())
-                    for i in range(len(p2)):
-                        #print(p2[i][0])
-                        parameters2[f"{p2[i][0]}"] = p2[i][1]
-
-            parameters = parameters0 | parameters1 | parameters2
-
-            if interface:
-                layout.window["-EXP-"].update(disabled=True)
-                layout.window["-ALGO-"].update(disabled=True)
-                layout.window["-PRO-"].update(disabled=True)
-                #layout.ax_pf.set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
-                layout.ax_pf[0].set_xlim(0, parameters["FINISH_RUN_MODE_VALUE"])
-
-            bench = parameters["BENCHMARK"].upper()
-
-            if interface and bench == "CUSTOM":
-                try:
-                    time.sleep(1)
-                    print("[Loaded]\n")
-                    layout.window.refresh()
-                    time.sleep(0.3)
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    layout.window["browseFit"].update(disabled=False)
-                    print("[Input the fitness function file and press continue...]")
-                    print("\n[ - The function should be defined in a python script, which will evaluate the solutions of the algorithm]")
-                    layout.set()
-                    if layout.reset:
-                        continue
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    print("[Loading Fitness Function file...]")
-                    layout.window["browseFit"].update(disabled=True)
-                    layout.window.refresh()
-                except SyntaxError:
-                    pass
-
-
-            algo = updateAlgo(algo, parameters)
-
-            '''
-            if interface:
-                try:
-                    time.sleep(1)
-                    print("[Loaded]\n")
-                    layout.window.refresh()
-                    time.sleep(0.3)
-                    components = []
-                    for i in range(len(algo.components)):
-                        components.append(algo.components[i][0])
-                    layout.window["program.sr"].update(visible=True)
-                    layout.window["program.ct"].update(visible=True)
-                    layout.window["program.aad"].update(visible=True)
-                    layout.window["-COMPS-"].update(value="", values=components, visible=True)
-                    layout.window.refresh()
-                    print("[Select a program and press continue...]")
-                    print("\n[ - Simple Run: A simple test of how the algorithm performs on the problem]")
-                    print("\n[ - Component Evaluation: How a specific component performs. It will be done a bench of test with the component with and without other components and a personalized evaluation will be done on it]")
-                    print("\n[ - Auto Algorithm Design: It will be find a good algorithm configuration which solves good for the specified problem]")
-                    layout.window["-COMPS-"].update(value="", values=components, visible=False)
-                    layout.window.refresh()
-                    layout.set(step=3)
-                    if layout.reset:
-                        continue
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    print("[Preparing to run...]")
-                    layout.window.refresh()
-                    time.sleep(0.5)
-                    print("[Ready]")
-                    layout.window.refresh()
-                    time.sleep(0.5)
-                except SyntaxError:
-                    pass
-            '''
-
-            if parameters["SEED"] >= 0:
-                seed = parameters["SEED"]
-
-            if globalVar.path == ".":
-                if not os.path.isdir(f"{parameters['PATH']}"):
-                    os.mkdir(f"{parameters['PATH']}")
-                globalVar.path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-            globalVar.path = checkDirs(globalVar.path)
-
-
-            if parameters["DEBUG_RUN"]:
-                if interface:
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                print(f"[ALGORITHM SETUP]")
-                print(f"- Name: {parameters['ALGORITHM']}")
-                print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
-
-                print(f"- [OPTIMIZERS]:")
-                for opt in algo.optimizers:
-                    print(f"-- [{opt[0]}]")
-                    value = parameters[f"{opt[0]}_POP_PERC"]
-                    print(f"---- % of POP: {value*100}%")
-                    for i in opt[1].params:
-                        value = parameters[f"{opt[0]}_{i}"]
-                        print(f"---- {i}: {value}")
-
-                print()
-                print(f"- [COMPONENTS]:")
-                for comp in algo.components:
-                    print(f"-- [{comp[0]}]")
-                    print(f"---- SCOPE: {comp[1].scope[0]}")
-                    for i in comp[1].params:
-                        value = parameters[f"COMP_{comp[0]}_{i}"]
-                        print(f"---- {i}: {value}")
-
-                print()
-                print(f"[FRAMEWORK SETUP]")
-                print(f"- RUNS:\t\t {parameters['RUNS']}")
-                if parameters["FINISH_RUN_MODE"] == 0:
-                    print(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}")
-                else:
-                    print(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}")
-                print(f"- SEED:\t\t {parameters['SEED']}")
-
-                print()
-                print(f"[PROBLEM SETUP]")
-                if parameters["BENCHMARK"] == "NONE":
-                    print(f"- Name: Fitness Function")
-                else:
-                    print(f"- Name: {parameters['BENCHMARK']}")
-                print(f"- NDIM: {parameters['NDIM']}")
-
-            if interface:
-                try:
-                    layout.window.refresh()
-                    print("\n[Press continue to start...]")
-                    layout.set()
-                    if layout.reset:
-                        continue
-                    layout.window["resetBT"].update(disabled=True)
-                    layout.window.refresh()
-                except SyntaxError:
-                    pass
-
-            # Create a list with the runs, seeds and if it is done or not
-            # to allow the parallelization
-            globalVar.runs = [{"id": run+1, "seed": int(parameters["SEED"] + run), "done":0} for run in range(parameters["RUNS"])]
-            globalVar.seedInit = parameters["SEED"]
-            print(globalVar.runs)
-                               
-            globalVar.header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std", "fr", "fr_std", "execTime"]
-            globalVar.filename = f"{globalVar.path}/results/results.csv"
-
-            # Headers of the log files
-            writeLog(mode=0, filename=globalVar.filename, header=globalVar.header)
-
-            #####################################
-            # Main loop of the runs
-            #####################################
-            if parameters["DEBUG_RUN"]:
-                print("\n[RUNNING]\n")
-                print(f"RUN | GEN | NEVALS |                    BEST                   | ERROR")
-            for run in globalVar.runs:
-                if interface:
-                    abec(algo, parameters, run, layout)
-                else:
-                    abec(algo, parameters, run)
-
-            # Analysis of the results            
-            analysis(parameters)
-            
-            # Copy the config.ini file to the experiment dir
-            if(parameters["CONFIG_COPY"]):
-                f = open(f"{globalVar.path}/algoConfig.ini","w")
-                f.write(json.dumps(parameters0))
-                f.close()
-                f = open(f"{globalVar.path}/frameConfig.ini","w")
-                f.write(json.dumps(parameters1))
-                f.close()
-                f = open(f"{globalVar.path}/problemConfig.ini","w")
-                f.write(json.dumps(parameters2))
-                f.close()
-            print("[END]\nThx :)")
-            if interface:
-                layout.window["continueBT"].update(disabled=True)
-                layout.window["resetBT"].update(disabled=False)
-                layout.set()
-                if layout.reset:
-                    continue
-            else:
-                break
-        except Exception as e:
-            logging.exception('Got exception on main handler')
-            raise
-
-
-if __name__ == "__main__":
-    main()
-
-
+    abec(run, seed, path, interface)

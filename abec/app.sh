@@ -46,7 +46,7 @@ else
     source ./aux/install/venv-abec/bin/activate
     # echo $VIRTUAL_ENV
     echo "Running the framework"
-    echo "./abec.py -i $interface -p $pathAbec -s $seed"
-    ./abec.py -i $interface -p $pathAbec -s $seed
+    echo "./framework.py -i $interface -p $pathAbec"
+    ./framework.py -i $interface -p $pathAbec
     deactivate
 fi

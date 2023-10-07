@@ -150,9 +150,9 @@ def ecMean(path, parameters):
 
     zipped = list(zip(data[0]["nevals"], ec_mean, ec_std))
     bestMean = pd.DataFrame(zipped, columns=["nevals", "ec", "ec_std"])
-    bestMean.to_csv(f"{globalVar.path}/results/ecMean.csv")
+    bestMean.to_csv(f"{path}/ecMean.csv")
 
-    return f"{globalVar.path}/results/ecMean.csv"
+    return f"{path}/ecMean.csv"
 
 
 def eoMean(path, parameters):
@@ -182,9 +182,9 @@ def eoMean(path, parameters):
 
     zipped = list(zip(data[0]["nevals"], eo_mean, eo_std))
     bestMean = pd.DataFrame(zipped, columns=["nevals", "eo", "eo_std"])
-    bestMean.to_csv(f"{globalVar.path}/results/eoMean.csv")
+    bestMean.to_csv(f"{path}/eoMean.csv")
 
-    return f"{globalVar.path}/results/eoMean.csv"
+    return f"{path}/eoMean.csv"
 
 
 '''
@@ -311,17 +311,17 @@ Default parametrization for frameConfig.ini
 def frameConfig():
     config = {
         "__COMMENT__": "FRAMEWORK CONFIGURATION", \
-        "RUNS": 5, \
+        "RUNS": 3, \
         "FINISH_RUN_MODE": 0, \
-        "FINISH_RUN_MODE_VALUE": 1000, \
+        "FINISH_RUN_MODE_VALUE": 2000, \
         "SEED": 42, \
-        "PLOT" : 0, \
+        "ANALISYS" : 1, \
         "CONFIG_COPY": 1, \
-        "OFFLINE_ERROR": 0, \
+        "OFFLINE_ERROR": 1, \
         "BEBC_ERROR": 0, \
         "PATH": "../experiments", \
-        "FILENAME": "data.csv", \
         "LOG_ALL": 0, \
+        "PARALLELIZATION": 1, \
         "DEBUG_RUN": 1, \
         "DEBUG_RUN_2": 0, \
         "DEBUG_GEN": 0, \
