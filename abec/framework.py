@@ -247,6 +247,9 @@ def main():
 
             if parameters["SEED"] >= 0:
                 seed = parameters["SEED"]
+            
+            algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
+
 
             #####################################
             # create the dis of the experiment
