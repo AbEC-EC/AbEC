@@ -479,8 +479,6 @@ def main():
 
                 if runsDone >= len(runs):
                     break
-                else:
-                    time.sleep(0.2)
 
             executionTime = (time.time() - startTime)
 

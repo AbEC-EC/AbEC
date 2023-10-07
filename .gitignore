@@ -6,4 +6,5 @@
 *.save
 venv-abec/
 log/
+experiments/
 __pycache__
