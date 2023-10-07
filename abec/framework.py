@@ -13,6 +13,7 @@ import datetime
 import csv
 import sys
 import getopt
+import psutil
 import time
 import copy
 import numbers
@@ -170,6 +171,23 @@ def checkRuns(path):
     df = pd.read_csv(f"{path}/results/results.csv")
     return df.shape[0]
 
+def getPids(script_name):
+    pids = []
+    for proc in psutil.process_iter():
+
+        try:
+            cmdline = proc.cmdline()
+            pid = proc.pid
+        except psutil.NoSuchProcess:
+            continue
+
+        if (len(cmdline) >= 2
+            and 'python' in cmdline[0]
+            and os.path.basename(cmdline[1]) == script_name):
+
+            pids.append(pid)
+
+    return pids
 
 def main():
 
@@ -454,39 +472,27 @@ def main():
 
             startTime = time.time()
             if parameters["PARALLELIZATION"]:
+                i = 0
                 for run in runs:
+                    while len(getPids("abec.py")) >= parameters["PROCESS"]:
+                        x = 5
+                    #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
                     os.system(f"./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
+                    
             else:
                 for run in runs:
                     if interface:
                         abec(algo, parameters, run, layout)
                     else:
-                        abec(algo, parameters, run)
-
-            progressBar = 0
-            if progressBar:
-                #progress_bar = tqdm(total=total_gen, desc=f"Run {runVars.id():02d}... ")
-                progress_bar = tqdm(total=len(runs))
-                progress_bar.update()
-            rdOld = 0
+                        abec(run['id'], run['seed'], pathExp, interface)
 
             #####################################
             # wait for the runs fininsh
             #####################################
-            while True:
-                runsDone = checkRuns(pathExp)
-                if not interface and progressBar:
-                    if runsDone != rdOld:
-                        progress_bar.update(1)
-                        rdOld = runsDone
-
-                if runsDone >= len(runs):
-                    break
+            while getPids("abec.py"):
+                x = 5                
 
             executionTime = (time.time() - startTime)
-
-            if progressBar:
-                progress_bar.close()
 
             #####################################
             # analisys of the results

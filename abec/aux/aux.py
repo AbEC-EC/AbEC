@@ -322,6 +322,7 @@ def frameConfig():
         "PATH": "../experiments", \
         "LOG_ALL": 0, \
         "PARALLELIZATION": 1, \
+        "PROCESS": 2, \
         "DEBUG_RUN": 1, \
         "DEBUG_RUN_2": 0, \
         "DEBUG_GEN": 0, \
