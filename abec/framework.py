@@ -240,7 +240,7 @@ def main():
 
 
             #####################################
-            # create the dis of the experiment
+            # create the dir of the experiment
             #####################################
             if pathConfig == ".":
                 pathExp = parameters["PATH"]
@@ -268,10 +268,6 @@ def main():
                     initializeInterface(layout)
                     step = 0
             
-            # file.write(headerReadme(pathExp, date))
-            # file.write(bodyReadme(pathExp, date))
-            # file.write(f"\nTotal exectution time(s):\n {executionTime:.02f}\n")
-            # file.write(footerReadme(pathExp, date))
             readme = open(f"{pathExp}/readme.txt", "w") # open file to write the outputs
 
             myPrint(f"====================================================================================================", readme, parameters)
