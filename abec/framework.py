@@ -7,38 +7,26 @@ Alexandre Mascarenhas
 
 2023/1
 '''
-import itertools
-import random
 import datetime
-import csv
+import os
 import sys
 import getopt
 import psutil
 import time
-import copy
-import numbers
+import ast
 import logging
 import json
 import shutil
-import numpy as np
 import pandas as pd
 from abec import abec
-from deap import benchmarks
-from tqdm import tqdm
 import matplotlib.colors as mcolors
 # AbEC files
 import plot.currentError as ecPlot
 import plot.offlineError as eoPlot
 import plot.searchSpace as spPlot
-import aux.globalVar as globalVar
-import aux.fitFunction as fitFunction
 import plot.rtPlot as rtPlot
 import gui.gui as gui
 from aux.aux import *
-import optimizers.pso as pso
-import optimizers.de as de
-import optimizers.ga as ga
-import optimizers.es as es
 from metrics.offlineError import offlineError
 from metrics.fillingRate import fillingRate
 
@@ -69,55 +57,39 @@ def initializeInterface(layout):
     layout.window["continueBT"].update(disabled=False)
     layout.window["resetBT"].update(disabled=True)
 
-def analysis(path, parameters, totalTime):
-    # End of the optimization
-    #print(len(runVars.sspace))
-    #print(runVars.tot_pos)
-    print("\n[RESULTS]")
+def analysis(path, parameters, totalTime, readme):
+    myPrint("\n[RESULTS]", readme, parameters)
 
-    '''
-    if layout:
-        layout.window.refresh()
-        try:
-            print("\n[Press continue to calculate the metrics...]")
-            layout.set()
-        except SyntaxError:
-            pass
-    '''
-
-    # Offline error
+    curError = [0, 0] # current error of the runs
+    offError = [0, 0] # offline error of the runs
+    meanTime = [0, 0] # executiation time of the runs
+    
+    # load the csv with the results
     df = pd.read_csv(f"{path}/results/results.csv")
-    eo_mean = df["eo"].mean()
-    meanTime = df["execTime"].mean()
-    meanTimeStd = df["execTime"].std()
-    #fr_mean = df["fr"].mean()
-    #fr_std = df["fr"].std()
+    df.sort_values(by="ec", inplace=True)
+    
+    # calculate the mean of the erros and time    
+    curError[0] = df["ec"].mean() 
+    offError[0] = df["eo"].mean() 
+    meanTime[0] = df["execTime"].mean()
+    
+    # get the best run and convert to dict
+    best = df.iloc[0].to_dict()
+    best["bestPos"] = ast.literal_eval(best["bestPos"]) # convert string to list
+    best["bestPos"] = [round(i, 2) for i in best["bestPos"]] # round 2 decimals
 
-    if parameters["RUNS"] > 1:
-        luffy = 0
-        bestsPos = []
-
-        eo_std = df["eo_std"].std()
-
-        '''
-        bests = [d["fit"] for d in globalVar.bestRuns]
-        meanBest = np.mean(bests)
-        stdBest = np.std(bests)
-        bPos = [d["pos"] for d in globalVar.bestRuns]
-        for i in range(len(bPos[0])):
-            for j in range(len(bPos)):
-                luffy += bPos[j][i]
-            bestsPos.append(luffy/len(bPos))
-            luffy = 0
-        '''
+    if parameters["RUNS"] > 1:       
+        # calculate the std of the error and time
+        curError[1] = df["ec"].std() 
+        offError[1] = df["eo_std"].std() 
+        meanTime[1] = df["execTime"].std()
 
         ecMean_csv = ecMean(f"{path}/results", parameters)
         eoMean_csv = eoMean(f"{path}/results", parameters)
         ecPlot.ecPlot(ecMean_csv, parameters, multi = 1, pathSave = f"{path}/results", name="ecMean")
         eoPlot.eoPlot(eoMean_csv, parameters, multi = 1, pathSave = f"{path}/results", name="eoMean")
     else:
-
-        eo_std = df["eo_std"][0]   # If only one run just the number
+        offError[1] = df["eo_std"][0]   # If only one run just the number
 
         # get the run data file of the run
         flist = os.listdir(f"{path}/results")
@@ -131,37 +103,43 @@ def analysis(path, parameters, totalTime):
 
 
     if parameters["DEBUG_RUN"]:
+        #####################################
+        # print all the files generated
+        #####################################
         files = os.listdir(f"{path}/results")
-        print(f"\n[FILES GENERATED]\n")
-        print(f"-[PATH] {path}/results/")
+        myPrint(f"\n[FILES GENERATED]\n", readme, parameters)
+        myPrint(f"-[PATH] {path}/results/", readme, parameters)
         files = sorted(files)
         for file in files:
-            print(f"\t-[FILE] {file}")
+            if os.path.isdir(f"{path}/results/{file}"):
+                files2 = os.listdir(f"{path}/results/{file}")
+                files2 = sorted(files2)
+                for file2 in files2:
+                    myPrint(f"\t-[FILE] {file}/{file2}", readme, parameters)
+            else:       
+                myPrint(f"\t-[FILE] {file}", readme, parameters)
 
         if parameters["RUNS"] > 1:
-            print(f"\n==============================================")
-            print(f"[RUNS:{parameters['RUNS']}]")
-            # print(f"[BEST RUN POS : {globalVar.best['pos']}]")
-            # print(f"[BEST RUN FIT : {globalVar.best['fit']}]")
-            print(f"[POS MEAN: {bestsPos} ]")
-            # print(f"[Ec  MEAN: {meanBest:.4f}({stdBest:.4f})]")
-            #print(f"[Fr  MEAN: {fr_mean:.4f}({fr_std:.4f})]")
-            print(f"[Eo  MEAN: {eo_mean:.4f}({eo_std:.4f})]")
+            myPrint(f"\n==============================================", readme, parameters)
+            myPrint(f"[RUNS:{parameters['RUNS']}]", readme, parameters)
+            myPrint(f"[BEST POS (RUN {best['run']}) : {best['bestPos']}]", readme, parameters)
+            myPrint(f"[BEST FIT (RUN {best['run']}): {best['ec']:.04f}]", readme, parameters)
+            myPrint(f"[Ec  MEAN: {curError[0]:.4f}({curError[1]:.4f})]", readme, parameters)
+            myPrint(f"[Eo  MEAN: {offError[0]:.4f}({offError[1]:.4f})]", readme, parameters)
         else:
-            print(f"\n==============================================")
-            print(f"[RUNS:{parameters['RUNS']}]")
-            # print(f"[POS : {globalVar.best['pos']}]")
-            # print(f"[Ec  : {globalVar.best['fit']:.4f}]")
-            #print(f"[Fr  : {globalVar.Fr:.4f} %]")
-            print(f"[Eo  : {eo_mean:.4f}({eo_std:.4f})]")
+            myPrint(f"\n==============================================", readme, parameters)
+            myPrint(f"[RUNS:{parameters['RUNS']}]", readme, parameters)
+            myPrint(f"[BEST POS : {best['bestPos']}]", readme, parameters)
+            myPrint(f"[EC  : {best['ec']:.4f}]", readme, parameters)
+            myPrint(f"[Eo  : {offError[0]:.4f}({offError[1]:.4f})]", readme, parameters)
 
-        print(f"[RUNTIME(s): {float(totalTime):.02f} | {meanTime:.02f}({meanTimeStd:.02f})/run]")
-        print(f"==============================================")
+        myPrint(f"[RUNTIME(s): {float(totalTime):.02f} | {meanTime[0]:.02f}({meanTime[1]:.02f})/run {parameters['PARALLELIZATION']}]", readme, parameters)
+        myPrint(f"==============================================", readme, parameters)
 
 
     if(parameters["BEBC_ERROR"]):
         if (parameters["DEBUG_RUN"]):
-            print("\n[METRICS]")
+            myPrint("\n[METRICS]", readme, parameters)
             os.system(f"python3 {sys.path[0]}/metrics/bestBeforeChange.py -p {path} -d 1")
         else:
             os.system(f"python3 {sys.path[0]}/metrics/bestBeforeChange.py -p {path}")
@@ -174,20 +152,20 @@ def checkRuns(path):
 def getPids(script_name):
     pids = []
     for proc in psutil.process_iter():
-
         try:
             cmdline = proc.cmdline()
             pid = proc.pid
         except psutil.NoSuchProcess:
             continue
-
+        
         if (len(cmdline) >= 2
             and 'python' in cmdline[0]
             and os.path.basename(cmdline[1]) == script_name):
-
             pids.append(pid)
 
     return pids
+
+get_time = lambda f: os.stat(f).st_ctime
 
 def main():
 
@@ -205,18 +183,14 @@ def main():
         try:
             # datetime variables
             cDate = datetime.datetime.now()
-            globalVar.year = cDate.year
-            globalVar.month = cDate.month
-            globalVar.day = cDate.day
-            globalVar.hour = cDate.hour
-            globalVar.minute = cDate.minute
-            globalVar.cleanGlobalVars()
-
-            seed = globalVar.minute
+            date = {"year": cDate.year, "month": cDate.month, "day": cDate.day, "hour": cDate.hour, "minute": cDate.minute}
+            
+            seed = date["minute"]
             pathConfig = "."
             interface = 1
-
-
+            nruns = 0
+            running = 0
+            ran = 0
 
             #####################################
             # get the arguments
@@ -241,9 +215,6 @@ def main():
                     if arg != "./":
                         pathConfig = arg
 
-            print(f"\n\nAbEC running parameters:")
-            print(f"Graphical Interface: {interface}\nPath: {pathConfig}\nSeed: {seed}\n")
-
             #####################################
             # load the parameter files
             #####################################
@@ -260,9 +231,8 @@ def main():
                             parameters[f"{p0[i][0]}"] = p0[i][1]
 
                 else:
-                    errorWarning(0.1, f"{file}", "FILE_NOT_FOUND", f"The {file} file is mandatory!")
-
-
+                    errorWarning(0.1, f"{file}", "FILE_NOT_FOUND", f"The {file} file is mandatory!")                  
+                    
             if parameters["SEED"] >= 0:
                 seed = parameters["SEED"]
             
@@ -280,7 +250,7 @@ def main():
 
 
             pathExp += f"/{parameters['ALGORITHM']}"
-            pathExp = checkDirs(pathExp)
+            pathExp = checkDirs(pathExp, date)
 
             # Copy the config.ini file to the experiment dir
             if(parameters["CONFIG_COPY"]):
@@ -297,16 +267,22 @@ def main():
                     layout.reset = 0
                     initializeInterface(layout)
                     step = 0
+            
+            # file.write(headerReadme(pathExp, date))
+            # file.write(bodyReadme(pathExp, date))
+            # file.write(f"\nTotal exectution time(s):\n {executionTime:.02f}\n")
+            # file.write(footerReadme(pathExp, date))
+            readme = open(f"{pathExp}/readme.txt", "w") # open file to write the outputs
 
-            print(f"====================================================================================================")
-            print(f"                               AbEC -> Ajustable Evolutionary Components        ")
-            print(f"                                 A framework for Optimization Problems         ")
-            print(f"====================================================================================================")
-            print("*                                                                                                  *")
-            print("*                                                                                                  *")
-            print("*                                          I hope you enjoy!                                       *")
-            print("*                                                                                                  *")
-            print("*                                                                                                  *")
+            myPrint(f"====================================================================================================", readme, parameters)
+            myPrint(f"                               AbEC -> Ajustable Evolutionary Components        ", readme, parameters)
+            myPrint(f"                                 A framework for Optimization Problems         ", readme, parameters)
+            myPrint(f"====================================================================================================", readme, parameters)
+            myPrint("*                                                                                                  *", readme, parameters)
+            myPrint("*                                                                                                  *", readme, parameters)
+            myPrint("*                                          I hope you enjoy!                                       *", readme, parameters)
+            myPrint("*                                                                                                  *", readme, parameters)
+            myPrint("*                                                                                                  *", readme, parameters)
             if interface:
                 try:
                     layout.window.refresh()
@@ -402,44 +378,41 @@ def main():
                 if interface:
                     layout.window["-OUTPUT-"].update("")
                     layout.window.refresh()
-                print(f"[ALGORITHM SETUP]")
-                print(f"- Name: {parameters['ALGORITHM']}")
-                print(f"- Individuals p/ population:\t{parameters['POPSIZE']}")
+                myPrint(f"\n[ALGORITHM SETUP]", readme, parameters)
+                myPrint(f"- Name: {parameters['ALGORITHM']}", readme, parameters)
+                myPrint(f"- Individuals p/ population:\t{parameters['POPSIZE']}", readme, parameters)
 
-                print(f"- [OPTIMIZERS]:")
+                myPrint(f"- [OPTIMIZERS]:", readme, parameters)
                 for opt in algo.optimizers:
-                    print(f"-- [{opt[0]}]")
+                    myPrint(f"-- [{opt[0]}]", readme, parameters)
                     value = parameters[f"{opt[0]}_POP_PERC"]
-                    print(f"---- % of POP: {value*100}%")
+                    myPrint(f"---- % of POP: {value*100}%", readme, parameters)
                     for i in opt[1].params:
                         value = parameters[f"{opt[0]}_{i}"]
-                        print(f"---- {i}: {value}")
+                        myPrint(f"---- {i}: {value}", readme, parameters)
 
-                print()
-                print(f"- [COMPONENTS]:")
+                myPrint(f"- [COMPONENTS]:", readme, parameters)
                 for comp in algo.components:
-                    print(f"-- [{comp[0]}]")
-                    print(f"---- SCOPE: {comp[1].scope[0]}")
+                    myPrint(f"-- [{comp[0]}]", readme, parameters)
+                    myPrint(f"---- SCOPE: {comp[1].scope[0]}", readme, parameters)
                     for i in comp[1].params:
                         value = parameters[f"COMP_{comp[0]}_{i}"]
-                        print(f"---- {i}: {value}")
+                        myPrint(f"---- {i}: {value}", readme, parameters)
 
-                print()
-                print(f"[FRAMEWORK SETUP]")
-                print(f"- RUNS:\t\t {parameters['RUNS']}")
+                myPrint(f"\n[FRAMEWORK SETUP]", readme, parameters)
+                myPrint(f"- RUNS:\t\t {parameters['RUNS']}", readme, parameters)
                 if parameters["FINISH_RUN_MODE"] == 0:
-                    print(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}")
+                    myPrint(f"- NEVALS p/ RUN: {parameters['FINISH_RUN_MODE_VALUE']}", readme, parameters)
                 else:
-                    print(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}")
-                print(f"- SEED:\t\t {parameters['SEED']}")
+                    myPrint(f"- Target error: {parameters['FINISH_RUN_MODE_VALUE']}", readme, parameters)
+                myPrint(f"- SEED:\t\t {parameters['SEED']}", readme, parameters)
 
-                print()
-                print(f"[PROBLEM SETUP]")
+                myPrint(f"\n[PROBLEM SETUP]", readme, parameters)
                 if parameters["BENCHMARK"] == "NONE":
-                    print(f"- Name: Fitness Function")
+                    myPrint(f"- Name: Fitness Function", readme, parameters)
                 else:
-                    print(f"- Name: {parameters['BENCHMARK']}")
-                print(f"- NDIM: {parameters['NDIM']}")
+                    myPrint(f"- Name: {parameters['BENCHMARK']}", readme, parameters)
+                myPrint(f"- NDIM: {parameters['NDIM']}", readme, parameters)
 
             if interface:
                 try:
@@ -462,47 +435,65 @@ def main():
 
             # Headers of the log files
             writeLog(mode=0, filename=filename, header=header)
-
+            
+            if parameters["DEBUG_RUN"]:
+                myPrint("\n[RUNNING]\n", readme, parameters)
+                myPrint(f"RUN | GEN | NEVALS |                    BEST                   | ERROR", readme, parameters)
+            
+            readme.close()   # Close file for the runs
             #####################################
             # Main loop of the runs
             #####################################
-            if parameters["DEBUG_RUN"]:
-                print("\n[RUNNING]\n")
-                print(f"RUN | GEN | NEVALS |                    BEST                   | ERROR")
-
             startTime = time.time()
+            
             if parameters["PARALLELIZATION"]:
-                i = 0
-                for run in runs:
-                    while len(getPids("abec.py")) >= parameters["PROCESS"]:
-                        x = 5
-                    #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
+                prev_time = get_time(f"{pathExp}/results/results.csv")
+                for run in runs:    
+                    while True:
+                        if running < parameters["PROCESS"]:
+                            break
+                        t = get_time(f"{pathExp}/results/results.csv")
+                        if t != prev_time: # if the file changed, see how many runs have finished
+                            ran = checkRuns(pathExp)
+                            running = nruns - ran
+                            prev_time = t
                     os.system(f"./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
-                    
+                    #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
+                    nruns += 1
+                    running = nruns - ran
+                
+                # wait for the runs fininsh if parallelization on
+                prev_time = get_time(f"{pathExp}/results/results.csv")
+                while True:
+                    t = get_time(f"{pathExp}/results/results.csv")
+                    if t != prev_time: # if the file changed, see how many runs have finished
+                        ran = checkRuns(pathExp)
+                        if checkRuns(pathExp) >= parameters["RUNS"]:
+                            break
+                        prev_time = t
             else:
                 for run in runs:
                     if interface:
-                        abec(algo, parameters, run, layout)
+                        abec(run['id'], run['seed'], pathExp, interface, layout)
                     else:
                         abec(run['id'], run['seed'], pathExp, interface)
 
-            #####################################
-            # wait for the runs fininsh
-            #####################################
-            while getPids("abec.py"):
-                x = 5                
-
             executionTime = (time.time() - startTime)
-
             #####################################
             # analisys of the results
             #####################################
-            analysis(pathExp, parameters, executionTime)
-
+            readme = open(f"{pathExp}/readme.txt", "a") # open file to write the outputs
+            if parameters["ANALISYS"]:
+                analysis(pathExp, parameters, executionTime, readme)
+                
             #####################################
             # end of the experiment
             #####################################
-            print("[END]\nThx :)")
+            myPrint(f"[DATE: {date['month']:02}/{date['day']:02}/{date['year']} at {date['hour']:02}:{date['minute']:02}]", readme, parameters)
+            myPrint("[END] Thx :)", readme, parameters)
+            readme.write("\n\nAbEC developed by Alexandre Mascarenhas\n")
+            readme.write("For more informations please go to https://abec-ec.github.io\n")
+            readme.write("Eh nois")
             if interface:
                 layout.window["continueBT"].update(disabled=True)
                 layout.window["resetBT"].update(disabled=False)

@@ -1,5 +1,4 @@
 import random
-import aux.globalVar as globalVar
 import aux.aux as aux
 import abec
 import fitnessFunction.function as function
@@ -78,7 +77,7 @@ def fitnessFunction(x, runVars, parameters):
             #if(globalVar.peaks <= len(parameters["NPEAKS_MPB"])): # Save the optima values
             aux.saveOptima(runVars, parameters)
             #globalVar.peaks += 1
-        if parameters["CHANGES"] and globalVar.nevals in parameters["CHANGES_NEVALS"]:
+        if parameters["CHANGES"] and runVars.nevals in parameters["CHANGES_NEVALS"]:
             runVars.mpb.changePeaks()
             aux.saveOptima(runVars, parameters)
             runVars.change = 1

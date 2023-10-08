@@ -8,35 +8,24 @@ Alexandre Mascarenhas
 2023/1
 '''
 import itertools
-import random
-import datetime
-import csv
 import sys
 import getopt
 import time
 import copy
+import signal
+import platform
 import numbers
-import logging
 import json
-import shutil
 import numpy as np
-import pandas as pd
-from deap import benchmarks
-from tqdm import tqdm
 import matplotlib.colors as mcolors
 # AbEC files
 import plot.currentError as ecPlot
 import plot.offlineError as eoPlot
 import plot.searchSpace as spPlot
-import aux.globalVar as globalVar
 import aux.fitFunction as fitFunction
 import plot.rtPlot as rtPlot
 import gui.gui as gui
 from aux.aux import *
-import optimizers.pso as pso
-import optimizers.de as de
-import optimizers.ga as ga
-import optimizers.es as es
 from metrics.offlineError import offlineError
 from metrics.fillingRate import fillingRate
 
@@ -58,6 +47,12 @@ def updateBest(ind, best):
         ind["best_pos"] = ind["pos"]
 
     return ind, best
+
+
+def myPrint(string, file, parameters):
+    if parameters["TERMINAL_OUTPUT"]:
+        print(string)
+    file.write(f"{string}\n")
 
 
 
@@ -137,12 +132,13 @@ class population():
         self.ind = []
         if fill == 1:
             for i in range(1, parameters["POPSIZE"]+1):
-                self.addInd(parameters, i)
+                self.addInd(runVars, parameters, i)
 
-        self.best = self.createInd(parameters, 0)
+        self.best = self.createInd(runVars, parameters, 0)
 
-    def createInd(self, parameters, ind_id=-1):
+    def createInd(self, runVars, parameters, ind_id=-1):
         attr = {"pop_id": self.id, \
+                "run": runVars.id(), \
                 "id": ind_id, \
                 "type": "NaN", \
                 "pos": [0 for _ in range(parameters["NDIM"])], \
@@ -154,7 +150,7 @@ class population():
                 }
         return attr
 
-    def addInd(self, parameters, ind_id=-1):
+    def addInd(self, runVars, parameters, ind_id=-1):
         flag = 0
         ids = [d["id"] for d in self.ind]
         while flag == 0:
@@ -162,7 +158,7 @@ class population():
                 ind_id += 1
             else:
                 flag = 1
-        self.ind.append(self.createInd(parameters, ind_id))
+        self.ind.append(self.createInd(runVars, parameters, ind_id))
 
     def resetId():
         population.newid = itertools.count(1).__next__    # Get a new id for the population
@@ -309,6 +305,9 @@ class runVariables():
 Framework
 '''
 def abec(run, seed, path, layout = 0):
+    # get the date by the path
+    date = path.split("/")
+    date = {"year": date[-2][0:4], "month": date[-2][5:7], "day": date[-2][8:], "hour": date[-1][0:2], "minute": date[-1][3:]}
     
     #####################################
     # initilize the algorithm with the parameters
@@ -338,19 +337,21 @@ def abec(run, seed, path, layout = 0):
     
     
     if parameters["LOG_ALL"]: # log each individual and its positions
-        runVars.filename_LA = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_LOGALL.csv"
+        runVars.filename_LA = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{date['year']}{date['month']:02}{date['day']:02}_{date['hour']:02}{date['minute']:02}_{runVars.id():04}_{runVars.seed()}_LOGALL.csv"
         writeLog(mode=0, filename=runVars.filename_LA, header=runVars.header_LA)
     if parameters["BENCHMARK"] != "CUSTOM" or parameters["BENCHMARK"] != "custom": # if benchmark sabe the optima points
-        runVars.filename_OPT = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_OPTIMA.csv"
+        runVars.filename_OPT = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{date['year']}{date['month']:02}{date['day']:02}_{date['hour']:02}{date['minute']:02}_{runVars.id():04}_{runVars.seed()}_OPTIMA.csv"
         writeLog(mode=0, filename=runVars.filename_OPT, header=runVars.header_OPT)
         
-    runVars.filename_RUN = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{globalVar.year}{globalVar.month:02}{globalVar.day:02}_{globalVar.hour:02}{globalVar.minute:02}_{runVars.id():04}_{runVars.seed()}_RUN.csv"  
+    runVars.filename_RUN = f"{path}/results/{runVars.id():04}/{parameters['ALGORITHM']}_{date['year']}{date['month']:02}{date['day']:02}_{date['hour']:02}{date['minute']:02}_{runVars.id():04}_{runVars.seed()}_RUN.csv"  
     writeLog(mode=0, filename=runVars.filename_RUN, header=runVars.header_RUN)
 
+    readme = open(f"{path}/readme.txt", "a") # open file to write the outputs
+
     if parameters["DEBUG_RUN_2"]:
-        print(f"\n==============================================")
-        print(f"[START][RUN:{runVars.id():02}]\n[NEVALS:{runVars.nevals:06}]")
-        print(f"==============================================")
+        myPrint(f"\n==============================================", readme, parameters)
+        myPrint(f"[START][RUN:{runVars.id():02}]\n[NEVALS:{runVars.nevals:06}]", readme, parameters)
+        myPrint(f"==============================================", readme, parameters)
 
     #####################################
     # Start the algorithm
@@ -372,7 +373,7 @@ def abec(run, seed, path, layout = 0):
             ind["ae"] = 0
             # Debug in individual level
             if parameters["DEBUG_IND"]:
-                print(f"[POP {subpop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {runVars.best['id']:04}: {runVars.best['pos']}\t\tERROR:{runVars.best['fit']:.04f}]")
+                myPrint(f"[POP {subpop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {runVars.best['id']:04}: {runVars.best['pos']}\t\tERROR:{runVars.best['fit']:.04f}]", readme, parameters)
                 
             subpop.ind[ind_i] = copy.deepcopy(subpop.ind[ind_i]) # Apply the changes to the ind
             
@@ -404,13 +405,13 @@ def abec(run, seed, path, layout = 0):
     #####################################
     
     if parameters["DEBUG_GEN"]:
-        #print(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}][Eo: {Eo:.04f}]")
-        print(f"[RUN {runVars.id():02}][GEN {runVars.gen:04}][NE {runVars.nevals:06}][POP {runVars.best['pop_id']:02}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}]")
+        #myPrint(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}][Eo: {Eo:.04f}]")
+        myPrint(f"[RUN {runVars.id():02}][GEN {runVars.gen:04}][NE {runVars.nevals:06}][POP {runVars.best['pop_id']:02}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}]", readme, parameters)
         
     if parameters["DEBUG_POP"]:
         for subpop in runVars.pop:
-            print(f"[POP {subpop.id:04}][BEST {subpop.best['id']:04}: {subpop.best['pos']} ERROR:{subpop.best['fit']}]")
- 
+            myPrint(f"[POP {subpop.id:04}][BEST {subpop.best['id']:04}: {subpop.best['pos']} ERROR:{subpop.best['fit']}]", readme, parameters)
+
     ###########################################################################
     # LOOP UNTIL FINISH THE RUN
     ###########################################################################
@@ -419,9 +420,9 @@ def abec(run, seed, path, layout = 0):
         # Apply the Global Diversity Components
         ###########################################
         for i in range(len(algo.comps_global["GDV"])):
-            runVars.randomInit = algo.comps_global["GDV"][i].component(runVars.pop, parameters, runVars.randomInit)
+            runVars.randomInit, runVars = algo.comps_global["GDV"][i].component(runVars.pop, runVars, parameters, runVars.randomInit)
 
-        #print(runVars.randomInit)
+        #myPrint(runVars.randomInit)
         for id, i in enumerate(runVars.randomInit, 0):
             if i:
                 runVars.pop[id], runVars = randInit(runVars.pop[id], runVars, parameters)
@@ -432,7 +433,7 @@ def abec(run, seed, path, layout = 0):
         ###########################################
 
         for i in range(len(algo.comps_global["GER"])):
-            runVars.pop = algo.comps_global["GER"][i].component(runVars.pop, parameters)
+            runVars.pop, runVars = algo.comps_global["GER"][i].component(runVars.pop, runVars, parameters)
 
 
         ###########################################
@@ -440,7 +441,7 @@ def abec(run, seed, path, layout = 0):
         ###########################################
 
         for i in range(len(algo.comps_global["GET"])):
-            runVars.best = algo.comps_global["GET"][i].component(runVars.best, parameters)
+            runVars.best, runVars = algo.comps_global["GET"][i].component(runVars.best, runVars, parameters)
 
 
         # Verification if all pop were reeavluated after change
@@ -449,18 +450,18 @@ def abec(run, seed, path, layout = 0):
             for subpop in runVars.pop:
                 sumPops += subpop.change
 
-            #print(f"sumpops: {sumPops} {runVars.nevals} {len(pop)}")
+            #myPrint(f"sumpops: {sumPops} {runVars.nevals} {len(pop)}")
             if sumPops == len(runVars.pop):
                 for subpop in runVars.pop:
                     subpop.change = 0
                 runVars.change = 0
-                #print("CABOU")
+                #myPrint("CABOU")
 
         for subpop_i, subpop in enumerate(runVars.pop):
 
             # Change detection component in the environment
             if runVars.change:
-                #print(f"Change: {runVars.nevals}")
+                #myPrint(f"Change: {runVars.nevals}")
                 runVars.best["fit"] = "NaN"
                 runVars.changeEV = 1
                 if subpop.change == 0:
@@ -504,7 +505,7 @@ def abec(run, seed, path, layout = 0):
                 ind["ae"] = 0 # Allow new evaluation
                 # Debug in individual level
                 if parameters["DEBUG_IND"]:
-                    print(f"[POP {subpop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {runVars.best['id']:04}: {runVars.best['pos']}\t\tERROR:{runVars.best['fit']:.04f}]")
+                    myPrint(f"[POP {subpop.id:04}][IND {ind['id']:04}: {ind['pos']}\t\tERROR:{ind['fit']:.04f}]\t[BEST {runVars.best['id']:04}: {runVars.best['pos']}\t\tERROR:{runVars.best['fit']:.04f}]", readme, parameters)
                     
                 subpop.ind[ind_i] = copy.deepcopy(subpop.ind[ind_i])
                     
@@ -548,10 +549,10 @@ def abec(run, seed, path, layout = 0):
 
         if parameters["DEBUG_POP"]:
             for subpop in runVars.pop:
-                print(f"[POP {subpop.id:04}][BEST {subpop.best['id']:04}: {subpop.best['pos']} ERROR:{subpop.best['fit']}]")
+                myPrint(f"[POP {subpop.id:04}][BEST {subpop.best['id']:04}: {subpop.best['pos']} ERROR:{subpop.best['fit']}]", readme, parameters)
 
         if parameters["DEBUG_GEN"]:
-            print(f"[RUN:{runVars.id():02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}][Eo: {runVars.Eo:.04f}]")
+            myPrint(f"[RUN:{runVars.id():02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}][Eo: {runVars.Eo:.04f}]", readme, parameters)
 
 
     #####################################
@@ -565,22 +566,28 @@ def abec(run, seed, path, layout = 0):
     writeLog(mode=1, filename=filename, header=header, data=log)
 
     if parameters["DEBUG_RUN"]:
-        #print(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.4f}][Eo:{Eo:.4f}]")
+        #myPrint(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.4f}][Eo:{Eo:.4f}]")
         pos = []
         for p in runVars.best["pos"]:
             pos.append(float(f"{p:.2f}"))
-        print(f"{runVars.id():02}   {runVars.gen:05}  {runVars.nevals:06}  {runVars.best['id']:04}:{pos}  {runVars.best['fit']:.04f}")
+        myPrint(f"{runVars.id():02}   {runVars.gen:05}  {runVars.nevals:06}  {runVars.best['id']:04}:{pos}  {runVars.best['fit']:.04f}", readme, parameters)
     if parameters["DEBUG_RUN_2"]:
-        print(f"\n==============================================")
-        print(f"[RUN:{runVars.id():02}]\n[GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}]")
-        print(f"[BEST: IND {runVars.best['id']:04} from POP {runVars.best['pop_id']:04}")
-        print(f"    -[POS: {runVars.best['pos']}]")
-        print(f"    -[Error: {runVars.best['fit']}]")
-        print(f"[RUNTIME: {str(executionTime)} s]")
-        print(f"==============================================")
-
+        myPrint(f"\n==============================================", readme, parameters)
+        myPrint(f"[RUN:{runVars.id():02}]\n[GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}]", readme, parameters)
+        myPrint(f"[BEST: IND {runVars.best['id']:04} from POP {runVars.best['pop_id']:04}", readme, parameters)
+        myPrint(f"    -[POS: {runVars.best['pos']}]", readme, parameters)
+        myPrint(f"    -[Error: {runVars.best['fit']}]", readme, parameters)
+        myPrint(f"[RUNTIME: {str(executionTime)} s]", readme, parameters)
+        myPrint(f"==============================================", readme, parameters)
 
     runVars.npops = len(runVars.pop)
+    
+    readme.close()  # Close file 
+    
+    if parameters["PARALLELIZATION"]:
+        PID = os.getpid()
+        os.kill(PID, signal.SIGTERM)
+            
 
 
 if __name__ == '__main__':

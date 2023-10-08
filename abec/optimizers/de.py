@@ -1,7 +1,6 @@
 import sys
 import copy
 import abec
-import aux.globalVar as globalVar
 from aux.aux import errorWarning
 
 '''
@@ -20,7 +19,7 @@ def cp(parameters):
     return 1
 
 
-def optimizer(pop, best, parameters):
+def optimizer(pop, best, runVars, parameters):
     tempPop = copy.deepcopy(pop)
     tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"]) # Order the individuals by the id number
 
@@ -29,7 +28,7 @@ def optimizer(pop, best, parameters):
     for ind in dePop:
         x = []
         candidates = [c for c in dePop if c["id"] != ind["id"]]
-        a, b, c = globalVar.rng.choice(candidates, 3, replace=False) # Select the candidate individuals
+        a, b, c = runVars.rng.choice(candidates, 3, replace=False) # Select the candidate individuals
 
         for d in range(parameters["NDIM"]):
             x.append(a["pos"][d] + parameters["DE_F"]*(b["pos"][d] - c["pos"][d]))
@@ -39,7 +38,7 @@ def optimizer(pop, best, parameters):
                 x[d] = parameters["MIN_POS"]
 
         for d in range(parameters["NDIM"]):
-            if globalVar.rng.random() < parameters["DE_CR"]:
+            if runVars.rng.random() < parameters["DE_CR"]:
                 ind["pos"][d] = x[d]
 
     for ind in dePop:
@@ -48,9 +47,9 @@ def optimizer(pop, best, parameters):
             if ind["id"] == pop.ind[i]["id"]:
                 if ind["fit"] < pop.ind[i]["fit"]:
                     pop.ind[i] = ind.copy()
-                    ind, globalVar.best = abec.updateBest(pop.ind[i], globalVar.best)
+                    ind, runVars.best = abec.updateBest(pop.ind[i], runVars.best)
                 else:
                     pop.ind[i]["ae"] = 1    # Assure that this individual will not be evaluated again
 
-    return pop
+    return pop, runVars
 
