@@ -37,7 +37,7 @@ def checkDirs(path, date):
         os.mkdir(pathTmp)
     return path
 
-def myPrint(string, file, parameters):
+def myPrint(string, file, parameters = {"TERMINAL_OUTPUT": 1}):
     if parameters["TERMINAL_OUTPUT"]:
         print(string)
     file.write(f"{string}\n")

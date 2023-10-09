@@ -95,9 +95,7 @@ def configAxes(ax, type = 1):
 
 class interface():
 
-    def __init__(self, parameters):
-
-        NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
+    def __init__(self):
         self.reset = 0
         self.enablePF = 1
         self.enableSS = 0
@@ -160,10 +158,10 @@ class interface():
 
 
         self.col3 = sg.Column([
-            [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font=("FreeMono", 14, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
+            [sg.Frame('Output:',
+                [[sg.Output(size=(300, 14), font=("FreeMono", 12, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
                 [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT", disabled=True)]
-               ], size=(1140, 250))
+               ], size=(1140, 300))
            ]
         ])
 
@@ -191,7 +189,7 @@ class interface():
 
    # window = sg.Window('Columns and Frames', layout)
 
-    def launch(self, parameters):
+    def launch(self):
         # Configure colors
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"

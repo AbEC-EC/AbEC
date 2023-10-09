@@ -54,6 +54,7 @@ def initializeInterface(layout):
     layout.window["program.sr"].update(False, visible=False)
     layout.window["program.ct"].update(False, visible=False)
     layout.window["program.aad"].update(False, visible=False)
+    layout.window["continueBT"].update("Continue")
     layout.window["continueBT"].update(disabled=False)
     layout.window["resetBT"].update(disabled=True)
 
@@ -149,6 +150,13 @@ def checkRuns(path):
     df = pd.read_csv(f"{path}/results/results.csv")
     return df.shape[0]
 
+def printRuns(layout, path):
+    fileTmp = open(f"{path}/printTmp.txt", "r")
+    print(fileTmp.read())
+    layout.window.refresh()
+    fileTmp.close()
+    os.remove(f"{path}/printTmp.txt")
+
 def getPids(script_name):
     pids = []
     for proc in psutil.process_iter():
@@ -167,14 +175,30 @@ def getPids(script_name):
 
 get_time = lambda f: os.stat(f).st_ctime
 
+
+def loadConfigFiles(parameters, pathConfig):
+    #Read the parameters from the config file
+    parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+    for file in parametersFiles:
+        if os.path.isfile(f"{pathConfig}/{file}"):
+            with open(f"{pathConfig}/{file}") as f:
+                p0 = list(json.loads(f.read()).items())
+                for i in range(len(p0)):
+                    parameters[f"{p0[i][0]}"] = p0[i][1]
+        else:
+            errorWarning(0.1, f"{file}", "FILE_NOT_FOUND", f"The {file} file is mandatory!")   
+    return parameters
+
 def main():
 
     #####################################
     # log file for debbug
     #####################################
-    #LOG_FILENAME = "./aux/log/log_last_run.txt"
-    #logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
-    #logging.debug('This message should go to the log file')
+    LOG_FILENAME = "./aux/log/log_last_run.txt"
+    if os.path.isfile(LOG_FILENAME):
+        os.remove(LOG_FILENAME)
+    logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+    logging.debug('This message should go to the log file')
 
     #####################################
     # start the framework
@@ -214,71 +238,36 @@ def main():
                 elif opt in ("-p", "--path"):
                     if arg != "./":
                         pathConfig = arg
-
-            #####################################
-            # load the parameter files
-            #####################################
-            parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
-            algoParameters, algo = algoConfig()
-            parameters = algoParameters | frameConfig() | problemConfig()
-
-            #Read the parameters from the config file
-            for file in parametersFiles:
-                if os.path.isfile(f"{pathConfig}/{file}"):
-                    with open(f"{pathConfig}/{file}") as f:
-                        p0 = list(json.loads(f.read()).items())
-                        for i in range(len(p0)):
-                            parameters[f"{p0[i][0]}"] = p0[i][1]
-
-                else:
-                    errorWarning(0.1, f"{file}", "FILE_NOT_FOUND", f"The {file} file is mandatory!")                  
-                    
-            if parameters["SEED"] >= 0:
-                seed = parameters["SEED"]
             
-            algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
-
-
-            #####################################
-            # create the dir of the experiment
-            #####################################
-            if pathConfig == ".":
-                pathExp = parameters["PATH"]
-                checkCreateDir(pathExp)
-            else:
-                pathExp = pathConfig
-
-
-            pathExp += f"/{parameters['ALGORITHM']}"
-            pathExp = checkDirs(pathExp, date)
-
-            # Copy the config.ini file to the experiment dir
-            if(parameters["CONFIG_COPY"]):
-                for file in parametersFiles:
-                    shutil.copyfile(f"{pathConfig}/{file}", f"{pathExp}/{file}")
-
             if interface:
                 if "layout" not in locals():
-                    layout = gui.interface(parameters)
-                    layout.launch(parameters)
+                    layout = gui.interface()
+                    layout.launch()
                 else:
                     layout.ax_pf = gui.configAxes(layout.ax_pf)
                     layout.ax_ss = gui.configAxes(layout.ax_ss, type = 2)
                     layout.reset = 0
                     initializeInterface(layout)
                     step = 0
+            else:
+                layout = 0
             
-            readme = open(f"{pathExp}/readme.txt", "w") # open file to write the outputs
+            readme = open(f"readme.txt", "w") # open file to write the outputs
+            if interface:
+                myPrint(f"==============================================================================================================", readme)
+                myPrint(f"                                   AbEC -> Ajustable Evolutionary Components        ", readme)
+                myPrint(f"                                     A framework for Optimization Problems         ", readme)
+                myPrint(f"==============================================================================================================", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                                            I hope you enjoy!                                               *", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                                             Press Continue                                                 *", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                                                                                                            *", readme)
+                myPrint("*                        For more informations please visit: https://abec-ec.github.io                       *", readme)
 
-            myPrint(f"====================================================================================================", readme, parameters)
-            myPrint(f"                               AbEC -> Ajustable Evolutionary Components        ", readme, parameters)
-            myPrint(f"                                 A framework for Optimization Problems         ", readme, parameters)
-            myPrint(f"====================================================================================================", readme, parameters)
-            myPrint("*                                                                                                  *", readme, parameters)
-            myPrint("*                                                                                                  *", readme, parameters)
-            myPrint("*                                          I hope you enjoy!                                       *", readme, parameters)
-            myPrint("*                                                                                                  *", readme, parameters)
-            myPrint("*                                                                                                  *", readme, parameters)
             if interface:
                 try:
                     layout.window.refresh()
@@ -288,6 +277,8 @@ def main():
                     layout.window["-ALGO-"].update(disabled=False)
                     layout.window["-PRO-"].update(disabled=False)
                     layout.window["resetBT"].update(disabled=False)
+                    layout.window["-OUTPUT-"].update("")
+                    layout.window.refresh()
                     print("[Please check if the configuration files are ok and then press continue...]")
                     print("\n[ - Experiment configuration file: Framework parameters (e.g. number of runs, path of the files, number of evaluations, ...)]")
                     print("\n[ - Algorithm configuration file: Functioning of the algorithm itself (e.g. Population size, optimizers, ...)]")
@@ -301,7 +292,38 @@ def main():
                     layout.window.refresh()
                 except SyntaxError:
                     pass
+                
+            readme.close()
+            #####################################
+            # load the parameter files
+            #####################################
+            parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+            algoParameters, algo = algoConfig()
+            parameters = algoParameters | frameConfig() | problemConfig()
+            
+            parameters = loadConfigFiles(parameters, pathConfig)     
+                    
+            if parameters["SEED"] >= 0:
+                seed = parameters["SEED"]
+            
+            algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
+            #####################################
+            # create the dir of the experiment
+            #####################################
+            if pathConfig == ".":
+                pathExp = parameters["PATH"]
+                checkCreateDir(pathExp)
+            else:
+                pathExp = pathConfig
 
+            pathExp += f"/{parameters['ALGORITHM']}"
+            pathExp = checkDirs(pathExp, date)
+
+            # Copy the config.ini file to the experiment dir
+            if(parameters["CONFIG_COPY"]):
+                for file in parametersFiles:
+                    shutil.copyfile(f"{pathConfig}/{file}", f"{pathExp}/{file}")
+            readme = open(f"{pathExp}/results/readme.txt", "a") # open file to write the outputs
 
             if interface:
                 layout.window["-EXP-"].update(disabled=True)
@@ -335,7 +357,7 @@ def main():
                     pass
 
 
-            if interface:
+            if interface and False:
                 try:
                     time.sleep(1)
                     print("[Loaded]\n")
@@ -413,11 +435,14 @@ def main():
             if interface:
                 try:
                     layout.window.refresh()
-                    print("\n[Press continue to start...]")
+                    print("\n[Check if the setup is correct, if so, press continue to start...]")
                     layout.set()
                     if layout.reset:
                         continue
+                    #layout.window["continueBT"].update("Cancel")
+                    layout.window["continueBT"].update(disabled=True)
                     layout.window["resetBT"].update(disabled=True)
+                    layout.window["-OUTPUT-"].update("")
                     layout.window.refresh()
                 except SyntaxError:
                     pass
@@ -435,6 +460,8 @@ def main():
             if parameters["DEBUG_RUN"]:
                 myPrint("\n[RUNNING]\n", readme, parameters)
                 myPrint(f"RUN | GEN | NEVALS |                    BEST                   | ERROR", readme, parameters)
+                if layout:
+                    layout.window.refresh()
             
             readme.close()   # Close file for the runs
             #####################################
@@ -453,6 +480,9 @@ def main():
                             ran = checkRuns(pathExp)
                             running = nruns - ran
                             prev_time = t
+                        if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
+                            printRuns(layout, pathExp)
+                    
                     os.system(f"./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
                     #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
                     nruns += 1
@@ -467,18 +497,22 @@ def main():
                         if checkRuns(pathExp) >= parameters["RUNS"]:
                             break
                         prev_time = t
+                        
+                    if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
+                        printRuns(layout, pathExp)
+                if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
+                        printRuns(layout, pathExp)
             else:
                 for run in runs:
+                    abec(run['id'], run['seed'], pathExp, interface)
                     if interface:
-                        abec(run['id'], run['seed'], pathExp, interface, layout)
-                    else:
-                        abec(run['id'], run['seed'], pathExp, interface)
+                        layout.window.refresh()
 
             executionTime = (time.time() - startTime)
             #####################################
             # analisys of the results
             #####################################
-            readme = open(f"{pathExp}/readme.txt", "a") # open file to write the outputs
+            readme = open(f"{pathExp}/results/readme.txt", "a") # open file to write the outputs
             if parameters["ANALISYS"]:
                 analysis(pathExp, parameters, executionTime, readme)
                 
