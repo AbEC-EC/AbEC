@@ -365,3 +365,18 @@ def problemConfig():
         "LAMBDA_MPB": 0 \
     }
     return config
+
+
+def headerReadme(readme):
+    myPrint(f"=================================================================", readme)
+    myPrint(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
+    myPrint(f"             A framework for Optimization Problems         ", readme)
+    myPrint(f"=================================================================", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("*                    I hope you enjoy!                           *", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("*                                                                *", readme)
+    myPrint("* For more informations please visit: https://abec-ec.github.io  *", readme)

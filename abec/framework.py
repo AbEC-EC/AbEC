@@ -252,21 +252,20 @@ def main():
             else:
                 layout = 0
             
-            readme = open(f"readme.txt", "w") # open file to write the outputs
             if interface:
-                myPrint(f"==============================================================================================================", readme)
-                myPrint(f"                                   AbEC -> Ajustable Evolutionary Components        ", readme)
-                myPrint(f"                                     A framework for Optimization Problems         ", readme)
-                myPrint(f"==============================================================================================================", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                                            I hope you enjoy!                                               *", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                                             Press Continue                                                 *", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                                                                                                            *", readme)
-                myPrint("*                        For more informations please visit: https://abec-ec.github.io                       *", readme)
+                print(f"==============================================================================================================")
+                print(f"                                   AbEC -> Ajustable Evolutionary Components        ")
+                print(f"                                     A framework for Optimization Problems         ")
+                print(f"==============================================================================================================")
+                print("*                                                                                                            *")
+                print("*                                                                                                            *")
+                print("*                                            I hope you enjoy!                                               *")
+                print("*                                                                                                            *")
+                print("*                                                                                                            *")
+                print("*                                             Press Continue                                                 *")
+                print("*                                                                                                            *")
+                print("*                                                                                                            *")
+                print("*                        For more informations please visit: https://abec-ec.github.io                       *")
 
             if interface:
                 try:
@@ -293,7 +292,6 @@ def main():
                 except SyntaxError:
                     pass
                 
-            readme.close()
             #####################################
             # load the parameter files
             #####################################
@@ -323,7 +321,10 @@ def main():
             if(parameters["CONFIG_COPY"]):
                 for file in parametersFiles:
                     shutil.copyfile(f"{pathConfig}/{file}", f"{pathExp}/{file}")
+                    
+            
             readme = open(f"{pathExp}/results/readme.txt", "a") # open file to write the outputs
+            headerReadme(readme)
 
             if interface:
                 layout.window["-EXP-"].update(disabled=True)
