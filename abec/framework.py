@@ -303,6 +303,12 @@ def main():
                     
             if parameters["SEED"] >= 0:
                 seed = parameters["SEED"]
+                
+            NCPUS = os.cpu_count()
+            if parameters["NPROCESS"] == "MAX":
+                parameters["NPROCESS"] = NCPUS
+            elif parameters["NPROCESS"] == "AUTO":
+                parameters["NPROCESS"] = int((2/3)*NCPUS)
             
             algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
             #####################################
@@ -468,13 +474,13 @@ def main():
             #####################################
             # Main loop of the runs
             #####################################
-            startTime = time.time()
-            
+            startTime = time.time()               
+                
             if parameters["PARALLELIZATION"]:
                 prev_time = get_time(f"{pathExp}/results/results.csv")
                 for run in runs:    
                     while True:
-                        if running < parameters["PROCESS"]:
+                        if running < parameters["NPROCESS"]:
                             break
                         t = get_time(f"{pathExp}/results/results.csv")
                         if t != prev_time: # if the file changed, see how many runs have finished
