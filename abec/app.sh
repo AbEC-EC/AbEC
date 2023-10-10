@@ -7,11 +7,8 @@ i=1
 pos=0
 v=("$@")
 
-if [ "$#" -eq  "0" ]
-    then
-    # echo "Default parameters is gonna be used"
-else
-    # echo "User parameters is gonna be used"
+if [ "$#" !=  "0" ]
+then
     for arg in $v[@]
     do
         case $arg in
