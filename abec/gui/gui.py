@@ -260,11 +260,11 @@ class interface():
                 self.reset = 1
                 break
             elif event == '-EXP-':
-                os.system("open ./frameConfig.ini")
+                os.system("xdg-open ./frameConfig.ini")
             elif event == '-ALGO-':
-                os.system("open ./algoConfig.ini")
+                os.system("xdg-open ./algoConfig.ini")
             elif event == '-PRO-':
-                os.system("open ./problemConfig.ini")
+                os.system("xdg-open ./problemConfig.ini")
             elif event == '-HAB-PF':
                 if values["-HAB-PF"] == True:
                     self.enablePF = 1
