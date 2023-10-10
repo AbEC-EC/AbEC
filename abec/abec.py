@@ -542,9 +542,9 @@ def abec(run, seed, path, interface):
     
     readme.close()  # Close file 
     
-    if parameters["PARALLELIZATION"]:
-        PID = os.getpid()
-        os.kill(PID, signal.SIGTERM)
+    # if parameters["PARALLELIZATION"]:
+    #     PID = os.getpid()
+    #     os.kill(PID, signal.SIGTERM)
             
 
 
