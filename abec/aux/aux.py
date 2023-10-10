@@ -330,7 +330,7 @@ def frameConfig():
         "PATH": "../experiments", \
         "LOG_ALL": 0, \
         "PARALLELIZATION": 1, \
-        "PROCESS": 2, \
+        "NPROCESS": "AUTO", \
         "TERMINAL_OUTPUT": 0, \
         "DEBUG_RUN": 1, \
         "DEBUG_RUN_2": 0, \
