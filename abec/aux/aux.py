@@ -41,6 +41,16 @@ def myPrint(string, file, parameters = {"TERMINAL_OUTPUT": 1}):
     if parameters["TERMINAL_OUTPUT"]:
         print(string)
     file.write(f"{string}\n")
+    
+def myPrint2(string, path):
+    file = open(f"{path}/printTmp.txt", "w")
+    file.write(f"{string}")
+    file.close()
+    
+def myPrint3(string, file):
+    file.write(f"{string}\n")
+    #file.close()
+    
 
 def errorWarning(nError="0.0", file="NONE", parameter="NONE", text="NONE"):
     '''
@@ -367,16 +377,31 @@ def problemConfig():
     return config
 
 
-def headerReadme(readme):
-    myPrint(f"=================================================================", readme)
-    myPrint(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
-    myPrint(f"             A framework for Optimization Problems         ", readme)
-    myPrint(f"=================================================================", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("*                    I hope you enjoy!                           *", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("*                                                                *", readme)
-    myPrint("* For more informations please visit: https://abec-ec.github.io  *", readme)
+def headerReadme(readme, interface):
+    if not interface:
+        myPrint(f"=================================================================", readme)
+        myPrint(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
+        myPrint(f"             A framework for Optimization Problems         ", readme)
+        myPrint(f"=================================================================", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                    I hope you enjoy!                          *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("* For more informations please visit: https://abec-ec.github.io *", readme)
+    else:
+        myPrint3(f"=================================================================", readme)
+        myPrint3(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
+        myPrint3(f"             A framework for Optimization Problems         ", readme)
+        myPrint3(f"=================================================================", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                    I hope you enjoy!                          *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("* For more informations please visit: https://abec-ec.github.io *", readme)
+        

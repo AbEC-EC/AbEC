@@ -1,7 +1,6 @@
 import random
 import aux.aux as aux
-import abec
-import fitnessFunction.function as function
+import function
 from deap import benchmarks
 from deap.benchmarks import movingpeaks
 
@@ -90,7 +89,7 @@ def fitnessFunction(x, runVars, parameters):
         globalOP = 0
 
 
-    if parameters["BENCHMARK"] =="NONE":
+    if parameters["BENCHMARK"] =="CUSTOM":
         fitness = fitInd
     else:
         fitness = abs(fitInd - globalOP )

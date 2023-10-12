@@ -12,8 +12,6 @@ import sys
 import getopt
 import time
 import copy
-import signal
-import platform
 import numbers
 import json
 import numpy as np
@@ -67,12 +65,14 @@ def evaluate(x, runVars, parameters, be = 0):
     '''
     
     position = []
+    '''
     for i in x["pos"]:
         pos = round(i, runVars.res)
         position.append(pos)
     if position not in runVars.sspace:
         runVars.sspace.append(position)
     runVars.Fr = (len(runVars.sspace)/runVars.tot_pos)*100
+    '''
     #print(globalVar.sspace)
     #print(globalVar.Fr)
 

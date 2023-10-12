@@ -50,6 +50,7 @@ def initializeInterface(layout):
     layout.window["-ALGO-"].update(disabled=True)
     layout.window["-PRO-"].update(disabled=True)
     layout.window["-COMPS-"].update(visible=False)
+    layout.window["butao"].update("Choose the file")
     layout.window["browseFit"].update(disabled=True)
     layout.window["program.sr"].update(False, visible=False)
     layout.window["program.ct"].update(False, visible=False)
@@ -271,7 +272,7 @@ def main():
                 try:
                     layout.window.refresh()
                     time.sleep(1)
-                    layout.set(step = 0)
+                    layout.set(pathConfig, step = 0)
                     layout.window["-EXP-"].update(disabled=False)
                     layout.window["-ALGO-"].update(disabled=False)
                     layout.window["-PRO-"].update(disabled=False)
@@ -282,7 +283,7 @@ def main():
                     print("\n[ - Experiment configuration file: Framework parameters (e.g. number of runs, path of the files, number of evaluations, ...)]")
                     print("\n[ - Algorithm configuration file: Functioning of the algorithm itself (e.g. Population size, optimizers, ...)]")
                     print("\n[ - Problem configuration file: e.g. number of dimensions, dynamic or not, ...]")
-                    layout.set()
+                    layout.set(pathConfig)
                     if layout.reset:
                         continue
                     layout.window["-OUTPUT-"].update("")
@@ -311,6 +312,7 @@ def main():
                 parameters["NPROCESS"] = int((2/3)*NCPUS)
             
             algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
+            
             #####################################
             # create the dir of the experiment
             #####################################
@@ -332,8 +334,9 @@ def main():
                     os.mkdir(pathExp+"/results")
                     
             
-            readme = open(f"{pathExp}/results/readme.txt", "a") # open file to write the outputs
-            headerReadme(readme)
+            readme = open(f"{pathExp}/results/readme.txt", "w") # open file to write the outputs
+            headerReadme(readme, interface)
+                
             
             saveTheDate = open(f"{pathExp}/savethedate.txt", "w")
             saveTheDate.write(f"{date['year']}/{date['month']:02}/{date['day']:02}/{date['hour']:02}/{date['minute']:02}")
@@ -348,28 +351,36 @@ def main():
 
             bench = parameters["BENCHMARK"].upper()
 
-            if interface and bench == "CUSTOM":
-                try:
-                    time.sleep(1)
-                    print("[Loaded]\n")
-                    layout.window.refresh()
-                    time.sleep(0.3)
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    layout.window["browseFit"].update(disabled=False)
-                    print("[Input the fitness function file and press continue...]")
-                    print("\n[ - The function should be defined in a python script, which will evaluate the solutions of the algorithm]")
-                    layout.set()
-                    if layout.reset:
-                        continue
-                    layout.window["-OUTPUT-"].update("")
-                    layout.window.refresh()
-                    print("[Loading Fitness Function file...]")
-                    layout.window["browseFit"].update(disabled=True)
-                    layout.window.refresh()
-                except SyntaxError:
-                    pass
-
+            if bench == "CUSTOM":
+                if interface:
+                    try:
+                        time.sleep(1)
+                        print("[Loaded]\n")
+                        layout.window.refresh()
+                        time.sleep(0.3)
+                        layout.window["-OUTPUT-"].update("")
+                        layout.window.refresh()
+                        layout.window["-EXP-"].update(disabled=True)
+                        layout.window["-ALGO-"].update(disabled=True)
+                        layout.window["-PRO-"].update(disabled=True)
+                        layout.window["continueBT"].update(disabled=True)
+                        layout.window["browseFit"].update(disabled=False)
+                        print("[Input the fitness function file and press continue...]")
+                        print("\n[ - The function should be defined in a python script, which will evaluate the solutions of the algorithm]")
+                        layout.set(pathExp, step =4)
+                        if layout.reset:
+                            continue
+                        layout.window["-OUTPUT-"].update("")
+                        layout.window.refresh()
+                        print("[Loading Fitness Function file...]")
+                        layout.window["browseFit"].update(disabled=True)
+                        layout.window.refresh()
+                    except SyntaxError:
+                        pass
+                else:
+                    #if(pathConfig != "."): # only copy if the path is not the abec folder
+                    os.system(f"cp {pathConfig}/{parameters['FUNCTION']} {os.path.abspath(os.getcwd())}/function.py")
+                        
 
             if interface and False:
                 try:
@@ -444,13 +455,14 @@ def main():
                     myPrint(f"- Name: Fitness Function", readme, parameters)
                 else:
                     myPrint(f"- Name: {parameters['BENCHMARK']}", readme, parameters)
+                    
                 myPrint(f"- NDIM: {parameters['NDIM']}", readme, parameters)
 
             if interface:
                 try:
                     layout.window.refresh()
                     print("\n[Check if the setup is correct, if so, press continue to start...]")
-                    layout.set()
+                    layout.set(pathExp)
                     if layout.reset:
                         continue
                     #layout.window["continueBT"].update("Cancel")
@@ -536,15 +548,18 @@ def main():
             myPrint(f"[DATE: {date['month']:02}/{date['day']:02}/{date['year']} at {date['hour']:02}:{date['minute']:02}]", readme, parameters)
             myPrint("[END] Thx :)", readme, parameters)
             
-            os.remove(f"{pathExp}/savethedate.txt")
-            os.remove(f"{pathExp}/printTmp.txt")
+            if(os.path.isfile(f"{pathExp}/savethedate.txt")):
+                os.remove(f"{pathExp}/savethedate.txt")
+            if(os.path.isfile(f"{pathExp}/printTmp.txt")):                
+                os.remove(f"{pathExp}/printTmp.txt")
             readme.write("\n\nAbEC developed by Alexandre Mascarenhas\n")
             readme.write("For more informations please go to https://abec-ec.github.io\n")
             readme.write("Eh nois")
+            readme.close()
             if interface:
                 layout.window["continueBT"].update(disabled=True)
                 layout.window["resetBT"].update(disabled=False)
-                layout.set()
+                layout.set(pathExp)
                 if layout.reset:
                     continue
             else:

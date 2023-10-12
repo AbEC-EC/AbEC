@@ -10,7 +10,7 @@ while getopts ":i:p:s:" opt; do
   case $opt in
     i) interface="$OPTARG"
     ;;
-    p) path="$OPTARG"
+    p) pathAbec="$OPTARG"
     ;;
     p) seed="$OPTARG"
     ;;
@@ -42,6 +42,6 @@ else
     # echo $VIRTUAL_ENV
     # echo "Running the framework"
     # echo "./framework.py -i $interface -p $pathAbec"
-    ./framework.py -i $interface -p $path
+    ./framework.py -i $interface -p $pathAbec
     deactivate
 fi

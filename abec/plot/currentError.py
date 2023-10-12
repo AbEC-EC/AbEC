@@ -48,7 +48,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     ax.set_xlabel("Evaluations", fontsize=20)
     ax.set_ylabel("Current error (Ec)", fontsize=20)
     ax.set_xlim(df["nevals"].iloc[0], df["nevals"].iloc[-1])
-    ax.set_ylim(0, df["ec"].max()+1)
+    #ax.set_ylim(0, df["ec"].max()+1)
 
     # Title content
     if parameters:
