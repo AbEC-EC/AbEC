@@ -95,9 +95,7 @@ def configAxes(ax, type = 1):
 
 class interface():
 
-    def __init__(self, parameters):
-
-        NUM_DATAPOINTS = parameters["FINISH_RUN_MODE_VALUE"]
+    def __init__(self):
         self.reset = 0
         self.enablePF = 1
         self.enableSS = 0
@@ -160,10 +158,10 @@ class interface():
 
 
         self.col3 = sg.Column([
-            [sg.Frame('Terminal:',
-                [[sg.Output(size=(300, 10), font=("FreeMono", 14, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
+            [sg.Frame('Output:',
+                [[sg.Output(size=(300, 14), font=("FreeMono", 12, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
                 [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT", disabled=True)]
-               ], size=(1140, 250))
+               ], size=(1140, 300))
            ]
         ])
 
@@ -191,7 +189,7 @@ class interface():
 
    # window = sg.Window('Columns and Frames', layout)
 
-    def launch(self, parameters):
+    def launch(self):
         # Configure colors
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "#1c1c1c"
@@ -241,7 +239,7 @@ class interface():
             #self.ax_ss.scatter(x, y1, c="orange", label=f"ind",s=10, alpha=0.5)
             self.fig_agg_ss.draw()
 
-    def set(self, step = 1):
+    def set(self, path, step = 1):
         while(True):
             event, values = self.window.read()
             #print(event, values)
@@ -258,15 +256,23 @@ class interface():
                             values["program.ct"] or \
                             values["program.aad"]:
                         break
+                elif step == 4: # check the function file
+                    if filename:
+                        break
+                    else:
+                        print(f"Please select a file")
+                        break
+                    
+                    
             elif event == "resetBT":
                 self.reset = 1
                 break
             elif event == '-EXP-':
-                os.system("open ./frameConfig.ini")
+                os.system(f"xdg-open {path}/frameConfig.ini")
             elif event == '-ALGO-':
-                os.system("open ./algoConfig.ini")
+                os.system(f"xdg-open {path}/algoConfig.ini")
             elif event == '-PRO-':
-                os.system("open ./problemConfig.ini")
+                os.system(f"xdg-open {path}/problemConfig.ini")
             elif event == '-HAB-PF':
                 if values["-HAB-PF"] == True:
                     self.enablePF = 1
@@ -287,8 +293,12 @@ class interface():
                 self.window["-COMPS-"].update(visible=False)
                 self.window.refresh()
             elif(event == "-FILE-"):
-                filename = values["-FILE-"].split("/")[-1]
-                self.window["butao"].update(f"{filename}")
+                filename = values["-FILE-"]         
+                self.window["butao"].update(f"{filename.split('/')[-1]}")
+                os.system(f"cp {filename} {os.path.abspath(os.getcwd())}/function.py")
+                self.window["continueBT"].update(disabled=False)
+                self.window.refresh()
+                
 
     #window.close()
 

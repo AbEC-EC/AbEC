@@ -1,6 +1,5 @@
 import abec
 import copy
-import aux.globalVar as globalVar
 from aux.aux import errorWarning
 
 '''
@@ -17,7 +16,6 @@ def cp_elitism(parameters):
         return 1
     else:
         errorWarning(1.2, "algoConfig.ini", "GA_ELI_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
-        sys.exit()
 
 def elitism(pop, newPop, parameters, ids):
     for i in range(int(parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])):
@@ -37,36 +35,35 @@ def cp_crossover(parameters):
         return 1
     else:
         errorWarning(2.2, "algoConfig.ini", "GA_CROSS_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0.1, 1[")
-        sys.exit()
 
 def condition(individual):
     return individual["fit"]
-def tournament(pop, parameters):
+def tournament(pop, runVars, parameters):
     l = int(len(pop)/2)
     c = []
     for _ in range(3):
-        c.append(globalVar.rng.choice(pop[:int(parameters["GA_CROSS_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])]))
+        c.append(runVars.rng.choice(pop[:int(parameters["GA_CROSS_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])]))
 
     choosed = min(c, key=condition)
-    return choosed
+    return choosed, runVars
 
-def crossover(pop, newPop, parameters, ids):
+def crossover(pop, newPop, runVars, parameters, ids):
     for i in range(1, int((parameters["GA_POP_PERC"]*parameters["POPSIZE"] - parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])+1), 2):
-        parent1 = tournament(pop, parameters)
-        parent2 = tournament(pop, parameters)
+        parent1, runVars = tournament(pop, runVars, parameters)
+        parent2, runVars = tournament(pop, runVars, parameters)
         child1 = parent1.copy()
         child2 = parent2.copy()
 
         if parameters["GA_ENCODER"]:
             parent1 = encoder(parent1, parameters)
             parent2 = encoder(parent2, parameters)
-            cutPoint = globalVar.rng.choice(range(len(parent1["pos"])))
+            cutPoint = runVars.rng.choice(range(len(parent1["pos"])))
             child1["pos"], child2["pos"]  = parent1["pos"][:cutPoint] + parent2["pos"][cutPoint:], \
                                             parent2["pos"][:cutPoint] + parent1["pos"][cutPoint:]
             child1 = decoder(child1, parameters)
             child2 = decoder(child2, parameters)
         else:
-            cutPoint = globalVar.rng.choice(range(1, parameters["NDIM"]))
+            cutPoint = runVars.rng.choice(range(1, parameters["NDIM"]))
             child1["pos"], child2["pos"]  = parent1["pos"][:cutPoint] + parent2["pos"][cutPoint:], \
                                             parent2["pos"][:cutPoint] + parent1["pos"][cutPoint:]
 
@@ -88,7 +85,7 @@ def crossover(pop, newPop, parameters, ids):
         newPop.ind[-1]["pos"] = child2["pos"].copy()
         newPop.ind[-1]["type"] = "GA"
 
-    return newPop
+    return newPop, runVars
 
 
 def decoder(ind, parameters):
@@ -147,13 +144,11 @@ def cp_mutation(parameters):
             return 1
         else:
             errorWarning("3.3", "algoConfig.ini", "GA_MUT_STD", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
-            sys.exit()
     else:
         errorWarning("3.2", "algoConfig.ini", "GA_MUT_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
-        sys.exit()
 
 
-def mutation(pop, parameters, comp=0):
+def mutation(pop, runVars, parameters, comp=0):
     if not comp:
         elitism_factor = parameters["GA_ELI_PERC"]
         mutation_factor = parameters["GA_MUT_PERC"]
@@ -168,21 +163,21 @@ def mutation(pop, parameters, comp=0):
     for i in range(int(elitism_factor*population_perc*parameters["POPSIZE"]), int(population_perc*parameters["POPSIZE"]-2)):
         if parameters["GA_ENCODER"]:
             for j in range(parameters["GA_INDSIZE"]):
-                if globarVar.rng.random() < mutation_factor:
+                if runVars.rng.random() < mutation_factor:
                     pop.ind[i] = encoder(pop.ind[i], parameters)
                     pop.ind[i]["pos"][j] = 1 - pop.ind[i]["pos"][j]
                     pop.ind[i] = decoder(pop.ind[i], parameters)
         else:
             for d in range(parameters["NDIM"]):
-                if globalVar.rng.random() < mutation_factor:
-                    dp = globalVar.rng.normal(loc = 0.0, scale = mutation_std)
+                if runVars.rng.random() < mutation_factor:
+                    dp = runVars.rng.normal(loc = 0.0, scale = mutation_std)
                     if (pop.ind[i]["pos"][d] + dp ) > parameters["MAX_POS"]:
                         pop.ind[i]["pos"][d] = parameters["MAX_POS"]
                     elif (pop.ind[i]["pos"][d] + dp ) < parameters["MIN_POS"]:
                         pop.ind[i]["pos"][d] = parameters["MIN_POS"]
                     else:
                         pop.ind[i]["pos"][d] += dp
-    return pop
+    return pop, runVars
 
 
 def cp(parameters):
@@ -190,7 +185,7 @@ def cp(parameters):
     cp_mutation(parameters)
     cp_crossover(parameters)
 
-def optimizer(pop, best, parameters):
+def optimizer(pop, best, runVars, parameters):
     newPop = abec.population(parameters, id = 0, fill = 0)
     newPop.id = pop.id
     tempPop = copy.deepcopy(pop)
@@ -201,9 +196,9 @@ def optimizer(pop, best, parameters):
 
     newPop, ids = elitism(gaPop, newPop, parameters, ids)
 
-    newPop = crossover(gaPop, newPop, parameters, ids)
+    newPop, runVars = crossover(gaPop, newPop, runVars, parameters, ids)
 
-    newPop = mutation(newPop, parameters)
+    newPop, runVars = mutation(newPop, runVars, parameters)
 
     # Substitute the individuals of GA population
     for ind in newPop.ind:
@@ -211,4 +206,4 @@ def optimizer(pop, best, parameters):
             if ind["id"] == pop.ind[i]["id"]:
                     pop.ind[i] = ind.copy()
 
-    return pop
+    return pop, runVars

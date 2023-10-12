@@ -71,7 +71,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
 def eoPlot(path, parameters = 0, type = 1, multi = 0, THEME = 1, pathSave = ".", name = "eo"):
     fig, ax = configPlot(THEME)
 
-    fig, ax = loadPlot(f"{path}.csv", fig, ax, parameters, multi, THEME)
+    fig, ax = loadPlot(path, fig, ax, parameters, multi, THEME)
 
     fig, ax = configLegend(fig, ax, THEME)
 

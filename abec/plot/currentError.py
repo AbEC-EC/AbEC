@@ -48,7 +48,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
     ax.set_xlabel("Evaluations", fontsize=20)
     ax.set_ylabel("Current error (Ec)", fontsize=20)
     ax.set_xlim(df["nevals"].iloc[0], df["nevals"].iloc[-1])
-    ax.set_ylim(0, df["ec"].max()+1)
+    #ax.set_ylim(0, df["ec"].max()+1)
 
     # Title content
     if parameters:
@@ -71,7 +71,7 @@ def loadPlot(path, fig, ax, parameters, multi, THEME):
 def ecPlot(path, parameters = 0, type = 1, multi = 0, THEME = 1, pathSave = ".", name = "ec"):
     fig, ax = configPlot(THEME)
 
-    fig, ax = loadPlot(f"{path}.csv", fig, ax, parameters, multi, THEME)
+    fig, ax = loadPlot(path, fig, ax, parameters, multi, THEME)
 
     fig, ax = configLegend(fig, ax, THEME)
 

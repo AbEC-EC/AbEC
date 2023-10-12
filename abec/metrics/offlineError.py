@@ -6,20 +6,12 @@ Alexandre Mascarenhas
 2023/1
 '''
 import json
-import shutil
-import itertools
-import operator
-import random
 import numpy as np
 import pandas as pd
-import math
 import datetime
-import os
-import csv
 import sys
 import time
 import getopt
-import aux.globalVar as globalVar
 from aux.aux import *
 
 cDate = datetime.datetime.now()

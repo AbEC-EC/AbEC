@@ -1,39 +1,56 @@
 import csv
 import os
 import numpy as np
-import datetime
+import shutil
 import pandas as pd
-import aux.globalVar as globalVar
 import importlib
 import sys
 import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 
-
+'''
+Check if a dir existis and if not, create it
+'''
+def checkCreateDir(path):
+    if(os.path.isdir(path) == False):
+        os.mkdir(path)
 '''
 Check if the dirs already exist, and if not, create them
 Returns the path
 '''
-def checkDirs(path):
-    cDate = datetime.datetime.now()
-    year = cDate.year
-    month = cDate.month
-    day = cDate.day
-    hour = cDate.hour
-    minute = cDate.minute
+def checkDirs(path, date):
+    # check if the dir exisits, if so, delete and recreate
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{year}-{month:02d}-{day:02d}"
+    path += f"/{date['year']}-{date['month']:02d}-{date['day']:02d}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    path += f"/{hour:02d}-{minute:02d}"
+    path += f"/{date['hour']:02d}-{date['minute']:02d}"
     if(os.path.isdir(path) == False):
+        os.mkdir(path)
+    else:
+        shutil.rmtree(path)
         os.mkdir(path)
     pathTmp = path+"/results"
     if(os.path.isdir(pathTmp) == False):
         os.mkdir(pathTmp)
     return path
+
+def myPrint(string, file, parameters = {"TERMINAL_OUTPUT": 1}):
+    if parameters["TERMINAL_OUTPUT"]:
+        print(string)
+    file.write(f"{string}\n")
+    
+def myPrint2(string, path):
+    file = open(f"{path}/printTmp.txt", "w")
+    file.write(f"{string}")
+    file.close()
+    
+def myPrint3(string, file):
+    file.write(f"{string}\n")
+    #file.close()
+    
 
 def errorWarning(nError="0.0", file="NONE", parameter="NONE", text="NONE"):
     '''
@@ -70,17 +87,17 @@ Write the position and fitness of the peaks on
 the 'optima.csv' file. The number of the peaks will be
 NPEAKS_MPB*NCHANGES
 '''
-def saveOptima(parameters):
+def saveOptima(runVars, parameters):
     opt = []
     if(parameters["BENCHMARK"] == "MPB"):
         #print(globalVar.mpb.maximums())
         #opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
-        for i in range(len(globalVar.mpb.maximums())):
+        for i in range(len(runVars.mpb.maximums())):
             #print(i)
-            opt.append(globalVar.mpb.maximums()[i])
-    elif(parameters["BENCHMARK"] == "H1"):
-        opt.append(fitFunction([8.6998, 6.7665])[0])
-    with open(f"{globalVar.path}/results/optima.csv", "a") as f:
+            opt.append(runVars.mpb.maximums()[i])
+    #elif(parameters["BENCHMARK"] == "H1"):
+        #opt.append(fitFunction([8.6998, 6.7665])[0])
+    with open(f"{runVars.filename_OPT}", "a") as f:
         write = csv.writer(f)
         write.writerow(opt)
 
@@ -129,12 +146,15 @@ def ecMean(path, parameters):
     sum = 0
     data = []
 
+    # get the run data files of each run in the dirs
     flist = os.listdir(path)
-    flist = sorted(flist)
-    files = [flist[d] for d in range(parameters["RUNS"])]
+    flist = sorted(flist)[:parameters["RUNS"]]
+    flist = [f"{path}/{d}" for d in flist]
+    files = [f"{pdir}/{sorted(os.listdir(pdir))[-1]}" for pdir in flist]
+    
 
     for f in files:
-        data.append(pd.read_csv(f"{path}/{f}"))
+        data.append(pd.read_csv(f))
     std = [0 for i in range(len(data))]
 
     for row in range(len(data[0].index)):
@@ -148,9 +168,9 @@ def ecMean(path, parameters):
 
     zipped = list(zip(data[0]["nevals"], ec_mean, ec_std))
     bestMean = pd.DataFrame(zipped, columns=["nevals", "ec", "ec_std"])
-    bestMean.to_csv(f"{globalVar.path}/results/ecMean.csv")
+    bestMean.to_csv(f"{path}/ecMean.csv")
 
-    return f"{globalVar.path}/results/ecMean"
+    return f"{path}/ecMean.csv"
 
 
 def eoMean(path, parameters):
@@ -158,13 +178,15 @@ def eoMean(path, parameters):
     eo_std = []
     sum = 0
     data = []
-
+    
+    # get the run data files of each run in the dirs
     flist = os.listdir(path)
-    flist = sorted(flist)
-    files = [flist[d] for d in range(parameters["RUNS"])]
+    flist = sorted(flist)[:parameters["RUNS"]]
+    flist = [f"{path}/{d}" for d in flist]
+    files = [f"{pdir}/{sorted(os.listdir(pdir))[-1]}" for pdir in flist]
 
     for f in files:
-        data.append(pd.read_csv(f"{path}/{f}"))
+        data.append(pd.read_csv(f))
     std = [0 for i in range(len(data))]
 
     for row in range(len(data[0].index)):
@@ -178,9 +200,9 @@ def eoMean(path, parameters):
 
     zipped = list(zip(data[0]["nevals"], eo_mean, eo_std))
     bestMean = pd.DataFrame(zipped, columns=["nevals", "eo", "eo_std"])
-    bestMean.to_csv(f"{globalVar.path}/results/eoMean.csv")
+    bestMean.to_csv(f"{path}/eoMean.csv")
 
-    return f"{globalVar.path}/results/eoMean"
+    return f"{path}/eoMean.csv"
 
 
 '''
@@ -307,17 +329,19 @@ Default parametrization for frameConfig.ini
 def frameConfig():
     config = {
         "__COMMENT__": "FRAMEWORK CONFIGURATION", \
-        "RUNS": 5, \
+        "RUNS": 3, \
         "FINISH_RUN_MODE": 0, \
-        "FINISH_RUN_MODE_VALUE": 1000, \
+        "FINISH_RUN_MODE_VALUE": 2000, \
         "SEED": 42, \
-        "PLOT" : 0, \
+        "ANALISYS" : 1, \
         "CONFIG_COPY": 1, \
-        "OFFLINE_ERROR": 0, \
+        "OFFLINE_ERROR": 1, \
         "BEBC_ERROR": 0, \
         "PATH": "../experiments", \
-        "FILENAME": "data.csv", \
         "LOG_ALL": 0, \
+        "PARALLELIZATION": 1, \
+        "NPROCESS": "AUTO", \
+        "TERMINAL_OUTPUT": 1, \
         "DEBUG_RUN": 1, \
         "DEBUG_RUN_2": 0, \
         "DEBUG_GEN": 0, \
@@ -337,7 +361,7 @@ def problemConfig():
         "FUNCTION": "NONE" , \
         "NDIM": 2, \
         "CHANGES": 0, \
-        "CHANGES_NEVALS": [5000, 10000, 15000], \
+        "CHANGES_NEVALS": [2000, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000, 85000, 90000, 95000, 100000, 105000, 110000, 115000, 120000, 125000, 130000, 135000, 140000, 145000, 150000, 155000, 160000, 165000, 170000, 175000, 180000, 185000, 190000, 195000, 200000, 205000, 210000, 215000, 220000, 225000, 230000, 235000, 240000, 245000, 250000, 255000, 260000, 265000, 270000, 275000, 280000, 285000, 290000, 295000, 300000, 305000, 310000, 315000, 320000, 325000, 330000, 335000, 340000, 345000, 350000, 355000, 360000, 365000, 370000, 375000, 380000, 385000, 390000, 395000, 400000, 405000, 410000, 415000, 420000, 425000, 430000, 435000, 440000, 445000, 450000, 455000, 460000, 465000, 470000, 475000, 480000, 485000, 490000, 495000],  \
         "SCENARIO_MPB": 2, \
         "NPEAKS_MPB": 10, \
         "UNIFORM_HEIGHT_MPB": 0, \
@@ -351,3 +375,33 @@ def problemConfig():
         "LAMBDA_MPB": 0 \
     }
     return config
+
+
+def headerReadme(readme, interface):
+    if not interface:
+        myPrint(f"=================================================================", readme)
+        myPrint(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
+        myPrint(f"             A framework for Optimization Problems         ", readme)
+        myPrint(f"=================================================================", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                    I hope you enjoy!                          *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("*                                                               *", readme)
+        myPrint("* For more informations please visit: https://abec-ec.github.io *", readme)
+    else:
+        myPrint3(f"=================================================================", readme)
+        myPrint3(f"            AbEC -> Ajustable Evolutionary Components        ", readme)
+        myPrint3(f"             A framework for Optimization Problems         ", readme)
+        myPrint3(f"=================================================================", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                    I hope you enjoy!                          *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("*                                                               *", readme)
+        myPrint3("* For more informations please visit: https://abec-ec.github.io *", readme)
+        

@@ -1,12 +1,10 @@
 import random
-import aux.globalVar as globalVar
 import aux.aux as aux
-import abec
-import fitnessFunction.function as function
+import function
 from deap import benchmarks
 from deap.benchmarks import movingpeaks
 
-def mpbAbcd(parameters):
+def mpbAbec(runVars, parameters):
     # Setup of MPB
     if (parameters["SCENARIO_MPB"] == 1):
         scenario = movingpeaks.SCENARIO_1
@@ -27,12 +25,12 @@ def mpbAbcd(parameters):
     scenario["max_coord"] = parameters["MAX_COORD_MPB"]
     scenario["lambda_"] = parameters["LAMBDA_MPB"]
     rngMPB = random.Random()
-    rngMPB.seed(parameters["SEED"])
-    globalVar.mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rngMPB, **scenario)
-    return globalVar.mpb
+    rngMPB.seed(runVars.seed())
+    runVars.mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rngMPB, **scenario)
+    return runVars.mpb
 
 
-def fitnessFunction(x, parameters):
+def fitnessFunction(x, runVars, parameters):
     globalOP = 0
     fitInd = 0
     global mpb
@@ -73,26 +71,26 @@ def fitnessFunction(x, parameters):
         globalOP = benchmarks.schwefel([420.9687436 for _ in range(parameters["NDIM"])])[0]
         fitInd = benchmarks.schwefel(x)[0]
     elif(parameters["BENCHMARK"] == "MPB"):
-        if not globalVar.mpb:
-            globalVar.mpb = mpbAbcd(parameters)
+        if not runVars.mpb:
+            runVars.mpb = mpbAbec(runVars, parameters)
             #if(globalVar.peaks <= len(parameters["NPEAKS_MPB"])): # Save the optima values
-            aux.saveOptima(parameters)
+            aux.saveOptima(runVars, parameters)
             #globalVar.peaks += 1
-        if parameters["CHANGES"] and globalVar.nevals in parameters["CHANGES_NEVALS"]:
-            globalVar.mpb.changePeaks()
-            aux.saveOptima(parameters)
-            globalVar.change = 1
-            globalVar.changeEV = 0 # block the evaluation until the first pop
+        if parameters["CHANGES"] and runVars.nevals in parameters["CHANGES_NEVALS"]:
+            runVars.mpb.changePeaks()
+            aux.saveOptima(runVars, parameters)
+            runVars.change = 1
+            runVars.changeEV = 0 # block the evaluation until the first pop
             #print(f"[Change Env: {globalVar.nevals}]")
-        globalOP = globalVar.mpb.maximums()[0][0]
-        fitInd = globalVar.mpb(x)[0]
-    elif(parameters["BENCHMARK"] == "NONE"):
+        globalOP = runVars.mpb.maximums()[0][0]
+        fitInd = runVars.mpb(x)[0]
+    elif(parameters["BENCHMARK"] == "CUSTOM" or parameters["BENCHMARK"] == "custom"):
         fitInd = function.function(x, parameters["CHANGES_NEVALS"])
         globalOP = 0
 
 
-    if parameters["BENCHMARK"] =="NONE":
+    if parameters["BENCHMARK"] =="CUSTOM":
         fitness = fitInd
     else:
         fitness = abs(fitInd - globalOP )
-    return fitness
+    return fitness, runVars
