@@ -71,7 +71,7 @@ def analysis(path, parameters, totalTime, readme):
     df.sort_values(by="ec", inplace=True)
 
     # calculate the mean of the erros and time
-    curError[0] = df["ec"].mean( 
+    curError[0] = df["ec"].mean()
     offError[0] = df["eo"].mean()
     meanTime[0] = df["execTime"].mean()
 
