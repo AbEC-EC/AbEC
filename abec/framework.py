@@ -317,20 +317,27 @@ def main():
             if pathConfig == ".":
                 pathExp = parameters["PATH"]
                 checkCreateDir(pathExp)
+                pathExp += f"/{parameters['ALGORITHM']}"
+                pathExp = checkDirs(pathExp, date)
+                # Copy the config.ini file to the experiment dir
+                if(parameters["CONFIG_COPY"]):
+                    for file in parametersFiles:
+                        shutil.copyfile(f"{pathConfig}/{file}", f"{pathExp}/{file}")
             else:
                 pathExp = pathConfig
-
-            pathExp += f"/{parameters['ALGORITHM']}"
-            pathExp = checkDirs(pathExp, date)
-
-            # Copy the config.ini file to the experiment dir
-            if(parameters["CONFIG_COPY"]):
-                for file in parametersFiles:
-                    shutil.copyfile(f"{pathConfig}/{file}", f"{pathExp}/{file}")
+                if(os.path.isdir(pathExp+"/results") == False):
+                    os.mkdir(pathExp+"/results")
+                else:
+                    shutil.rmtree(pathExp+"/results")
+                    os.mkdir(pathExp+"/results")
                     
             
             readme = open(f"{pathExp}/results/readme.txt", "a") # open file to write the outputs
             headerReadme(readme)
+            
+            saveTheDate = open(f"{pathExp}/savethedate.txt", "w")
+            saveTheDate.write(f"{date['year']}/{date['month']:02}/{date['day']:02}/{date['hour']:02}/{date['minute']:02}")
+            saveTheDate.close()
 
             if interface:
                 layout.window["-EXP-"].update(disabled=True)
@@ -528,6 +535,9 @@ def main():
             #####################################
             myPrint(f"[DATE: {date['month']:02}/{date['day']:02}/{date['year']} at {date['hour']:02}:{date['minute']:02}]", readme, parameters)
             myPrint("[END] Thx :)", readme, parameters)
+            
+            os.remove(f"{pathExp}/savethedate.txt")
+            os.remove(f"{pathExp}/printTmp.txt")
             readme.write("\n\nAbEC developed by Alexandre Mascarenhas\n")
             readme.write("For more informations please go to https://abec-ec.github.io\n")
             readme.write("Eh nois")

@@ -42,6 +42,6 @@ else
     # echo $VIRTUAL_ENV
     # echo "Running the framework"
     # echo "./framework.py -i $interface -p $pathAbec"
-    ./framework.py -i $interface -p $pathAbec
+    ./framework.py -i $interface -p $path
     deactivate
 fi

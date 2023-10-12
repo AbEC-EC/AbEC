@@ -331,7 +331,7 @@ def frameConfig():
         "LOG_ALL": 0, \
         "PARALLELIZATION": 1, \
         "NPROCESS": "AUTO", \
-        "TERMINAL_OUTPUT": 0, \
+        "TERMINAL_OUTPUT": 1, \
         "DEBUG_RUN": 1, \
         "DEBUG_RUN_2": 0, \
         "DEBUG_GEN": 0, \

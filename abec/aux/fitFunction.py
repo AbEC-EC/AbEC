@@ -85,7 +85,7 @@ def fitnessFunction(x, runVars, parameters):
             #print(f"[Change Env: {globalVar.nevals}]")
         globalOP = runVars.mpb.maximums()[0][0]
         fitInd = runVars.mpb(x)[0]
-    elif(parameters["BENCHMARK"] == "NONE"):
+    elif(parameters["BENCHMARK"] == "CUSTOM" or parameters["BENCHMARK"] == "custom"):
         fitInd = function.function(x, parameters["CHANGES_NEVALS"])
         globalOP = 0
 

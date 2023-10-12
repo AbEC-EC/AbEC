@@ -298,8 +298,11 @@ Framework
 '''
 def abec(run, seed, path, interface):
     # get the date by the path
-    date = path.split("/")
-    date = {"year": date[-2][0:4], "month": date[-2][5:7], "day": date[-2][8:], "hour": date[-1][0:2], "minute": date[-1][3:]}
+    tmpdate = open(f"{path}/savethedate.txt", "r")
+    date = tmpdate.read()
+    tmpdate.close()
+    date = date.split("/")
+    date = {"year": date[0], "month": date[1], "day": date[2], "hour": date[3], "minute": date[4]}
     
     #####################################
     # initilize the algorithm with the parameters
