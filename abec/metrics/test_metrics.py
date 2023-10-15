@@ -86,4 +86,3 @@ ax[2, 1].grid(True)
 ax[2, 1].set_xlim(-4, 4)
 ax[2, 1].set_ylim(-4, 4)
 plt.show()
-

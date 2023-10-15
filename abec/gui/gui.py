@@ -68,7 +68,7 @@ def configAxes(ax, type = 1):
 
         ax[0].set_ylabel("Current Error (Ec)", fontsize=16)
         ax[0].set_xlim(0, 666)
-        ax[1].set_xlabel("NEVALS", fontsize=16)
+        ax[1].set_xlabel("NEVALS", fontsize=14)
         ax[1].set_ylabel("Offline Error (Eo)", fontsize=16)
         '''
         ax.clear()
@@ -202,7 +202,7 @@ class interface():
 
         self.ax_pf = configAxes(self.ax_pf, 1)
         self.ax_ss = configAxes(self.ax_ss, 2)
-        self.ax_pf[0].set_yscale('log')
+        # self.ax_pf[0].set_yscale('log')
 
         self.fig_agg_pf = draw_figure(self.canvas_pf, self.fig_pf)
         self.fig_agg_ss = draw_figure(self.canvas_ss, self.fig_ss)
@@ -231,8 +231,8 @@ class interface():
             
             self.ax_pf[0].set_xlim(x[0])
             #self.ax_pf[0].set_ylim(0, None)
-            self.ax_pf[0].set_yscale('log')
-            self.ax_pf[1].set_yscale('log')
+            # self.ax_pf[0].set_yscale('log')
+            # self.ax_pf[1].set_yscale('log')
 
             if(legendFlag):
                 self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], label=f"Run {r}")
@@ -248,7 +248,12 @@ class interface():
         elif type == 2:
             self.ax_ss.set_xlim(0, 100)
             self.ax_ss.set_ylim(0, 100)
-            #self.ax_ss.scatter(x, y1, c="orange", label=f"ind",s=10, alpha=0.5)
+            if(legendFlag):
+                self.ax_ss.scatter(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], label=f"Run {r}", s=10, alpha=0.5)
+                self.ax_ss.legend()
+            else:
+                self.ax_ss.scatter(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], s=1, alpha=0.5)
+                
             self.fig_agg_ss.draw()
 
     def set(self, path, step = 1):

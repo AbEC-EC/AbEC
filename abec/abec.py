@@ -47,8 +47,8 @@ def myPrint(string, file, parameters):
     file.write(f"{string}\n")
     
 def myPrint2(string, path):
-    file = open(f"{path}/printTmp.txt", "w")
-    file.write(f"{string}")
+    file = open(f"{path}/printTmp.txt", "a")
+    file.write(f"{string}\n")
     file.close()
 
 
@@ -266,7 +266,7 @@ class runVariables():
         self.filename_RUN = ""
         self.header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
         self.filename_LA = ""
-        self.header_OPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
+        self.header_OPT = [f"opt{i}" for i in range(1, parameters["NPEAKS_MPB"]+1)]
         self.filename_OPT = ""
         self.genChangeEnv = 0
         self.env = 0

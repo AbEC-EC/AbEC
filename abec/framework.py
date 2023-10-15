@@ -150,7 +150,8 @@ def checkRuns(path):
 
 def printRuns(layout, path):
     fileTmp = open(f"{path}/printTmp.txt", "r")
-    print(fileTmp.read())
+    content = fileTmp.read()
+    print(content[:-2])
     layout.window.refresh()
     fileTmp.close()
     os.remove(f"{path}/printTmp.txt")
@@ -188,7 +189,7 @@ def loadConfigFiles(parameters, pathConfig):
     return parameters
 
 
-def getRunsFiles(path, luffy, nRuns):
+def getRunsFiles(path, luffy, logAllRuns, optimaRuns, nRuns):
     path += "/results"
     if(os.path.isdir(f"{path}")):
         zoro = [name for name in os.listdir(path) if(name != "readme.txt" and name != "results.csv")]
@@ -202,7 +203,18 @@ def getRunsFiles(path, luffy, nRuns):
                             if(full not in luffy):
                                 luffy.append(full)
                                 nRuns = len(zoro)
-    return luffy, nRuns
+                        elif(file[-10:-4] == "LOGALL"):
+                            full = f"{path}/{run}/{file}"
+                            if(full not in logAllRuns):
+                                logAllRuns.append(full)
+                        elif(file[-10:-4] == "OPTIMA"):
+                            full = f"{path}/{run}/{file}"
+                            if(full not in optimaRuns):
+                                optimaRuns.append(full)
+                        
+
+    return luffy, logAllRuns, optimaRuns, nRuns
+
 
 # plot the current state of the run files
 def plotRuns(luffy, layout, nruns):
@@ -220,6 +232,48 @@ def plotRuns(luffy, layout, nruns):
                 else:
                     layout.run(x=x, y1=ec, y2=eo, r=nrun)
     return nruns
+
+# plot the current state of the run files
+def plotRunsSearchSpace(logAllRuns, layout, nruns):
+    if(layout.enableSS):
+        x = []
+        y = []
+        for run in logAllRuns:
+            nrun = int(run[-18:-14])
+            pos = pd.read_csv(run)["indPos"].to_list()
+            if(pos):
+                for row in pos:
+                    row = ast.literal_eval(row)
+                    x.append(float(row[0]))
+                    y.append(float(row[1]))    
+                if(nrun not in nruns):
+                    nruns.append(nrun)
+                    layout.run(x=x, y1=y, type=2, r=nrun, legendFlag = 1)
+                else:
+                    layout.run(x=x, y1=y, type=2, r=nrun)
+    return nruns
+
+
+# plot the current state of the run files
+def plotOptimaSearchSpace(optimaRuns, layout, nruns):
+    if(layout.enableSS):
+        x = []
+        y = []
+        for run in optimaRuns:
+            nrun = int(run[-18:-14])
+            opts = pd.read_csv(run)
+            if(len(opts) > 0):
+                opts = opts.iloc[0].to_list()
+                if(opts):
+                    for opt in opts:
+                        if(type(opt) == str):
+                            opt = opt.split(",")
+                            x.append(float(opt[1][2:6]))
+                            y.append(float(opt[2][1:5]))
+                    layout.ax_ss.scatter(x, y, c="red", s=4, alpha=0.7)
+                    layout.fig_agg_ss.draw()  
+    return nruns
+
 
 def main():
 
@@ -529,7 +583,11 @@ def main():
             
             numberRuns = 0
             luffy = [] # list with the paths of the runs files
+            logAllRuns = []
+            optimaRuns = []
             runsDone = []
+            runsDoneSS = []
+            runsDoneOP = []
             #####################################
             # Main loop of the runs
             #####################################
@@ -540,7 +598,11 @@ def main():
                     while True:
                         if interface:
                             if(layout.enablePF):
-                                luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                                luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
+                                if(parameters["LOG_ALL"]):
+                                    runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                                    if(parameters["BENCHMARK"] != "CUSTOM"):
+                                        runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                                 runsDone = plotRuns(luffy, layout, runsDone)
                         if running < parameters["NPROCESS"]:
                             break
@@ -565,7 +627,11 @@ def main():
                 while True:
                     if interface:
                         if(layout.enablePF):
-                            luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                            luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
+                            if(parameters["LOG_ALL"]):
+                                runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                                if(parameters["BENCHMARK"] != "CUSTOM"):
+                                    runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                             runsDone = plotRuns(luffy, layout, runsDone)
                     t = get_time(f"{pathExp}/results/results.csv")
                     if t != prev_time: # if the file changed, see how many runs have finished
@@ -581,7 +647,11 @@ def main():
                 if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                     printRuns(layout, pathExp)
                     if(layout.enablePF):
-                        luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                        luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
+                        if(parameters["LOG_ALL"]):
+                            runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                            if(parameters["BENCHMARK"] != "CUSTOM"):
+                                        runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                         runsDone = plotRuns(luffy, layout, runsDone)
                     
             else:
