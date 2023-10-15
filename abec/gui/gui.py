@@ -133,7 +133,7 @@ class interface():
             [sg.Frame('Programs:',
                                 [[sg.Radio("Simple Run", "program", key="program.sr", enable_events=True, visible=False)],
                                 [sg.Radio("Component Evaluation", "program", enable_events=True, key="program.ct", visible=False)],
-                                [sg.Combo([], key="-COMPS-", visible=False, size=(30, 10))],
+                                [sg.Text('Under development ...'),sg.Combo([], key="-COMPS-", visible=False, size=(30, 10))],
                                 [sg.Radio("Auto Algorithm Design", "program", key="program.aad", enable_events=True, visible=False)]
                                 ],
                                 size=(300, 361), visible = True, key="-PROGRAMS-")]
@@ -160,7 +160,7 @@ class interface():
         self.col3 = sg.Column([
             [sg.Frame('Output:',
                 [[sg.Output(size=(300, 14), font=("FreeMono", 12, "bold"), background_color = "#1c1c1c", text_color="green", key="-OUTPUT-")],
-                [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT", disabled=True)]
+                [sg.Button('Continue', key="continueBT"), sg.Button("Reset", key="resetBT", disabled=True), sg.Push(), sg.Text('https://abec-ec.github.io')]
                ], size=(1140, 300))
            ]
         ])
