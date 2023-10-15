@@ -202,12 +202,13 @@ class interface():
 
         self.ax_pf = configAxes(self.ax_pf, 1)
         self.ax_ss = configAxes(self.ax_ss, 2)
+        self.ax_pf[0].set_yscale('log')
 
         self.fig_agg_pf = draw_figure(self.canvas_pf, self.fig_pf)
         self.fig_agg_ss = draw_figure(self.canvas_ss, self.fig_ss)
 
 
-    def run(self, x, y1, y2 = 0, type = 1, r=0):
+    def run(self, x, y1, y2 = 0, type = 1, r=0, legendFlag = 0):
         event, values = self.window.read(timeout=10)
         if event == '-HAB-PF':
             if values["-HAB-PF"] == True:
@@ -219,19 +220,30 @@ class interface():
                 self.enableSS = 1
             else:
                 self.enableSS = 0
+        self.window.refresh()
         if type == 1:
-            
+            '''
             self.ax_pf[0].set_xlim(x[0])
             self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
             self.ax_pf[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r])
             #self.ax_pf[0].set_yscale('log')
+            '''
             
-            '''
-            self.ax_pf.set_xlim(x[0])
-            self.ax_pf.plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r])
-            self.ax_pf.plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r], linestyle="--")
-            self.ax_pf.set_yscale('log')
-            '''
+            self.ax_pf[0].set_xlim(x[0])
+            #self.ax_pf[0].set_ylim(0, None)
+            self.ax_pf[0].set_yscale('log')
+            self.ax_pf[1].set_yscale('log')
+
+            if(legendFlag):
+                self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], label=f"Run {r}")
+                self.ax_pf[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r], label=f"Run {r}", linestyle="--")
+                self.ax_pf[0].legend()
+                self.ax_pf[1].legend()
+            else:
+                self.ax_pf[0].plot(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], )
+                self.ax_pf[1].plot(x, y2, c=list(mcolors.CSS4_COLORS)[r+r], linestyle="--")
+            
+            
             self.fig_agg_pf.draw()
         elif type == 2:
             self.ax_ss.set_xlim(0, 100)
@@ -278,6 +290,7 @@ class interface():
                     self.enablePF = 1
                 else:
                     self.enablePF = 0
+                self.window.refresh()
             elif event == '-HAB-SS':
                 if values["-HAB-SS"] == True:
                     self.enableSS = 1

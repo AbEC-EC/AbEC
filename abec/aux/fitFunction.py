@@ -81,7 +81,7 @@ def fitnessFunction(x, runVars, parameters):
             aux.saveOptima(runVars, parameters)
             runVars.change = 1
             runVars.changeEV = 0 # block the evaluation until the first pop
-            #print(f"[Change Env: {globalVar.nevals}]")
+            # print(f"[Change Env: {runVars.nevals}]")
         globalOP = runVars.mpb.maximums()[0][0]
         fitInd = runVars.mpb(x)[0]
     elif(parameters["BENCHMARK"] == "CUSTOM" or parameters["BENCHMARK"] == "custom"):

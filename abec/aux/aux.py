@@ -70,16 +70,18 @@ Write the log of the algorithm over the generations on a csv file
 def writeLog(mode, filename, header, data=None):
     if(mode==0):
         # Create csv file
-        with open(filename, "w") as file:
-            csvwriter = csv.DictWriter(file, fieldnames=header)
-            csvwriter.writeheader()
+        file = open(filename, "w")
+        csvwriter = csv.DictWriter(file, fieldnames=header)
+        csvwriter.writeheader()
+        
     elif(mode==1):
         # Writing in csv file
-        with open(filename, mode="a") as file:
-            csvwriter = csv.DictWriter(file, fieldnames=header)
-            csvwriter.writerows(data)
-           # for i in range(len(data)):
-           #     csvwriter.writerows(data[i])
+        file = open(filename, "a")
+        csvwriter = csv.DictWriter(file, fieldnames=header)
+        csvwriter.writerows(data)
+        # for i in range(len(data)):
+        #     csvwriter.writerows(data[i])
+    file.close()
 
 
 '''

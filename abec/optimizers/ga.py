@@ -17,9 +17,9 @@ def cp_elitism(parameters):
     else:
         errorWarning(1.2, "algoConfig.ini", "GA_ELI_PERC", "The percentage parameter of the Elitism component Elitism should be in the interval ]0, 1[")
 
-def elitism(pop, newPop, parameters, ids):
+def elitism(pop, newPop, runVars, parameters, ids):
     for i in range(int(parameters["GA_ELI_PERC"]*parameters["GA_POP_PERC"]*parameters["POPSIZE"])):
-        newPop.addInd(parameters)
+        newPop.addInd(runVars, parameters)
         newPop.ind[i] = copy.deepcopy(pop[i])
         newPop.ind[i]["ae"] = 1
         ids.remove(pop[i]["id"])    # Remove the id of the elite to not enter in crossover
@@ -78,10 +78,10 @@ def crossover(pop, newPop, runVars, parameters, ids):
             elif child2["pos"][i] < parameters["MIN_POS"]:
                 child2["pos"][i] = parameters["MIN_POS"]
 
-        newPop.addInd(parameters, ids[i])
+        newPop.addInd(runVars, parameters, ids[i])
         newPop.ind[-1]["pos"] = child1["pos"].copy()
         newPop.ind[-1]["type"] = "GA"
-        newPop.addInd(parameters, ids[i+1])
+        newPop.addInd(runVars, parameters, ids[i+1])
         newPop.ind[-1]["pos"] = child2["pos"].copy()
         newPop.ind[-1]["type"] = "GA"
 
@@ -186,7 +186,7 @@ def cp(parameters):
     cp_crossover(parameters)
 
 def optimizer(pop, best, runVars, parameters):
-    newPop = abec.population(parameters, id = 0, fill = 0)
+    newPop = abec.population(runVars, parameters, id = 0, fill = 0)
     newPop.id = pop.id
     tempPop = copy.deepcopy(pop)
     #tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"])
@@ -194,7 +194,7 @@ def optimizer(pop, best, runVars, parameters):
     gaPop = [d for d in tempPop.ind if d["type"]=="GA"] # Select only the DE individuals
     ids = [d["id"] for d in gaPop]
 
-    newPop, ids = elitism(gaPop, newPop, parameters, ids)
+    newPop, ids = elitism(gaPop, newPop, runVars, parameters, ids)
 
     newPop, runVars = crossover(gaPop, newPop, runVars, parameters, ids)
 

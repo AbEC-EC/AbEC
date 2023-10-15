@@ -27,7 +27,7 @@ def cp(parameters):
     else:
         return 0
 
-def component(pop, parameters, randomInit):
+def component(pop, runVars, parameters, randomInit):
     rconv = parameters["COMP_ANTI_CONVERGENCE_RCONV"]
     wsubpopId = None
     wsubpop = None
@@ -58,4 +58,4 @@ def component(pop, parameters, randomInit):
         #print("CONVERGIU")
         randomInit[wsubpopId] = 1
 
-    return randomInit
+    return randomInit, runVars

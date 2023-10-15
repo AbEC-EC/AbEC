@@ -24,7 +24,7 @@ def optimizer(pop, best, runVars, parameters):
             elif indTemp["pos"][d] < parameters["MIN_POS"]:
                 indTemp["pos"][d] = parameters["MIN_POS"]
 
-        indTemp = abec.evaluate(indTemp, parameters)
+        indTemp, runVars = abec.evaluate(indTemp, runVars, parameters)
         if indTemp["fit"] < pop.ind[i]["fit"]:
             indTemp, runVars.best = abec.updateBest(indTemp, runVars.best)
             pop.ind[i] = indTemp

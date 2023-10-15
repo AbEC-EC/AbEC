@@ -15,14 +15,8 @@ import copy
 import numbers
 import json
 import numpy as np
-import matplotlib.colors as mcolors
 # AbEC files
-import plot.currentError as ecPlot
-import plot.offlineError as eoPlot
-import plot.searchSpace as spPlot
 import aux.fitFunction as fitFunction
-import plot.rtPlot as rtPlot
-import gui.gui as gui
 from aux.aux import *
 from metrics.offlineError import offlineError
 from metrics.fillingRate import fillingRate
@@ -82,8 +76,8 @@ def evaluate(x, runVars, parameters, be = 0):
         x["fit"], runVars = fitFunction.fitnessFunction(x['pos'], runVars, parameters)
         runVars.nevals += 1
     else:
-        if x["fit"] == "NaN":
-            print(f"{x}")
+        # if x["fit"] == "NaN":
+        #     print(f"{x}")
         if not be:
             return x, runVars
         else:
@@ -280,11 +274,7 @@ class runVariables():
         self.Eo = 0
         self.Fr = 0
         self.change = 0
-        self.changeEV = 0
-        self.rtPlotNevals = []
-        self.rtPlotError = []
-        self.rtPlotEo = []
-        self.rtPlotFr = []
+        self.changeEV = 1
     
     def id(self):
         return self.__id
@@ -429,31 +419,28 @@ def abec(run, seed, path, interface):
             sumPops = 0
             for subpop in runVars.pop:
                 sumPops += subpop.change
-
-            #myPrint(f"sumpops: {sumPops} {runVars.nevals} {len(pop)}")
+                
             if sumPops == len(runVars.pop):
                 for subpop in runVars.pop:
                     subpop.change = 0
                 runVars.change = 0
-                #myPrint("CABOU")
 
         for subpop_i, subpop in enumerate(runVars.pop):
 
             # Change detection component in the environment
             if runVars.change:
-                #myPrint(f"Change: {runVars.nevals}")
                 runVars.best["fit"] = "NaN"
-                runVars.changeEV = 1
+                runVars.changeEV = 1 # enable the evaluation again
                 if subpop.change == 0:
-                    runVars.pop, runVars.best = evaluatePop(runVars.pop, runVars.best, parameters)
+                    subpop, runVars.best, runVars = evaluatePop(subpop, runVars.best, runVars, parameters)
                     subpop.change = 1
-                    if flagEnv == 0:
-                        env += 1
-                        genChangeEnv = runVars.gen
-                        flagEnv = 1
+                    if runVars.flagEnv == 0:
+                        runVars.env += 1
+                        runVars.genChangeEnv = runVars.gen
+                        runVars.flagEnv = 1
                     for ind_i, ind in enumerate(subpop.ind):
                         ind["ae"] = 0 # Allow new evaluation
-                        subpop.ind[ind_i] = copy.deepcopy(subpop[ind_i])
+                        subpop.ind[ind_i] = copy.deepcopy(subpop.ind[ind_i])
                     continue
 
             #####################################
@@ -468,7 +455,7 @@ def abec(run, seed, path, interface):
             ###########################################
 
             for i in range(len(algo.comps_local["LER"])):
-                subpop = algo.comps_local["LER"][i].component(runVars.pop, parameters)
+                subpop, runVars = algo.comps_local["LER"][i].component(runVars.pop, runVars, parameters)
 
             ###########################################
             # Apply the Local Exploitation Components
@@ -489,11 +476,9 @@ def abec(run, seed, path, interface):
             runVars.pop[subpop_i] = copy.deepcopy(runVars.pop[subpop_i])
 
 
-        runVars.change = 0  # The generation is over so reset the change flag
         runVars.flagEnv = 0
         runVars.gen += 1
-        #if abs(runVars.gen - runVars.genChangeEnv) >= 1:
-            #runVars.change = 0
+        
 
         #####################################
         # Save the log only with the bests of each generation

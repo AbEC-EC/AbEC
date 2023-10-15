@@ -23,12 +23,8 @@ import matplotlib.colors as mcolors
 # AbEC files
 import plot.currentError as ecPlot
 import plot.offlineError as eoPlot
-import plot.searchSpace as spPlot
-import plot.rtPlot as rtPlot
 import gui.gui as gui
 from aux.aux import *
-from metrics.offlineError import offlineError
-from metrics.fillingRate import fillingRate
 
 def getSearchSpace(pop, layout):
     x = []
@@ -58,6 +54,7 @@ def initializeInterface(layout):
     layout.window["continueBT"].update("Continue")
     layout.window["continueBT"].update(disabled=False)
     layout.window["resetBT"].update(disabled=True)
+    #layout.launch()
 
 def analysis(path, parameters, totalTime, readme):
     myPrint("\n[RESULTS]", readme, parameters)
@@ -190,6 +187,40 @@ def loadConfigFiles(parameters, pathConfig):
             errorWarning(0.1, f"{file}", "FILE_NOT_FOUND", f"The {file} file is mandatory!")
     return parameters
 
+
+def getRunsFiles(path, luffy, nRuns):
+    path += "/results"
+    if(os.path.isdir(f"{path}")):
+        zoro = [name for name in os.listdir(path) if(name != "readme.txt" and name != "results.csv")]
+        if(nRuns != len(zoro)):                      
+            for run in zoro:
+                content = os.listdir(f"{path}/{run}")
+                if(len(content) >= 2):
+                    for file in content:
+                        if(file[-7:-4] == "RUN"):
+                            full = f"{path}/{run}/{file}"
+                            if(full not in luffy):
+                                luffy.append(full)
+                                nRuns = len(zoro)
+    return luffy, nRuns
+
+# plot the current state of the run files
+def plotRuns(luffy, layout, nruns):
+    if(layout.enablePF):
+        for run in luffy:
+            nrun = int(run[-15:-11])
+            df = pd.read_csv(run)[["nevals", "ec", "eo"]]
+            x = df["nevals"].to_list()
+            ec = df["ec"].to_list()
+            eo = df["eo"].to_list()
+            if(x and eo[-1] > 0):
+                if(nrun not in nruns):
+                    nruns.append(nrun)
+                    layout.run(x=x, y1=ec, y2=eo, r=nrun, legendFlag = 1)
+                else:
+                    layout.run(x=x, y1=ec, y2=eo, r=nrun)
+    return nruns
+
 def main():
 
     #####################################
@@ -243,12 +274,18 @@ def main():
             if interface:
                 if "layout" not in locals():
                     layout = gui.interface()
+                    print("[initializing ... ]")
+                    layout.window["continueBT"].update(disabled=True)
+                    layout.window.refresh()
                     layout.launch()
+                    layout.window["continueBT"].update(disabled=False)
+                    layout.window.refresh()
 
                 else:
                     layout.ax_pf = gui.configAxes(layout.ax_pf)
                     layout.ax_ss = gui.configAxes(layout.ax_ss, type = 2)
                     layout.reset = 0
+                    
                     initializeInterface(layout)
                     step = 0
 
@@ -489,6 +526,10 @@ def main():
                     layout.window.refresh()
 
             readme.close()   # Close file for the runs
+            
+            numberRuns = 0
+            luffy = [] # list with the paths of the runs files
+            runsDone = []
             #####################################
             # Main loop of the runs
             #####################################
@@ -497,6 +538,10 @@ def main():
                 prev_time = get_time(f"{pathExp}/results/results.csv")
                 for run in runs:
                     while True:
+                        if interface:
+                            if(layout.enablePF):
+                                luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                                runsDone = plotRuns(luffy, layout, runsDone)
                         if running < parameters["NPROCESS"]:
                             break
                         t = get_time(f"{pathExp}/results/results.csv")
@@ -506,15 +551,22 @@ def main():
                             prev_time = t
                         if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                             printRuns(layout, pathExp)
-
+                        
+                    
+                    
                     os.system(f"./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
                     #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
+                    
                     nruns += 1
                     running = nruns - ran
-
+                
                 # wait for the runs fininsh if parallelization on
                 prev_time = get_time(f"{pathExp}/results/results.csv")
                 while True:
+                    if interface:
+                        if(layout.enablePF):
+                            luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                            runsDone = plotRuns(luffy, layout, runsDone)
                     t = get_time(f"{pathExp}/results/results.csv")
                     if t != prev_time: # if the file changed, see how many runs have finished
                         ran = checkRuns(pathExp)
@@ -524,14 +576,20 @@ def main():
 
                     if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                         printRuns(layout, pathExp)
+                       
+                
                 if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
-                        printRuns(layout, pathExp)
+                    printRuns(layout, pathExp)
+                    if(layout.enablePF):
+                        luffy, numberRuns = getRunsFiles(pathExp, luffy, numberRuns)
+                        runsDone = plotRuns(luffy, layout, runsDone)
+                    
             else:
                 for run in runs:
                     abec(run['id'], run['seed'], pathExp, interface)
                     if interface:
                         layout.window.refresh()
-
+            
             executionTime = (time.time() - startTime)
             #####################################
             # analisys of the results

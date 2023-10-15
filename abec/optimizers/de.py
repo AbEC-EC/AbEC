@@ -42,7 +42,7 @@ def optimizer(pop, best, runVars, parameters):
                 ind["pos"][d] = x[d]
 
     for ind in dePop:
-        ind = abec.evaluate(ind, parameters)
+        ind, runVars = abec.evaluate(ind, runVars, parameters)
         for i in range(len(pop.ind)):
             if ind["id"] == pop.ind[i]["id"]:
                 if ind["fit"] < pop.ind[i]["fit"]:
