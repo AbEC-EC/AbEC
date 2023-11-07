@@ -109,13 +109,17 @@ Create the class of the algorithm
 '''
 class algoritmo():
 
+    # constructor
     def __init__(self):
         self.opts = []
         self.comps_global = {"GDV": [], "GER": [], "GET": []}
         self.comps_local = {"LER": [], "LET": []}
         self.comps_initialization = []
+        self.mts = {"IND": [], "GEN": [], "RUN": []}
         self.components = []
         self.optimizers = []
+        self.metrics = []
+        
 
     def updateOptimizers(self, x):
         self.opts.append(x)
@@ -140,6 +144,13 @@ class algoritmo():
 
     def removeComps_global(self, x):
         self.comps_global[x.scope[0]].remove(x)
+        
+    def updateMetrics(self, x, scope):
+        self.mts[scope].append(x)
+
+    def removeMetrics(self, x):
+        self.mts[x.scope[0]].remove(x)
+
 
 
 def ecMean(path, parameters):
@@ -211,13 +222,17 @@ def eoMean(path, parameters):
 Update algo with the parameters
 '''
 def updateAlgo(algo, parameters):
+    # list the files of the dir in append in the list
     components = [f for f in listdir("components") if isfile(join("components", f))]
     optimizers = [f for f in listdir("optimizers") if isfile(join("optimizers", f))]
-    comp_parameters = []
-    opt_parameters = []
+    metrics = [f for f in listdir("metrics") if isfile(join("metrics", f))]
+    
+    # update the size of the algo's lists
     algo.optimizers = [[] for _ in range (len(optimizers))]
     algo.components = [[] for _ in range (len(components))]
+    algo.metrics = [[] for _ in range (len(metrics))]
     validation = 0
+    
     # Load the optimizers
     id = 0
     for i in range(len(optimizers)):
@@ -245,6 +260,7 @@ def updateAlgo(algo, parameters):
         errorWarning(0.0, "algoConfig.ini", "XXX_POP_PERC", "The sum of the percentage of the population to perform the optimizers should be in 1")
         sys.exit()
 
+    # Load the components
     id = 0
     for i in range(len(components)):
         components[i] = components[i].split(".")[0].upper()
@@ -265,9 +281,28 @@ def updateAlgo(algo, parameters):
             algo.components[id].append(components[i])
             algo.components[id].append(comp)
             id += 1
+            
+            
+    # Load the metrics
+    id = 0
+    for i in range(len(metrics)):
+        metrics[i] = metrics[i].split(".")[0].upper()
+        arg = f"MTC_{metrics[i]}"
+        mtc = importlib.import_module(f"metrics.{metrics[i].lower()}")
+        if parameters[arg] == 0:
+            algo.removeMetrics(mtc)
+        elif(parameters[arg] != 1):
+            errorWarning("0.3.1", "algoConfig.ini", f"{arg}", "Metric selection should be 0 or 1")
+            sys.exit()
+        else:
+            mtc.cp(parameters)
+            algo.metrics[id].append(metrics[i])
+            algo.metrics[id].append(mtc)
+            id += 1
 
     algo.optimizers = [x for x in algo.optimizers if x] # Remove the empty lists
     algo.components = [x for x in algo.components if x]
+    algo.metrics = [x for x in algo.metrics if x]
 
     return algo
 
@@ -276,10 +311,13 @@ def updateAlgo(algo, parameters):
 Default parametrization for algoConfig.ini
 '''
 def algoConfig():
+    # list the files of the dir in append in the list
     components = [f for f in listdir("components") if isfile(join("components", f))]
     optimizers = [f for f in listdir("optimizers") if isfile(join("optimizers", f))]
+    metrics = [f for f in listdir("metrics") if isfile(join("metrics", f))]
     comp_parameters = []
     opt_parameters = []
+    mtc_parameters = []
 
     algo = algoritmo()
 
@@ -293,11 +331,11 @@ def algoConfig():
 
     # Load the optimizers
     for i in range(len(optimizers)):
-        optimizers[i] = optimizers[i].split(".")[0]
-        opt_parameters.append(importlib.import_module(f"optimizers.{optimizers[i]}"))
-        algo.updateOptimizers(opt_parameters[i])
-        optimizers[i] = optimizers[i].upper()
-        config.update({f"{optimizers[i]}_POP_PERC": 0})
+        optimizers[i] = optimizers[i].split(".")[0] # take the name
+        opt_parameters.append(importlib.import_module(f"optimizers.{optimizers[i]}")) # import the files
+        algo.updateOptimizers(opt_parameters[i]) # update the algo
+        optimizers[i] = optimizers[i].upper() 
+        config.update({f"{optimizers[i]}_POP_PERC": 0}) # update the config files with the parameters
         for j in range(len(opt_parameters[i].params)):
             config.update({f"{optimizers[i]}_{opt_parameters[i].params[j]}": 0})
 
@@ -322,6 +360,25 @@ def algoConfig():
         config.update({f"COMP_{components[i]}": 0})
         for j in range(len(comp_parameters[i].params)):
             config.update({f"COMP_{components[i]}_{comp_parameters[i].params[j]}": 0})
+            
+    # Load the metrics
+    for i in range(len(metrics)):
+        metrics[i] = metrics[i].split(".")[0]
+        mtc_parameters.append(importlib.import_module(f"metrics.{metrics[i]}"))
+        if mtc_parameters[i].scope[0] == "IND":
+            algo.updateMetrics(mtc_parameters[i], "IND")
+        elif mtc_parameters[i].scope[0] == "GEN":
+            algo.updateMetrics(mtc_parameters[i], "GEN")
+        elif mtc_parameters[i].scope[0] == "RUN":
+            algo.updateMetrics(mtc_parameters[i], "RUN")
+        else:
+            print("ERRO")
+
+        metrics[i] = metrics[i].upper()
+        config.update({f"MTC_{metrics[i]}": 0})
+        for j in range(len(mtc_parameters[i].params)):
+            config.update({f"MTC_{metrics[i]}_{mtc_parameters[i].params[j]}": 0})
+            
 
     return config, algo
 
@@ -338,6 +395,10 @@ def frameConfig():
         "ANALISYS" : 1, \
         "CONFIG_COPY": 1, \
         "OFFLINE_ERROR": 1, \
+        "MTC_EC": 1, \
+        "MTC_EO": 1, \
+        "MTC_ARR": 0, \
+        "MTC_BBC": 0, \
         "BEBC_ERROR": 0, \
         "PATH": "../experiments", \
         "LOG_ALL": 0, \

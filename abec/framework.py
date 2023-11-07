@@ -404,7 +404,9 @@ def main():
             elif parameters["NPROCESS"] == "AUTO":
                 parameters["NPROCESS"] = int((2/3)*NCPUS)
 
-            algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
+            algo = updateAlgo(algo, parameters) # update the algorithm with the parameters
+            
+            print(f"metrics: {algo.metrics}")
 
             #####################################
             # create the dir of the experiment
@@ -568,11 +570,18 @@ def main():
             # to allow the parallelization
             runs = [{"id": run+1, "seed": int(parameters["SEED"] + run), "done":0} for run in range(parameters["RUNS"])]
 
-            header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std", "fr", "fr_std", "execTime"]
+            header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "execTime"]
+            keys = list(algo.mts)
+            for i in range(len(algo.mts)):
+                for j in algo.mts[keys[i]]:
+                    for var in j.log:
+                        header.append(var)
+            #print(header)
+            
+                
             filename = f"{pathExp}/results/results.csv"
-
-            # Headers of the log files
             writeLog(mode=0, filename=filename, header=header)
+
             if parameters["DEBUG_RUN"]:
                 myPrint("\n[RUNNING]\n", readme, parameters)
                 myPrint(f"RUN | GEN | NEVALS |                    BEST                   | ERROR", readme, parameters)

@@ -18,8 +18,7 @@ import numpy as np
 # AbEC files
 import aux.fitFunction as fitFunction
 from aux.aux import *
-from metrics.offlineError import offlineError
-from metrics.fillingRate import fillingRate
+
 
 
 def updateBest(ind, best):
@@ -50,6 +49,25 @@ def myPrint2(string, path):
     file = open(f"{path}/printTmp.txt", "a")
     file.write(f"{string}\n")
     file.close()
+    
+def finishMetrics(runVars, parameters):
+    log = {}
+    for i in range(len(runVars.algo.mts["RUN"])):
+        metricName = runVars.algo.mts["RUN"][i].vars[0]
+        runVars.metrics[metricName.upper()] = runVars.algo.mts["RUN"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
+        for var in runVars.algo.mts["RUN"][i].log:   
+            log[var] = runVars.metrics[metricName.upper()][var]
+    
+    for s in ["GEN", "IND"]:
+        for i in range(len(runVars.algo.mts[s])):
+            metricName = runVars.algo.mts[s][i].vars[0]
+            runVars.metrics[metricName.upper()] = runVars.algo.mts[s][i].finishMetric(runVars.metrics[metricName.upper()], f"{runVars.filename_RUN}")
+            for var in runVars.algo.mts[s][i].log:   
+                log[var] = runVars.metrics[metricName.upper()][var]
+            
+    return runVars.metrics, log
+            
+
 
 
 def evaluate(x, runVars, parameters, be = 0):
@@ -57,18 +75,6 @@ def evaluate(x, runVars, parameters, be = 0):
     Fitness function. Returns the error between the fitness of the particle
     and the global optimum
     '''
-    
-    position = []
-    '''
-    for i in x["pos"]:
-        pos = round(i, runVars.res)
-        position.append(pos)
-    if position not in runVars.sspace:
-        runVars.sspace.append(position)
-    runVars.Fr = (len(runVars.sspace)/runVars.tot_pos)*100
-    '''
-    #print(globalVar.sspace)
-    #print(globalVar.Fr)
 
     # If a dynamic problem, there will be changes in the env
 
@@ -76,20 +82,22 @@ def evaluate(x, runVars, parameters, be = 0):
         x["fit"], runVars = fitFunction.fitnessFunction(x['pos'], runVars, parameters)
         runVars.nevals += 1
     else:
-        # if x["fit"] == "NaN":
-        #     print(f"{x}")
         if not be:
             return x, runVars
         else:
             return x["fit"], runVars
 
     if not be: # If it is a best evaluation does not log
-
-        if parameters["OFFLINE_ERROR"] and isinstance(runVars.best["fit"], numbers.Number):
-            runVars.eo_sum += runVars.best["fit"]
-
-        x["ae"] = 1 # Set as already evaluated
-
+        x["ae"] = 1 # Set the individual as already evaluated
+        
+        ###########################################
+        # Apply the individual level metrics
+        ###########################################        
+        if (isinstance(runVars.best["fit"], numbers.Number)):
+            for i in range(len(runVars.algo.mts["IND"])):
+                metricName = runVars.algo.mts["IND"][i].vars[0]
+                runVars.metrics[metricName.upper()] = runVars.algo.mts["IND"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters, x)
+                
         if parameters["LOG_ALL"]:
             log = [{"run": runVars.id(), "gen": runVars.gen, "nevals": runVars.nevals, \
                 "popId": x["pop_id"], "indId": x["id"], "type": x["type"], "indPos": x["pos"], \
@@ -102,7 +110,6 @@ def evaluate(x, runVars, parameters, be = 0):
         return x, runVars
 
     else:
-
         return x["fit"], runVars
 
 
@@ -162,14 +169,14 @@ class population():
         population.newid = itertools.count(1).__next__    # Get a new id for the population
 
 
-def createPopulation(algo, runVars, parameters):
+def createPopulation(runVars, parameters):
     '''
         This function is to create the populations and individuals
     '''
     pop = []
 
-    for i in range(len(algo.comps_initialization)):
-        pop, runVars = algo.comps_initialization[i].component(pop, runVars, parameters)
+    for i in range(len(runVars.algo.comps_initialization)):
+        pop, runVars = runVars.algo.comps_initialization[i].component(pop, runVars, parameters)
 
     if not pop:
         pop.append(population(runVars, parameters))
@@ -180,7 +187,7 @@ def createPopulation(algo, runVars, parameters):
 
     for subpop in pop:
         flag = 0
-        for opt in algo.optimizers:
+        for opt in runVars.algo.optimizers:
             for i in range(flag, len(subpop.ind)):
                 if subpop.ind[i]["id"] <= int(parameters[f"{opt[0]}_POP_PERC"]*parameters["POPSIZE"]+flag):
                     subpop.ind[i]["type"] = opt[0]
@@ -241,11 +248,12 @@ def finishRun(runVars, parameters):
 
 
 class runVariables():
-    def __init__(self, run, seed, parameters):
+    def __init__(self, run, seed, algo, parameters):
         self.__id = run
         self.__seed = seed
         self.done = 0
         self.rng = np.random.default_rng(self.__seed)
+        self.algo = algo
         self.gen = 0
         self.nevals = 0
         self.pop = []
@@ -254,15 +262,13 @@ class runVariables():
         self.randomInit = [0]
         self.mpb = None
         self.peaks = 0
-        self.eo_sum = 0
         self.npops = 0
-        self.Fr = 0
         self.res = 2
         self.flagChangeEnv = 0
         self.tot_pos = (parameters["MAX_POS"]-parameters["MIN_POS"])**parameters["NDIM"] * (10**self.res)
         self.startTime = 0
         self.bestRuns = []
-        self.header_RUN = ["gen", "nevals", "bestId", "bestPos", "ec", "eo", "fr", "env"]  
+        self.header_RUN = ["gen", "nevals", "bestId", "bestPos", "env"]  
         self.filename_RUN = ""
         self.header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
         self.filename_LA = ""
@@ -271,10 +277,17 @@ class runVariables():
         self.genChangeEnv = 0
         self.env = 0
         self.flagEnv = 0
-        self.Eo = 0
-        self.Fr = 0
         self.change = 0
         self.changeEV = 1
+        self.metrics = {}
+        # add the metrics to the variable and header
+        for i in range(len(algo.metrics)):
+            self.metrics[f"{algo.metrics[i][0]}"] = {}
+            for var in algo.metrics[i][1].vars:
+                self.metrics[f"{algo.metrics[i][0]}"][f"{var}"] = 0
+            if (algo.metrics[i][1].scope[0] == "GEN" or algo.metrics[i][1].scope[0] == "IND"):
+                self.header_RUN.append(f"{algo.metrics[i][0].lower()}")
+            
     
     def id(self):
         return self.__id
@@ -309,16 +322,24 @@ def abec(run, seed, path, interface):
     
     algo = updateAlgo(algo, parameters) # udpate the algorithm with the parameters
 
-    runVars = runVariables(run, seed, parameters)
-    
-    
+    runVars = runVariables(run, seed, algo, parameters)    
+
     #####################################
     # initialize and configure the logs
     #####################################
     checkCreateDir(f"{path}/results/{runVars.id():04}") # Check if the run dir exists, if not, create it
     
-    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "ec", "eo", "eo_std", "fr", "fr_std", "execTime"]
+    header = ["run", "gen", "nevals", "popId", "bestId", "bestPos", "execTime"]
+    keys = list(algo.mts)
+    for i in range(len(algo.mts)):
+        for j in algo.mts[keys[i]]:
+            for var in j.log:
+                header.append(var)
+    
     filename = f"{path}/results/results.csv"
+    if (not os.path.isfile(f"{path}/results/results.csv")):
+        # Headers of the log files
+        writeLog(mode=0, filename=filename, header=header)
     
     
     if parameters["LOG_ALL"]: # log each individual and its positions
@@ -343,7 +364,7 @@ def abec(run, seed, path, interface):
     #####################################
     runVars.startTime = time.time()
     # Create the population with POPSIZE individuals
-    runVars.pop, runVars.best, runVars = createPopulation(algo, runVars, parameters)
+    runVars.pop, runVars.best, runVars = createPopulation(runVars, parameters)
 
     #####################################
     # For each subpop in pop do the job
@@ -365,10 +386,17 @@ def abec(run, seed, path, interface):
         runVars.pop[subpop_i] = copy.deepcopy(runVars.pop[subpop_i]) # Apply the changes to the subpop
 
     runVars.gen += 1  # First generation
-    runVars.Eo = runVars.eo_sum/runVars.nevals  # Offline error
+    if (isinstance(runVars.best["fit"], numbers.Number)):
+        for i in range(len(runVars.algo.mts["IND"])):
+            metricName = runVars.algo.mts["IND"][i].vars[0]
+            runVars.metrics[metricName.upper()] = runVars.algo.mts["IND"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
     
-    log = [{"gen": runVars.gen, "nevals":runVars.nevals, "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "ec": runVars.best["fit"], "eo": runVars.Eo, "fr": runVars.Fr, "env": runVars.env}]
-    writeLog(mode=1, filename=runVars.filename_RUN, header=runVars.header_RUN, data=log)
+    log = {}
+    for i in range(len(runVars.algo.mts["IND"])):
+        metricName = runVars.algo.mts["IND"][i].vars[0]
+        log[metricName] = runVars.metrics[metricName.upper()][metricName]
+    log |= {"gen": runVars.gen, "nevals":runVars.nevals, "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "env": runVars.env}
+    writeLog(mode=1, filename=runVars.filename_RUN, header=runVars.header_RUN, data=[log])
 
     #####################################
     # Debug in pop and generation level
@@ -389,8 +417,8 @@ def abec(run, seed, path, interface):
         ###########################################
         # Apply the Global Diversity Components
         ###########################################
-        for i in range(len(algo.comps_global["GDV"])):
-            runVars.randomInit, runVars = algo.comps_global["GDV"][i].component(runVars.pop, runVars, parameters, runVars.randomInit)
+        for i in range(len(runVars.algo.comps_global["GDV"])):
+            runVars.randomInit, runVars = runVars.algo.comps_global["GDV"][i].component(runVars.pop, runVars, parameters, runVars.randomInit)
 
         #myPrint(runVars.randomInit)
         for id, i in enumerate(runVars.randomInit, 0):
@@ -402,16 +430,16 @@ def abec(run, seed, path, interface):
         # Apply the Global Exploration Components
         ###########################################
 
-        for i in range(len(algo.comps_global["GER"])):
-            runVars.pop, runVars = algo.comps_global["GER"][i].component(runVars.pop, runVars, parameters)
+        for i in range(len(runVars.algo.comps_global["GER"])):
+            runVars.pop, runVars = runVars.algo.comps_global["GER"][i].component(runVars.pop, runVars, parameters)
 
 
         ###########################################
         # Apply the Global Exploitation Components
         ###########################################
 
-        for i in range(len(algo.comps_global["GET"])):
-            runVars.best, runVars = algo.comps_global["GET"][i].component(runVars.best, runVars, parameters)
+        for i in range(len(runVars.algo.comps_global["GET"])):
+            runVars.best, runVars = runVars.algo.comps_global["GET"][i].component(runVars.best, runVars, parameters)
 
 
         # Verification if all pop were reeavluated after change
@@ -447,15 +475,15 @@ def abec(run, seed, path, interface):
             # Apply the optimizers in the pop
             #####################################
 
-            if i in range(len(algo.opts)):
-                subpop, runVars = algo.opts[i].optimizer(subpop, runVars.best, runVars, parameters)
+            if i in range(len(runVars.algo.opts)):
+                subpop, runVars = runVars.algo.opts[i].optimizer(subpop, runVars.best, runVars, parameters)
 
             ###########################################
             # Apply the Local Exploration Components
             ###########################################
 
-            for i in range(len(algo.comps_local["LER"])):
-                subpop, runVars = algo.comps_local["LER"][i].component(runVars.pop, runVars, parameters)
+            for i in range(len(runVars.algo.comps_local["LER"])):
+                subpop, runVars = runVars.algo.comps_local["LER"][i].component(runVars.pop, runVars, parameters)
 
             ###########################################
             # Apply the Local Exploitation Components
@@ -479,14 +507,24 @@ def abec(run, seed, path, interface):
         runVars.flagEnv = 0
         runVars.gen += 1
         
-
+        ###########################################
+        # Apply the generation level metrics
+        ###########################################
+        for i in range(len(runVars.algo.mts["GEN"])):
+            metricName = runVars.algo.mts["GEN"][i].vars[0]
+            runVars.metrics[metricName.upper()] = runVars.algo.mts["GEN"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
+            
         #####################################
         # Save the log only with the bests of each generation
         #####################################
-
-        runVars.Eo = runVars.eo_sum/runVars.nevals  # Calculate the offline error
-        log = [{"gen": runVars.gen, "nevals":runVars.nevals, "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "ec": runVars.best["fit"], "eo": runVars.Eo, "fr": runVars.Fr, "env": runVars.env}]
-        writeLog(mode=1, filename=runVars.filename_RUN, header=runVars.header_RUN, data=log)
+        log = {}
+        for s in ["GEN", "IND"]:
+            for i in range(len(runVars.algo.mts[s])):
+                metricName = runVars.algo.mts[s][i].vars[0]
+                log[metricName] = runVars.metrics[metricName.upper()][metricName]
+        log |= {"gen": runVars.gen, "nevals":runVars.nevals, "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "env": runVars.env}
+        writeLog(mode=1, filename=runVars.filename_RUN, header=runVars.header_RUN, data=[log])
+        
 
         #####################################
         # Debug in subpop and generation level
@@ -505,10 +543,14 @@ def abec(run, seed, path, interface):
     ####################################
     executionTime = (time.time() - runVars.startTime) 
     
-    # write the results in the log
-    runVars.eo = offlineError(f"{runVars.filename_RUN}")
-    log = [{"run": runVars.id(), "gen": runVars.gen, "nevals":runVars.nevals, "popId": runVars.best["pop_id"], "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "ec": runVars.best["fit"], "eo": runVars.eo[0], "eo_std": runVars.eo[1], "execTime": executionTime}]
-    writeLog(mode=1, filename=filename, header=header, data=log)
+    ###########################################
+    # Apply the run level metrics and write in the log
+    ###########################################
+    log = {}
+    runVars.metrics, log = finishMetrics(runVars, parameters)
+            
+    log |= {"run": runVars.id(), "gen": runVars.gen, "nevals":runVars.nevals, "popId": runVars.best["pop_id"], "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "execTime": executionTime}
+    writeLog(mode=1, filename=filename, header=header, data=[log])
 
     if parameters["DEBUG_RUN"]:
         #myPrint(f"[RUN:{runVars.run:02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.4f}][Eo:{Eo:.4f}]")

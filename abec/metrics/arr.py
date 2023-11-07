@@ -17,6 +17,26 @@ import os
 import csv
 import sys
 
+
+vars = ["arr"]
+scope = ["GEN"]
+params = []
+
+# check if the params of the metric is set up correctly
+def cp(parameters):
+    # code ...
+    return 1
+
+# calculate the metric
+def metric(ind, pop, var_metric, parameters):
+    # code ...
+    return var_metric
+
+# do the final calculations in the end of the run
+def finishMetric(file):
+    # code ...
+    return file
+
 cDate = datetime.datetime.now()
 year = cDate.year
 month = cDate.month
