@@ -8,11 +8,13 @@ Date: xxx
 '''
 import numpy as np
 import pandas as pd
+import sys
+from aux.aux import *
 
-
-vars = ["VAR1"] # variables used in to calculate the metric
-scope = ["IND"] # scope of the metric {IND, GEN, RUN}
 params = [] # configuration parameters of the metric
+vars = ["metricX", "var1"] # variables used in to calculate the metric
+log = [] # variable to be recorded on the log file
+scope = ["IND"] # scope of the metric {IND, GEN, RUN}
 
 # check if the params of the metric is set up correctly
 def cp(parameters):

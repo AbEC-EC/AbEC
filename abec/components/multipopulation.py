@@ -1,5 +1,10 @@
 '''
-Multipopulation component
+Title: Code to perform the Multipopulation component
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
 '''
 import numpy as np
 import abec

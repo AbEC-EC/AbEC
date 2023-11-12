@@ -1,5 +1,10 @@
 '''
-Exclusion operator
+Title: Code to perform the Exclusion component
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
 '''
 import itertools
 import numpy as np

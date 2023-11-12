@@ -1,10 +1,14 @@
+'''
+Title: Code to perform the Evolutionary Strategy (ES) optimizer
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import abec
 import copy
 from aux.aux import errorWarning
-
-'''
-Apply ES on the particle
-'''
 
 params = ["RCLOUD"]
 P = 1

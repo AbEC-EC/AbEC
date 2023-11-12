@@ -1,7 +1,11 @@
 '''
-Anti-convergence operator
-'''
+Title: Code to perform the Anti-convergence component
 
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import numpy as np
 import copy
 from aux.aux import *

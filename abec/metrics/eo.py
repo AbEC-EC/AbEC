@@ -7,25 +7,23 @@ Contact: https://mascarenhasav.github.io
 Date: 2023/2 
 '''
 
-import json
 import numpy as np
 import pandas as pd
-import datetime
 import sys
-import time
-import getopt
 from aux.aux import *
 
-
+params = []
 vars = ["eo", "eo_sum", "eo_std"]
 log = ["eo", "eo_std"]
 scope = ["IND"]
-params = []
 
 # check if the params of the metric is set up correctly
 def cp(parameters):
-    # code ...
-    return 1
+    if parameters["MTC_EO"] == 1:
+        return 1
+    elif(parameters["MTC_EO"] != 0):
+        errorWarning("3.2.2", "algoConfig.ini", "MTC_EO", "The Current Error metric should be 0 or 1")
+        sys.exit()
 
 # calculate the metric
 def metric(var_metric, runVars, parameters, ind = 0):

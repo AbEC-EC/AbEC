@@ -1,7 +1,11 @@
 '''
-Mutation components
-'''
+Title: Code to perform the Mutation component
 
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import numpy as np
 import sys
 from aux.aux import errorWarning

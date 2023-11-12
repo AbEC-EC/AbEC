@@ -1,11 +1,15 @@
+'''
+Title: Code to perform the Particle Swarm Optimization (PSO) optimizer
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import math
 import operator
 import sys
 from aux.aux import errorWarning
-
-'''
-Apply PSO on the particle
-'''
 
 params = ["PHI1", "PHI2", "W", "MIN_VEL", "MAX_VEL"]
 

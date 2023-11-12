@@ -1,10 +1,14 @@
+'''
+Title: Code to perform the Genetic Algorithm (GA) optimizer
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import abec
 import copy
 from aux.aux import errorWarning
-
-'''
-    GA optimizer
-'''
 
 params = ["ELI_PERC", "CROSS_PERC", "MUT_PERC", "MUT_STD", "ENCODER", "INDSIZE"]
 

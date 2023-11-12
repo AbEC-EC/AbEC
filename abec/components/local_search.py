@@ -1,5 +1,10 @@
 '''
-Apply LS on the best
+Title: Code to perform the Local Search component
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
 '''
 import copy
 import abec
@@ -12,6 +17,7 @@ scope = ["GET"]
 def cp(parameters):
     if not (0 < parameters["COMP_LOCAL_SEARCH_ETRY"] < parameters["POPSIZE"]):
         errorWarning("4.4.1", "algoConfig.ini", "COMP_LOCAL_SEARCH_ETRY", "The number of tries of the Local Search should be 0 between [1, POPSIZE[")
+        
     if not (0 < parameters["COMP_LOCAL_SEARCH_RLS"] < parameters["MAX_POS"]):
         errorWarning("3.4.2", "algoConfig.ini", "COMP_LOCAL_SEARCH_RLS", "The Local Search radio should be 0 between ]0, MAX_POS[")
     return 1

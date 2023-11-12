@@ -1,11 +1,15 @@
+'''
+Title: Code to perform the Differential Evolution (DE) optimizer
+
+Author: Alexandre Mascarenhas
+Contact: https://mascarenhasav.github.io
+
+Date: 2023/2
+'''
 import sys
 import copy
 import abec
 from aux.aux import errorWarning
-
-'''
-    DE optimizer
-'''
 
 params = ["F", "CR"]
 
