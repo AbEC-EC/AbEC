@@ -27,10 +27,10 @@ def cp(parameters):
         return 0
 
 def component(pop, runVars, parameters):
+    subpopsize = int(parameters["POPSIZE"]/parameters["COMP_MULTIPOPULATION_N"])
     for _ in range (parameters["COMP_MULTIPOPULATION_N"]):
-        pop.append(abec.population(runVars, parameters))
+        pop.append(abec.population(runVars, parameters, subpopsize))
 
     runVars.randomInit = [0 for _ in range(1, parameters["COMP_MULTIPOPULATION_N"]+2)]
 
     return pop, runVars
-

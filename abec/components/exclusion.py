@@ -41,7 +41,7 @@ def component(pop, runVars, parameters, randomInit):
                 dist += (x1 - x2)**2
             dist = np.sqrt(dist)
             if dist <= rexcl:
-                if pop[sp1].best["fit"] <= pop[sp2].best["fit"]:
+                if pop[sp1].best["fit"] >= pop[sp2].best["fit"]:
                     randomInit[sp1] = 1
                 else:
                     randomInit[sp2] = 1

@@ -383,9 +383,9 @@ def algoConfig():
     return config, algo
 
 '''
-Default parametrization for frameConfig.ini
+Default parametrization for expConfig.ini
 '''
-def frameConfig():
+def expConfig():
     config = {
         "__COMMENT__": "FRAMEWORK CONFIGURATION", \
         "RUNS": 3, \
@@ -397,8 +397,6 @@ def frameConfig():
         "OFFLINE_ERROR": 1, \
         "MTC_EC": 1, \
         "MTC_EO": 1, \
-        "MTC_ARR": 0, \
-        "MTC_BBC": 0, \
         "BEBC_ERROR": 0, \
         "PATH": "../experiments", \
         "LOG_ALL": 0, \

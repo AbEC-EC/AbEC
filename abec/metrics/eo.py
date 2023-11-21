@@ -1,5 +1,10 @@
 '''
-Title: Code to evaluate the offline error metric
+Title: Code to evaluate the offline error metric*
+
+* J. Branke and H. Schmeck, “Designing evolutionary algorithms for dynamic 
+optimization problems,” in Advances in Evolutionary Computing (Natural 
+Computing Series), A. Ghosh and S. Tsutsui, Eds. Heidelberg, Germany: Springer, 
+2003, pp. 239-262.
 
 Author: Alexandre Mascarenhas
 Contact: https://mascarenhasav.github.io

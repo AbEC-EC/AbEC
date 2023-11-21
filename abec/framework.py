@@ -16,8 +16,10 @@ import time
 import ast
 import logging
 import json
+from math import dist
 import shutil
 import pandas as pd
+import numpy as np
 from abec import abec
 import matplotlib.colors as mcolors
 # AbEC files
@@ -177,7 +179,7 @@ get_time = lambda f: os.stat(f).st_ctime
 
 def loadConfigFiles(parameters, pathConfig):
     #Read the parameters from the config file
-    parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+    parametersFiles = ["algoConfig.ini", "expConfig.ini", "problemConfig.ini"]
     for file in parametersFiles:
         if os.path.isfile(f"{pathConfig}/{file}"):
             with open(f"{pathConfig}/{file}") as f:
@@ -193,7 +195,7 @@ def getRunsFiles(path, luffy, logAllRuns, optimaRuns, nRuns):
     path += "/results"
     if(os.path.isdir(f"{path}")):
         zoro = [name for name in os.listdir(path) if(name != "readme.txt" and name != "results.csv")]
-        if(nRuns != len(zoro)):                      
+        if(nRuns != len(zoro)):
             for run in zoro:
                 content = os.listdir(f"{path}/{run}")
                 if(len(content) >= 2):
@@ -211,7 +213,7 @@ def getRunsFiles(path, luffy, logAllRuns, optimaRuns, nRuns):
                             full = f"{path}/{run}/{file}"
                             if(full not in optimaRuns):
                                 optimaRuns.append(full)
-                        
+
 
     return luffy, logAllRuns, optimaRuns, nRuns
 
@@ -234,29 +236,63 @@ def plotRuns(luffy, layout, nruns):
     return nruns
 
 # plot the current state of the run files
-def plotRunsSearchSpace(logAllRuns, layout, nruns):
-    if(layout.enableSS):
-        x = []
-        y = []
-        for run in logAllRuns:
-            nrun = int(run[-18:-14])
-            pos = pd.read_csv(run)["indPos"].to_list()
+def plotRunsSearchSpace(path, layout, lastGen):
+    df = pd.read_csv(path)
+    if( (not df.empty) and (df["gen"].iloc[-1]>lastGen) ):
+        lastGen = df["gen"].iloc[-1]
+        layout.ax_ss.clear()
+        layout.ax_ss.set_xlim(0, 100)
+        layout.ax_ss.set_ylim(0, 100)
+        posAll = df[df["gen"] == df["gen"].iloc[-1]-1]
+        for subpops in range(1, len(pd.unique(posAll["popId"]))+1):
+            x = []
+            y = []
+            pos = posAll[["indPos", "indFit"]][(posAll["popId"] == subpops)]
+            minFit = pos["indFit"].min()
+            maxFit = pos["indFit"].max()
+            worst = pos["indPos"][pos["indFit"]==maxFit].to_list()[0]
+            best = pos["indPos"][pos["indFit"]==minFit].to_list()[0]
+            worst = ast.literal_eval(worst)[:2]
+            best = ast.literal_eval(best)[:2]
+            distance = np.sqrt(((float(best[0])-float(worst[0]))**2) + ((float(best[1])-float(worst[1]))**2))
+            medium = [(best[0] + worst[0])/2, (best[1] + worst[1])/2]
+            #distance = dist(worst, best)
+            if distance < 1:
+                distance = 10
+            layout.ax_ss.scatter(float(best[0]), float(best[1]), c=list(mcolors.CSS4_COLORS)[subpops*3], s=50, marker="X", linewidth=0, alpha=0.7)
+            layout.ax_ss.scatter(float(best[0]), float(best[1]), c=list(mcolors.CSS4_COLORS)[subpops*3], s=(4*distance)**2, linewidth=0, alpha=0.1)
+            #layout.ax_ss.scatter(float(worst[0]), float(worst[1]), c=list(mcolors.CSS4_COLORS)[subpops*2], s=50, linewidth=0, alpha=0.7)
+            for row in pos["indPos"].tolist():
+                    row = ast.literal_eval(row)
+                    x.append(float(row[0]))
+                    y.append(float(row[1]))
+                    layout.ax_ss.scatter(x, y, c=list(mcolors.CSS4_COLORS)[subpops*3], s=3, linewidth=0, alpha=0.7)
+                    
+        layout.fig_agg_ss.draw()
+        '''
             if(pos):
                 for row in pos:
                     row = ast.literal_eval(row)
                     x.append(float(row[0]))
-                    y.append(float(row[1]))    
+                    y.append(float(row[1]))
+                    layout.ax_ss.scatter(x, y1, c=list(mcolors.CSS4_COLORS)[subpops], s=distance, alpha=0.5)
+                    layout.fig_agg_ss.draw()
+
+                
                 if(nrun not in nruns):
                     nruns.append(nrun)
+                    layout.run(x=x, y1=y, type=2, r=subpops, legendFlag = 1)
                     layout.run(x=x, y1=y, type=2, r=nrun, legendFlag = 1)
                 else:
                     layout.run(x=x, y1=y, type=2, r=nrun)
-    return nruns
+        '''
+    return lastGen
 
 
 # plot the current state of the run files
 def plotOptimaSearchSpace(optimaRuns, layout, nruns):
     if(layout.enableSS):
+        first = 1
         x = []
         y = []
         for run in optimaRuns:
@@ -270,8 +306,11 @@ def plotOptimaSearchSpace(optimaRuns, layout, nruns):
                             opt = opt.split(",")
                             x.append(float(opt[1][2:6]))
                             y.append(float(opt[2][1:5]))
-                    layout.ax_ss.scatter(x, y, c="red", s=4, alpha=0.7)
-                    layout.fig_agg_ss.draw()  
+                        if(first):
+                            layout.ax_ss.scatter(x, y, c="orange", marker="X", s=50, linewidth=0, alpha=0.7)
+                            first = 0
+                    layout.ax_ss.scatter(x, y, c="red", s=5, alpha=0.7)
+                    layout.fig_agg_ss.draw()
     return nruns
 
 
@@ -339,7 +378,7 @@ def main():
                     layout.ax_pf = gui.configAxes(layout.ax_pf)
                     layout.ax_ss = gui.configAxes(layout.ax_ss, type = 2)
                     layout.reset = 0
-                    
+
                     initializeInterface(layout)
                     step = 0
 
@@ -389,9 +428,9 @@ def main():
             #####################################
             # load the parameter files
             #####################################
-            parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+            parametersFiles = ["algoConfig.ini", "expConfig.ini", "problemConfig.ini"]
             algoParameters, algo = algoConfig()
-            parameters = algoParameters | frameConfig() | problemConfig()
+            parameters = algoParameters | expConfig() | problemConfig()
 
             parameters = loadConfigFiles(parameters, pathConfig)
 
@@ -405,7 +444,7 @@ def main():
                 parameters["NPROCESS"] = int((2/3)*NCPUS)
 
             algo = updateAlgo(algo, parameters) # update the algorithm with the parameters
-            
+
             print(f"metrics: {algo.metrics}")
 
             #####################################
@@ -577,8 +616,8 @@ def main():
                     for var in j.log:
                         header.append(var)
             #print(header)
-            
-                
+
+
             filename = f"{pathExp}/results/results.csv"
             writeLog(mode=0, filename=filename, header=header)
 
@@ -589,13 +628,13 @@ def main():
                     layout.window.refresh()
 
             readme.close()   # Close file for the runs
-            
+
             numberRuns = 0
             luffy = [] # list with the paths of the runs files
             logAllRuns = []
             optimaRuns = []
             runsDone = []
-            runsDoneSS = []
+            lastGenSS = 0
             runsDoneOP = []
             #####################################
             # Main loop of the runs
@@ -608,8 +647,8 @@ def main():
                         if interface:
                             if(layout.enablePF):
                                 luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
-                                if(parameters["LOG_ALL"]):
-                                    runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                                if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
+                                    lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
                                     if(parameters["BENCHMARK"] != "CUSTOM"):
                                         runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                                 runsDone = plotRuns(luffy, layout, runsDone)
@@ -622,23 +661,23 @@ def main():
                             prev_time = t
                         if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                             printRuns(layout, pathExp)
-                        
-                    
-                    
+
+
+
                     os.system(f"./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
                     #os.system(f"taskset -c {i},{i+1} ./abec.py -r {run['id']} -s {run['seed']} -p {pathExp} -i {interface} &")
-                    
+
                     nruns += 1
                     running = nruns - ran
-                
+
                 # wait for the runs fininsh if parallelization on
                 prev_time = get_time(f"{pathExp}/results/results.csv")
                 while True:
                     if interface:
                         if(layout.enablePF):
                             luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
-                            if(parameters["LOG_ALL"]):
-                                runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                            if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
+                                lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
                                 if(parameters["BENCHMARK"] != "CUSTOM"):
                                     runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                             runsDone = plotRuns(luffy, layout, runsDone)
@@ -651,24 +690,24 @@ def main():
 
                     if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                         printRuns(layout, pathExp)
-                       
-                
+
+
                 if interface and os.path.isfile(f"{pathExp}/printTmp.txt"):
                     printRuns(layout, pathExp)
                     if(layout.enablePF):
                         luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
-                        if(parameters["LOG_ALL"]):
-                            runsDoneSS = plotRunsSearchSpace(logAllRuns, layout, runsDoneSS)
+                        if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
+                            lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
                             if(parameters["BENCHMARK"] != "CUSTOM"):
                                         runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                         runsDone = plotRuns(luffy, layout, runsDone)
-                    
+
             else:
                 for run in runs:
                     abec(run['id'], run['seed'], pathExp, interface)
                     if interface:
                         layout.window.refresh()
-            
+
             executionTime = (time.time() - startTime)
             #####################################
             # analisys of the results

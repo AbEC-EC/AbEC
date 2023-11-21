@@ -53,7 +53,7 @@ def component(pop, runVars, parameters, randomInit):
                         nconv += 1
                         break
         # Search for the worst swarm according to its global best
-        if not wsubpop or subpop.best["fit"] < wsubpop.best["fit"]:
+        if not wsubpop or subpop.best["fit"] > wsubpop.best["fit"]:
             wsubpopId = subpopId
             wsubpop = copy.deepcopy(subpop)
 

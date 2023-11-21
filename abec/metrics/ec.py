@@ -1,5 +1,9 @@
 '''
-Title: Code to evaluate the current error metric
+Title: Code to evaluate the current error metric*
+
+* R. C. Eberhart and Y. Shi, “Tracking and optimizing dynamic systems 
+with particle swarms,” in Proc. IEEE Congr. Evol. Comput.,vol.1. Seoul, 
+South Korea, 2001, pp. 94–100.
 
 Author: Alexandre Mascarenhas
 Contact: https://mascarenhasav.github.io

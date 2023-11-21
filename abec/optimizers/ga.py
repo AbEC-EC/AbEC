@@ -190,7 +190,7 @@ def cp(parameters):
     cp_crossover(parameters)
 
 def optimizer(pop, best, runVars, parameters):
-    newPop = abec.population(runVars, parameters, id = 0, fill = 0)
+    newPop = abec.population(runVars, parameters, len(pop.ind), id = 0, fill = 0)
     newPop.id = pop.id
     tempPop = copy.deepcopy(pop)
     #tempPop.ind = sorted(tempPop.ind, key = lambda x:x["id"])

@@ -52,13 +52,15 @@ def myPrint2(string, path):
     
 def finishMetrics(runVars, parameters):
     log = {}
+    '''
     for i in range(len(runVars.algo.mts["RUN"])):
         metricName = runVars.algo.mts["RUN"][i].vars[0]
         runVars.metrics[metricName.upper()] = runVars.algo.mts["RUN"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
         for var in runVars.algo.mts["RUN"][i].log:   
             log[var] = runVars.metrics[metricName.upper()][var]
+    '''
     
-    for s in ["GEN", "IND"]:
+    for s in ["RUN", "GEN", "IND"]:
         for i in range(len(runVars.algo.mts[s])):
             metricName = runVars.algo.mts[s][i].vars[0]
             runVars.metrics[metricName.upper()] = runVars.algo.mts[s][i].finishMetric(runVars.metrics[metricName.upper()], f"{runVars.filename_RUN}")
@@ -121,7 +123,7 @@ class population():
     # Get a new id for the population
     newid = itertools.count(1).__next__
 
-    def __init__(self, runVars, parameters, id = 1, fill = 1):
+    def __init__(self, runVars, parameters, popsize, id = 1, fill = 1):
         if(id == 0):    # Temporary population doesnt have an id
             self.id = 0
         else:
@@ -130,13 +132,13 @@ class population():
             else:
                 self.id = population.newid()
 
-        self.popsize = parameters["POPSIZE"]
+        self.popsize = popsize
 
         self.change = 0
 
         self.ind = []
         if fill == 1:
-            for i in range(1, parameters["POPSIZE"]+1):
+            for i in range(1, popsize+1):
                 self.addInd(runVars, parameters, i)
 
         self.best = self.createInd(runVars, parameters, 0)
@@ -179,7 +181,7 @@ def createPopulation(runVars, parameters):
         pop, runVars = runVars.algo.comps_initialization[i].component(pop, runVars, parameters)
 
     if not pop:
-        pop.append(population(runVars, parameters))
+        pop.append(population(runVars, parameters, parameters["POPSIZE"]))
         runVars.randomInit = [0]
 
     best = pop[0].ind[0].copy()
@@ -189,7 +191,7 @@ def createPopulation(runVars, parameters):
         flag = 0
         for opt in runVars.algo.optimizers:
             for i in range(flag, len(subpop.ind)):
-                if subpop.ind[i]["id"] <= int(parameters[f"{opt[0]}_POP_PERC"]*parameters["POPSIZE"]+flag):
+                if subpop.ind[i]["id"] <= int(parameters[f"{opt[0]}_POP_PERC"]*len(subpop.ind)+flag):
                     subpop.ind[i]["type"] = opt[0]
                 else:
                     flag = subpop.ind[i]["id"]-1
@@ -310,9 +312,9 @@ def abec(run, seed, path, interface):
     #####################################
     # initilize the algorithm with the parameters
     #####################################
-    parametersFiles = ["algoConfig.ini", "frameConfig.ini", "problemConfig.ini"]
+    parametersFiles = ["algoConfig.ini", "expConfig.ini", "problemConfig.ini"]
     parameters0, algo = algoConfig()
-    parameters = parameters0 | frameConfig() | problemConfig()
+    parameters = parameters0 | expConfig() | problemConfig()
     
     for file in parametersFiles:
         with open(f"{path}/{file}") as f:
@@ -390,13 +392,25 @@ def abec(run, seed, path, interface):
         for i in range(len(runVars.algo.mts["IND"])):
             metricName = runVars.algo.mts["IND"][i].vars[0]
             runVars.metrics[metricName.upper()] = runVars.algo.mts["IND"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
-    
+
+    ###########################################
+    # Apply the generation level metrics
+    ###########################################
+    for i in range(len(runVars.algo.mts["GEN"])):
+            metricName = runVars.algo.mts["GEN"][i].vars[0]
+            runVars.metrics[metricName.upper()] = runVars.algo.mts["GEN"][i].metric(runVars.metrics[metricName.upper()], runVars, parameters)
+
+    #####################################
+    # Save the log only with the bests of each generation
+    #####################################
     log = {}
-    for i in range(len(runVars.algo.mts["IND"])):
-        metricName = runVars.algo.mts["IND"][i].vars[0]
-        log[metricName] = runVars.metrics[metricName.upper()][metricName]
+    for s in ["GEN", "IND"]:
+        for i in range(len(runVars.algo.mts[s])):
+            metricName = runVars.algo.mts[s][i].vars[0]
+            log[metricName] = runVars.metrics[metricName.upper()][metricName]
     log |= {"gen": runVars.gen, "nevals":runVars.nevals, "bestId": runVars.best["id"], "bestPos": runVars.best["pos"], "env": runVars.env}
     writeLog(mode=1, filename=runVars.filename_RUN, header=runVars.header_RUN, data=[log])
+
 
     #####################################
     # Debug in pop and generation level

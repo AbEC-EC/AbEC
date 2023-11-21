@@ -248,6 +248,7 @@ class interface():
         elif type == 2:
             self.ax_ss.set_xlim(0, 100)
             self.ax_ss.set_ylim(0, 100)
+            
             if(legendFlag):
                 self.ax_ss.scatter(x, y1, c=list(mcolors.CSS4_COLORS)[r+r], label=f"Run {r}", s=10, alpha=0.5)
                 self.ax_ss.legend()
@@ -285,7 +286,7 @@ class interface():
                 self.reset = 1
                 break
             elif event == '-EXP-':
-                os.system(f"xdg-open {path}/frameConfig.ini")
+                os.system(f"xdg-open {path}/expConfig.ini")
             elif event == '-ALGO-':
                 os.system(f"xdg-open {path}/algoConfig.ini")
             elif event == '-PRO-':
