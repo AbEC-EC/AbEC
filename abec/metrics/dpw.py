@@ -44,7 +44,7 @@ def metric(var_metric, runVars, parameters):
 
     # Caclulate the difference euclidean distance between the individuals
     # and normalize with the population size
-    for ind1_i, ind1 in enumerate(pop):
+    for ind1_i, ind1 in enumerate(pop, start=1):
         for ind2 in pop[:ind1_i-1]:
             for d1, d2 in zip(ind1["pos"], ind2["pos"]):
                 aux += (d1-d2)**2
