@@ -21,16 +21,21 @@ def optimizer(pop, best, runVars, parameters):
     for i in range(len(pop.ind)):
         indTemp = copy.deepcopy(pop.ind[i])
         rcloud = parameters["ES_RCLOUD"]
+        #if(pop.id == 3 and pop.ind[i]["id"] == 6):
+         #   print(f"ind: {pop.ind[i]}")
         for d in range(parameters["NDIM"]):
+            
             indTemp["pos"][d] = pop.best["pos"][d] + P*(runVars.rng.uniform(-1, 1)*rcloud)
+            
+            
             if indTemp["pos"][d] > parameters["MAX_POS"]:
                 indTemp["pos"][d] = parameters["MAX_POS"]
             elif indTemp["pos"][d] < parameters["MIN_POS"]:
                 indTemp["pos"][d] = parameters["MIN_POS"]
 
-        indTemp, runVars = abec.evaluate(indTemp, runVars, parameters)
+        indTemp, pop.best, runVars = abec.evaluate(indTemp, pop.best, runVars, parameters)
         if indTemp["fit"] < pop.ind[i]["fit"]:
-            indTemp, runVars.best = abec.updateBest(indTemp, runVars.best)
+            # indTemp, runVars.best = abec.updateBest(indTemp, runVars.best)
             pop.ind[i] = indTemp
         else:
             pop.ind[i]["ae"] = 1

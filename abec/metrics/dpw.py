@@ -32,22 +32,29 @@ def cp(parameters):
 
 # calculate the metric
 def metric(var_metric, runVars, parameters):
+    pop = []
     aux = 0
     aux2 = 0
     
+    # If there are more subpopulations, put all the individuals in the same list (pop)
     for subpop in runVars.pop:
-        for ind1_i, ind1 in enumerate(subpop.ind[1:], start=2):
-            for ind2 in subpop.ind[:ind1_i-1]:
-                for d1, d2 in zip(ind1["pos"], ind2["pos"]):
-                    aux += (d1-d2)**2
-                aux2 += np.sqrt(aux)
-                aux = 0
+        for ind in subpop.ind:
+            pop.append(ind)
+    popsize = len(pop)
+
+    # Caclulate the difference euclidean distance between the individuals
+    # and normalize with the population size
+    for ind1_i, ind1 in enumerate(pop):
+        for ind2 in pop[:ind1_i-1]:
+            for d1, d2 in zip(ind1["pos"], ind2["pos"]):
+                aux += (d1-d2)**2
+            aux2 += np.sqrt(aux)
+            aux = 0
     
-    popsize = len(runVars.pop) * len(runVars.pop[0].ind)
     aux = 2*(aux2)/(popsize-1)
-    
     aux = aux / popsize
         
+    # Normalize
     if(runVars.gen == 1 or aux > var_metric["NMDF"]):
         var_metric["NMDF"] = aux
     var_metric["dpw"] = aux / var_metric["NMDF"]

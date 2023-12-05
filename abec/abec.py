@@ -21,23 +21,7 @@ from aux.aux import *
 
 
 
-def updateBest(ind, best):
-    '''
-    Update the global best individual
-    '''
-    #print(f"ind type: {type(ind)} {ind['pop_id']} {ind['id']} {ind['fit']} {globalVar.nevals}")
-    #print(f"best type: {type(best)} {best['fit']}")
-    if not isinstance(best["fit"], numbers.Number) or (best["fit"] > ind["fit"]): # If first gen, just copy the ind
-        best = ind.copy()
 
-    '''
-    Update the ind best
-    '''
-    if not isinstance(ind["best_fit"], numbers.Number) or (ind["best_fit"] > ind["fit"]): # If first gen, just copy the ind
-        ind["best_fit"] = ind["fit"]
-        ind["best_pos"] = ind["pos"]
-
-    return ind, best
 
 
 def myPrint(string, file, parameters):
@@ -69,25 +53,51 @@ def finishMetrics(runVars, parameters):
             
     return runVars.metrics, log
             
+def updateBest(ind, popBest, best):
+    '''
+    Update the global best individual
+    '''
+    #print(f"ind type: {type(ind)} {ind['pop_id']} {ind['id']} {ind['fit']} {globalVar.nevals}")
+    #print(f"best type: {type(best)} {best['fit']}")
+    #if not isinstance(best["fit"], numbers.Number) or (ind["fit"] < best["fit"]): # If first gen, just copy the ind
+    if ind["fit"] < best["fit"]: # If first gen, just copy the ind
+        best = ind.copy()
+        
+    '''
+    Update the pop best
+    '''
+    if ind["fit"] < popBest["fit"]: # If first gen, just copy the ind
+        popBest = ind.copy()
+
+    '''
+    Update the ind best
+    '''
+    if ind["fit"] < ind["best_fit"]: # If first gen, just copy the ind
+        ind["best_fit"] = ind["fit"]
+        ind["best_pos"] = ind["pos"]
+
+    return ind, popBest, best
 
 
-
-def evaluate(x, runVars, parameters, be = 0):
+def evaluate(x, popBest, runVars, parameters, be = 0):
     '''
     Fitness function. Returns the error between the fitness of the particle
     and the global optimum
     '''
 
     # If a dynamic problem, there will be changes in the env
+    
 
     if not parameters["CHANGES"] or runVars.changeEV:
         x["fit"], runVars = fitFunction.fitnessFunction(x['pos'], runVars, parameters)
         runVars.nevals += 1
+        if not be:
+            x, popBest, runVars.best = updateBest(x, popBest, runVars.best)
     else:
         if not be:
-            return x, runVars
+            return x, popBest, runVars
         else:
-            return x["fit"], runVars
+            return x["fit"], popBest, runVars
 
     if not be: # If it is a best evaluation does not log
         x["ae"] = 1 # Set the individual as already evaluated
@@ -105,14 +115,15 @@ def evaluate(x, runVars, parameters, be = 0):
                 "popId": x["pop_id"], "indId": x["id"], "type": x["type"], "indPos": x["pos"], \
                 "indVel": x["vel"], "indBestPos": x["best_pos"], "indBestFit": x["best_fit"], \
                 "indFit": x["fit"], \
+                "popBestId": popBest["id"], "popBestPos": popBest["pos"], "popBestFit": popBest["fit"], \
                 "globalBestId": runVars.best["id"], "globalBestPos": runVars.best["pos"], \
                 "globalBestFit": runVars.best["fit"]}]
             writeLog(mode=1, filename=runVars.filename_LA, header=runVars.header_LA, data=log)
 
-        return x, runVars
+        return x, popBest, runVars
 
     else:
-        return x["fit"], runVars
+        return x["fit"], popBest, runVars
 
 
 
@@ -135,6 +146,7 @@ class population():
         self.popsize = popsize
 
         self.change = 0
+        self.ae = 0
 
         self.ind = []
         if fill == 1:
@@ -151,8 +163,8 @@ class population():
                 "pos": [0 for _ in range(parameters["NDIM"])], \
                 "vel": [0 for _ in range(parameters["NDIM"])], \
                 "best_pos": [0 for _ in range(parameters["NDIM"])], \
-                "best_fit": "NaN", \
-                "fit": "NaN", \
+                "best_fit": 100000000, \
+                "fit": 1000000000, \
                 "ae": 0 \
                 }
         return attr
@@ -184,8 +196,8 @@ def createPopulation(runVars, parameters):
         pop.append(population(runVars, parameters, parameters["POPSIZE"]))
         runVars.randomInit = [0]
 
-    best = pop[0].ind[0].copy()
-    best["id"] = "NaN"
+    #best = pop[0].ind[0].copy()
+    #best["id"] = "NaN"
 
     for subpop in pop:
         flag = 0
@@ -197,7 +209,7 @@ def createPopulation(runVars, parameters):
                     flag = subpop.ind[i]["id"]-1
                     break
 
-    return pop, best, runVars
+    return pop, runVars
 
 
 def randInit(pop, runVars, parameters):
@@ -205,34 +217,32 @@ def randInit(pop, runVars, parameters):
         Random initialization of the individuals
     '''
     #print(f"REINIT {subpop.id}")
-    for ind in pop.ind:
-        ind["pos"] = [float(runVars.rng.choice(range(parameters['MIN_POS'], parameters['MAX_POS']))) for _ in range(parameters["NDIM"])]
-        if ind["type"] == "PSO":
-            ind["vel"] = [float(runVars.rng.choice(range(parameters["PSO_MIN_VEL"], parameters["PSO_MAX_VEL"]))) for _ in range(parameters["NDIM"])]
+    for ind_i, ind in enumerate(pop.ind):
+        pop.ind[ind_i]["pos"] = [float(runVars.rng.choice(range(int(parameters['MIN_POS']), int(parameters['MAX_POS'])))) for _ in range(parameters["NDIM"])]
+        pop.ind[ind_i]["best_pos"] = pop.ind[ind_i]["pos"]
+        pop.ind[ind_i]["best_fit"] = 100000000
+        if pop.ind[ind_i]["type"] == "PSO":
+            pop.ind[ind_i]["vel"] = [float(runVars.rng.choice(range(int(parameters["PSO_MIN_VEL"]), int(parameters["PSO_MAX_VEL"])))) for _ in range(parameters["NDIM"])]
     pop.best = pop.ind[0].copy()
+    pop.best["fit"] = 100000000
     return pop, runVars
 
 
 
-def evaluatePop(pop, best, runVars, parameters):
-    '''
-    Reevaluate each particle attractor and update swarm best
-    If ES_CHANGE_COMP is activated, the position of particles is
-    changed by ES strategy
-    '''
-    for ind in pop.ind:
+def evaluatePop(pop, runVars, parameters):
+    for ind_i, ind in enumerate(pop.ind):
         if ind["ae"] == 0:
-            ind, runVars = evaluate(ind, runVars, parameters)
+            pop.ind[ind_i], pop.best, runVars = evaluate(ind, pop.best, runVars, parameters)
             '''
             for i, d in enumerate(ind["pos"]):
                 ind["pos"][i] = round(d, 4)
             '''
-            ind, best = updateBest(ind, best)
+            # ind, best = updateBest(ind, best)
 
     pop.ind = sorted(pop.ind, key = lambda x:x["fit"])
-    pop.best = pop.ind[0].copy()
+    # pop.best = pop.ind[0].copy()
 
-    return pop, best, runVars
+    return pop, runVars
 
 
 def finishRun(runVars, parameters):
@@ -272,7 +282,7 @@ class runVariables():
         self.bestRuns = []
         self.header_RUN = ["gen", "nevals", "bestId", "bestPos", "env"]  
         self.filename_RUN = ""
-        self.header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "globalBestId", "globalBestPos", "globalBestFit"]
+        self.header_LA = ["run", "gen", "nevals", "popId", "indId", "type", "indPos", "indVel", "indBestPos", "indBestFit", "indFit", "popBestId", "popBestPos", "popBestFit", "globalBestId", "globalBestPos", "globalBestFit"]
         self.filename_LA = ""
         self.header_OPT = [f"opt{i}" for i in range(1, parameters["NPEAKS_MPB"]+1)]
         self.filename_OPT = ""
@@ -366,8 +376,11 @@ def abec(run, seed, path, interface):
     #####################################
     runVars.startTime = time.time()
     # Create the population with POPSIZE individuals
-    runVars.pop, runVars.best, runVars = createPopulation(runVars, parameters)
-
+    runVars.pop, runVars = createPopulation(runVars, parameters)
+    runVars.best = copy.deepcopy(runVars.pop[0].ind[0])
+    runVars.best["fit"] = 10000000
+    runVars.gen += 1  # First generation
+    
     #####################################
     # For each subpop in pop do the job
     #####################################
@@ -376,7 +389,7 @@ def abec(run, seed, path, interface):
         subpop, runVars = randInit(subpop, runVars, parameters)
 
         # Evaluate all the individuals in the pop and update the bests
-        subpop, runVars.best, runVars = evaluatePop(subpop, runVars.best, runVars, parameters)
+        subpop, runVars = evaluatePop(subpop, runVars, parameters)
         for ind_i, ind in enumerate(subpop.ind):
             ind["ae"] = 0
             # Debug in individual level
@@ -387,7 +400,7 @@ def abec(run, seed, path, interface):
             
         runVars.pop[subpop_i] = copy.deepcopy(runVars.pop[subpop_i]) # Apply the changes to the subpop
 
-    runVars.gen += 1  # First generation
+    
     if (isinstance(runVars.best["fit"], numbers.Number)):
         for i in range(len(runVars.algo.mts["IND"])):
             metricName = runVars.algo.mts["IND"][i].vars[0]
@@ -428,24 +441,31 @@ def abec(run, seed, path, interface):
     # LOOP UNTIL FINISH THE RUN
     ###########################################################################
     while finishRun(runVars, parameters) == 0:
+        runVars.gen += 1
         ###########################################
         # Apply the Global Diversity Components
         ###########################################
         for i in range(len(runVars.algo.comps_global["GDV"])):
-            runVars.randomInit, runVars = runVars.algo.comps_global["GDV"][i].component(runVars.pop, runVars, parameters, runVars.randomInit)
+            runVars.randomInit = runVars.algo.comps_global["GDV"][i].component(runVars.pop, runVars.randomInit, runVars, parameters)
 
         #myPrint(runVars.randomInit)
-        for id, i in enumerate(runVars.randomInit, 0):
-            if i:
-                runVars.pop[id], runVars = randInit(runVars.pop[id], runVars, parameters)
+        for id in range(len(runVars.randomInit)):
+            if runVars.randomInit[id]:
+                #print(id)
+                runVars.pop[id-1], runVars = randInit(runVars.pop[id-1], runVars, parameters)
                 runVars.randomInit[id] = 0
+                # Evaluate all the individuals in the pop and update the bests
+                runVars.pop[id-1], runVars = evaluatePop(runVars.pop[id-1], runVars, parameters)
+                runVars.pop[id-1].ae = 1
+
+                
 
         ###########################################
         # Apply the Global Exploration Components
         ###########################################
 
         for i in range(len(runVars.algo.comps_global["GER"])):
-            runVars.pop, runVars = runVars.algo.comps_global["GER"][i].component(runVars.pop, runVars, parameters)
+            runVars.pop = runVars.algo.comps_global["GER"][i].component(runVars.pop, runVars, parameters)
 
 
         ###########################################
@@ -468,13 +488,14 @@ def abec(run, seed, path, interface):
                 runVars.change = 0
 
         for subpop_i, subpop in enumerate(runVars.pop):
-
+            if runVars.pop[subpop_i].ae == 1:
+                continue
             # Change detection component in the environment
             if runVars.change:
-                runVars.best["fit"] = "NaN"
+                runVars.best["fit"] = 10000000
                 runVars.changeEV = 1 # enable the evaluation again
                 if subpop.change == 0:
-                    subpop, runVars.best, runVars = evaluatePop(subpop, runVars.best, runVars, parameters)
+                    subpop, runVars = evaluatePop(subpop, runVars, parameters)
                     subpop.change = 1
                     if runVars.flagEnv == 0:
                         runVars.env += 1
@@ -488,8 +509,7 @@ def abec(run, seed, path, interface):
             #####################################
             # Apply the optimizers in the pop
             #####################################
-
-            if i in range(len(runVars.algo.opts)):
+            for i in range(len(runVars.algo.opts)):    
                 subpop, runVars = runVars.algo.opts[i].optimizer(subpop, runVars.best, runVars, parameters)
 
             ###########################################
@@ -505,7 +525,7 @@ def abec(run, seed, path, interface):
 
 
             # Evaluate all the individuals that have no been yet in the subpop and update the bests
-            subpop, runVars.best, runVars = evaluatePop(subpop, runVars.best, runVars, parameters)
+            subpop, runVars = evaluatePop(subpop, runVars, parameters)
                 
             for ind_i, ind in enumerate(subpop.ind):
                 ind["ae"] = 0 # Allow new evaluation
@@ -516,10 +536,14 @@ def abec(run, seed, path, interface):
                 subpop.ind[ind_i] = copy.deepcopy(subpop.ind[ind_i])
                     
             runVars.pop[subpop_i] = copy.deepcopy(runVars.pop[subpop_i])
+            
+        for subpop_i, subpop in enumerate(runVars.pop):
+            runVars.pop[subpop_i].ae = 0
+            for ind_i in range(len(subpop.ind)):
+                subpop.ind[ind_i]["ae"] = 0
 
 
         runVars.flagEnv = 0
-        runVars.gen += 1
         
         ###########################################
         # Apply the generation level metrics
@@ -549,7 +573,7 @@ def abec(run, seed, path, interface):
                 myPrint(f"[POP {subpop.id:04}][BEST {subpop.best['id']:04}: {subpop.best['pos']} ERROR:{subpop.best['fit']}]", readme, parameters)
 
         if parameters["DEBUG_GEN"]:
-            myPrint(f"[RUN:{runVars.id():02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}][Eo: {runVars.Eo:.04f}]", readme, parameters)
+            myPrint(f"[RUN:{runVars.id():02}][GEN:{runVars.gen:04}][NEVALS:{runVars.nevals:06}][POP {runVars.best['pop_id']:04}][BEST {runVars.best['id']:04}:{runVars.best['pos']}][ERROR:{runVars.best['fit']:.04f}]]", readme, parameters)
 
 
     #####################################

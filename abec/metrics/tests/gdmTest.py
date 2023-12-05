@@ -32,7 +32,9 @@ fig, ax = plt.subplots()
 
 df = pd.read_csv(path)
 
-gdms = ["dtd", "dmi", "dtap", "dvac", "dpw"]
+gdms = ["dtd", "dmi", "dtap", "dvac", "dpw", "mex"]
+#gdms = ["dtd", "dtap"]
+#gdms = ["dpw", "mex"]
 gen = df["gen"]
 
 for metric in gdms:

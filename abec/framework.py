@@ -236,13 +236,13 @@ def plotRuns(luffy, layout, nruns):
     return nruns
 
 # plot the current state of the run files
-def plotRunsSearchSpace(path, layout, lastGen):
+def plotRunsSearchSpace(path, layout, lastGen, parameters):
     df = pd.read_csv(path)
     if( (not df.empty) and (df["gen"].iloc[-1]>lastGen) ):
         lastGen = df["gen"].iloc[-1]
         layout.ax_ss.clear()
-        layout.ax_ss.set_xlim(0, 100)
-        layout.ax_ss.set_ylim(0, 100)
+        layout.ax_ss.set_xlim(int(parameters["MIN_POS"]), int(parameters["MAX_POS"]))
+        layout.ax_ss.set_ylim(int(parameters["MIN_POS"]), int(parameters["MAX_POS"]))
         posAll = df[df["gen"] == df["gen"].iloc[-1]-1]
         for subpops in range(1, len(pd.unique(posAll["popId"]))+1):
             x = []
@@ -445,7 +445,7 @@ def main():
 
             algo = updateAlgo(algo, parameters) # update the algorithm with the parameters
 
-            print(f"metrics: {algo.metrics}")
+            #print(f"metrics: {algo.metrics}")
 
             #####################################
             # create the dir of the experiment
@@ -648,7 +648,7 @@ def main():
                             if(layout.enablePF):
                                 luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
                                 if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
-                                    lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
+                                    lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS, parameters)
                                     if(parameters["BENCHMARK"] != "CUSTOM"):
                                         runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                                 runsDone = plotRuns(luffy, layout, runsDone)
@@ -677,7 +677,7 @@ def main():
                         if(layout.enablePF):
                             luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
                             if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
-                                lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
+                                lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS, parameters)
                                 if(parameters["BENCHMARK"] != "CUSTOM"):
                                     runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                             runsDone = plotRuns(luffy, layout, runsDone)
@@ -697,7 +697,7 @@ def main():
                     if(layout.enablePF):
                         luffy, logAllRuns, optimaRuns, numberRuns = getRunsFiles(pathExp, luffy, logAllRuns, optimaRuns, numberRuns)
                         if(parameters["LOG_ALL"] and layout.enableSS and logAllRuns):
-                            lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS)
+                            lastGenSS = plotRunsSearchSpace(logAllRuns[0], layout, lastGenSS, parameters)
                             if(parameters["BENCHMARK"] != "CUSTOM"):
                                         runsDoneOP = plotOptimaSearchSpace(optimaRuns, layout, runsDoneOP)
                         runsDone = plotRuns(luffy, layout, runsDone)
@@ -740,6 +740,8 @@ def main():
                 break
 
         except Exception as e:
+            while(True):
+                x = 1
             logging.exception('Got exception on main handler')
             raise
 

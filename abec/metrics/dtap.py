@@ -33,25 +33,33 @@ def cp(parameters):
 # calculate the metric
 def metric(var_metric, runVars, parameters):
     pd1 = [[] for i in range(parameters["NDIM"])]
+    pop = []
     aux = 0
+    
+    # If there are more subpopulations, put all the individuals in the same list (pop)
     for subpop in runVars.pop:
         for ind in subpop.ind:
-            for d_i, d in enumerate(ind["pos"]):
-                pd1[d_i].append(d)
-                
+            pop.append(ind)
+    popsize = len(pop)
+    
+    # Append the value of the dimensions in a list
+    for ind in pop:
+        for d_i, d in enumerate(ind["pos"]):
+            pd1[d_i].append(d)
+            
+    # Avarage the the values of the dimension
     avr_pd1 = [np.average(pd1[d_i]) for d_i in range(parameters["NDIM"])]
     
-    for subpop in runVars.pop:
-        for ind in subpop.ind:
-            for d_i, d in enumerate(ind["pos"]):
-                aux += (d - avr_pd1[d_i])**2
+    for ind in pop:
+        for d_i, d in enumerate(ind["pos"]):
+            aux += (d - avr_pd1[d_i])**2
     
-    popsize = len(runVars.pop) * len(runVars.pop[0].ind)
     aux = np.sqrt(aux) / popsize
         
     if(runVars.gen == 1 or aux > var_metric["NMDF"]):
         var_metric["NMDF"] = aux
     var_metric["dtap"] = aux / var_metric["NMDF"]
+    
     return var_metric
 
 # do the final calculations in the end of the run

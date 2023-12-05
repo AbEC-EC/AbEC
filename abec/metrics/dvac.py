@@ -33,24 +33,34 @@ def cp(parameters):
 # calculate the metric
 def metric(var_metric, runVars, parameters):
     pd1 = []
+    pop = []
     aux = 0
+    
+    # If there are more subpopulations, put all the individuals in the same list (pop)
     for subpop in runVars.pop:
         for ind in subpop.ind:
-            for d_i, d in enumerate(ind["pos"]):
-                pd1.append(d)
+            pop.append(ind)
+    popsize = len(pop)
+    
+    # Append the value of the dimensions in a list
+    for ind in pop:
+        for d in ind["pos"]:
+            pd1.append(d)
                 
+    # Average the values of all dimensions
     avr_pd1 = np.average(pd1)
     pd1 = []
     
-    for subpop in runVars.pop:
-        for ind in subpop.ind:
-            for d_i, d in enumerate(ind["pos"]):
-                pd1.append(d)
-            aux += (np.average(pd1) - avr_pd1)**2
+    # For each individual, sum the difference between the average of its dimensions values
+    # and the average of all dimensions. Normalize with the population size
+    for ind in pop:
+        for d in ind["pos"]:
+            pd1.append(d)
+        aux += (np.average(pd1) - avr_pd1)**2
             
-    popsize = len(runVars.pop) * len(runVars.pop[0].ind)
     aux = aux / popsize
         
+    # Normalize
     if(runVars.gen == 1 or aux > var_metric["NMDF"]):
         var_metric["NMDF"] = aux
     var_metric["dvac"] = aux / var_metric["NMDF"]

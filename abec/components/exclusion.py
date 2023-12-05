@@ -31,21 +31,21 @@ def cp(parameters):
     else:
         return 0
 
-def component(pop, runVars, parameters, randomInit):
+def component(pop, randomInit, runVars, parameters):
     rexcl = parameters["COMP_EXCLUSION_REXCL"]
     for sp1, sp2 in itertools.combinations(range(len(pop)), 2):
         # Subpop must have a best and not already be set to reinitialize
-        if pop[sp1].best and pop[sp2].best and not (randomInit[sp1] or randomInit[sp2]):
+        if pop[sp1].best and pop[sp2].best and not (randomInit[pop[sp1].id] or randomInit[pop[sp2].id]):
             dist = 0
             for x1, x2 in zip(pop[sp1].best["pos"], pop[sp2].best["pos"]):
                 dist += (x1 - x2)**2
             dist = np.sqrt(dist)
             if dist <= rexcl:
                 if pop[sp1].best["fit"] >= pop[sp2].best["fit"]:
-                    randomInit[sp1] = 1
+                    randomInit[pop[sp1].id] = 1
                 else:
-                    randomInit[sp2] = 1
+                    randomInit[pop[sp2].id] = 1
             #else:
                 #print(f"{pop[sp1].id} {pop[sp1].best['pos']} -- {pop[sp2].id} {pop[sp2].best['pos']}")
 
-    return randomInit, runVars
+    return randomInit

@@ -46,12 +46,12 @@ def optimizer(pop, best, runVars, parameters):
                 ind["pos"][d] = x[d]
 
     for ind in dePop:
-        ind, runVars = abec.evaluate(ind, runVars, parameters)
+        ind, pop.best, runVars = abec.evaluate(ind, pop.best, runVars, parameters)
         for i in range(len(pop.ind)):
             if ind["id"] == pop.ind[i]["id"]:
                 if ind["fit"] < pop.ind[i]["fit"]:
                     pop.ind[i] = ind.copy()
-                    ind, runVars.best = abec.updateBest(pop.ind[i], runVars.best)
+                    ind, pop.best, runVars.best = abec.updateBest(pop.ind[i], pop.best, runVars.best)
                 else:
                     pop.ind[i]["ae"] = 1    # Assure that this individual will not be evaluated again
 

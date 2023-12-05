@@ -36,20 +36,31 @@ def metric(var_metric, runVars, parameters):
     pd1 = [[] for i in range(parameters["NDIM"])]
     pd2 = [[] for i in range(parameters["NDIM"])]
     aux = 0
+    pop = []
+    
+    # If there are more subpopulations, put all the individuals in the same list (pop)
     for subpop in runVars.pop:
         for ind in subpop.ind:
-            for d_i, d in enumerate(ind["pos"]):
-                pd1[d_i].append(d)
-                pd2[d_i].append(d**2)
-                
+            pop.append(ind)
+    
+    # Append the value of the dimension and its value squared in different lists
+    for ind in pop:
+        for d_i, d in enumerate(ind["pos"]):
+            pd1[d_i].append(d)
+            pd2[d_i].append(d**2)
+            
+    # Create a list of the avarage of the dimensions
     avr_pd1 = [np.average(pd1[d_i])**2 for d_i in range(parameters["NDIM"])]
     avr_pd2 = [np.average(pd2[d_i]) for d_i in range(parameters["NDIM"])]
     
+    # Sum the difference
     for d_i in range(parameters["NDIM"]):
         aux += avr_pd2[d_i] - avr_pd1[d_i]
     
+    # Square root the sum
     aux = np.sqrt(aux) / parameters["NDIM"]
     
+    # Normalize
     if(runVars.gen == 1 or aux > var_metric["NMDF"]):
         var_metric["NMDF"] = aux
     var_metric["dtd"] = aux / var_metric["NMDF"]

@@ -25,11 +25,12 @@ def cp(parameters):
 
 def component(best, runVars, parameters):
     bp = copy.deepcopy(best)
+    bp2 = copy.deepcopy(best)
     for _ in range(parameters["COMP_LOCAL_SEARCH_ETRY"]):
         for i in range(parameters["NDIM"]):
             bp["pos"][i] = bp["pos"][i] + runVars.rng.uniform(-1, 1)*parameters["COMP_LOCAL_SEARCH_RLS"]
-        bp["fit"], runVars = abec.evaluate(bp, runVars, parameters, be = 1)
-        if not isinstance(best["fit"], numbers.Number) or bp["fit"] < best["fit"]:
+        bp["fit"], bp2, runVars = abec.evaluate(bp, bp2, runVars, parameters, be = 1)
+        if bp["fit"] < best["fit"]:
             best = copy.deepcopy(bp)
     return best, runVars
 
