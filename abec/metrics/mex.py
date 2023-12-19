@@ -17,19 +17,6 @@ vars = ["mex", "NMDF"] # variables used in to calculate the metric
 log = ["mex"] # variable to be recorded on the log file
 scope = ["GEN"] # scope of the metric, GEN
 
-def PCA_reduction(df, plotDebug = 0):        
-        
-    pca = PCA(n_components = 2)
-    pca.fit(df)
-    
-    autovalores = pca.explained_variance_
-    autovetores = pca.components_
-    fatores_x = ['F1','F2', "F3", "F4", "F5"]
-    
-    data_pca = pca.transform(df)
-    data_pca = pd.DataFrame(data_pca,columns=['PC1','PC2'])
-    return data_pca["PC1"].to_list(), data_pca["PC2"].to_list()
-
 # check if the params of the metric is set up correctly
 def cp(parameters):
     if parameters["MTC_MEX"] == 1:

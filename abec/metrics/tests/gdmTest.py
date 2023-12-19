@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 plt.style.use("dark_background")
 plt.rcParams["axes.facecolor"] = "#1c1c1c"
 plt.rcParams["savefig.facecolor"] = "#1c1c1c"
-plt.rcParams["figure.figsize"] = (20, 16)
+plt.rcParams["figure.figsize"] = (10, 6)
 
 #####################################
 # get the arguments
@@ -32,7 +32,7 @@ fig, ax = plt.subplots()
 
 df = pd.read_csv(path)
 
-gdms = ["dtd", "dmi", "dtap", "dvac", "dpw", "mex"]
+gdms = ["dtd", "dmi", "dtap", "dvac", "dpw"]
 #gdms = ["dtd", "dtap"]
 #gdms = ["dpw", "mex"]
 gen = df["gen"]
@@ -44,5 +44,6 @@ ax.set_title(f"GDMs")
 plt.legend()
 plt.grid(which="major", color="dimgrey", linewidth=0.8)
 plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+plt.savefig("diversity1.png")
 plt.show()
     
