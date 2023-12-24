@@ -1,5 +1,5 @@
 '''
-Title: Code to evaluate the Maximum Exploration metric
+Title: Code to evaluate the Minimum Individual Distance Metric
 
 Author: Alexandre Mascarenhas
 Contact: https://mascarenhasav.github.io
@@ -13,16 +13,16 @@ from aux.aux import *
 from sklearn.decomposition import PCA
 
 params = [] # configuration parameters of the metric
-vars = ["mex", "NMDF"] # variables used in to calculate the metric
-log = ["mex"] # variable to be recorded on the log file
+vars = ["mid", "NMDF"] # variables used in to calculate the metric
+log = ["mid"] # variable to be recorded on the log file
 scope = ["GEN"] # scope of the metric, GEN
 
 # check if the params of the metric is set up correctly
 def cp(parameters):
-    if parameters["MTC_MEX"] == 1:
+    if parameters["MTC_MID"] == 1:
         return 1
-    elif(parameters["MTC_MEX"] != 0):
-        errorWarning("3.2.2", "algoConfig.ini", "MTC_MEX", "The Maximum Exploration metric should be 0 or 1")
+    elif(parameters["MTC_MID"] != 0):
+        errorWarning("3.2.2", "algoConfig.ini", "MTC_MID", "The Minimum Individual Distance metric should be 0 or 1")
         sys.exit()
 
 # calculate the metric
@@ -54,7 +54,7 @@ def metric(var_metric, runVars, parameters):
     
     if(runVars.gen == 1 or aux > var_metric["NMDF"]):
         var_metric["NMDF"] = aux
-    var_metric["mex"] = aux / var_metric["NMDF"]
+    var_metric["mid"] = aux / var_metric["NMDF"]
     return var_metric
 
 # do the final calculations in the end of the run
