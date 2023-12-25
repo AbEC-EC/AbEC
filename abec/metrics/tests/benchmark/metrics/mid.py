@@ -23,6 +23,7 @@ def metric(var_metric, NMDF, population, gen):
             d = np.sqrt(sumD) # Euclidean distance
                 
             if d < minDist[ind1_i] or minDist[ind1_i] == -1:
+                #print(d)
                 minDist[ind1_i] = d
 
     aux = sum(minDist)
