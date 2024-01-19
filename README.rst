@@ -59,7 +59,7 @@ License
 Copyright 2024 Alexandre Mascarenhas and contributors.
 
 ``AbEC`` is free software made available under the MIT License. For details see
-the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
+the `LICENSE <https://github.com/AbEC-EC/AbEC/blob/main/LICENCE>`_ file.
 
 .. |Coverage Status| image:: https://codecov.io/gh/adrn/gala/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/adrn/gala
