@@ -2,7 +2,7 @@
 
 AbEC is a Component-based Framework for Research and Development in Static and Dynamic Evolutionary Computation 
 
-|Affiliated package| |Coverage Status| |Build status|
+|Build status| |Coverage Status| 
 
 Documentation
 -------------
@@ -66,17 +66,11 @@ the `LICENSE <https://github.com/AbEC-EC/AbEC/blob/main/LICENCE>`_ file.
 .. |Build status| image:: https://github.com/adrn/gala/actions/workflows/tests.yml/badge.svg
    :target: https://github.com/adrn/gala/actions/workflows/tests.yml
 .. |License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-   :target: https://github.com/adrn/gala/blob/main/LICENSE
-.. |PyPI| image:: https://badge.fury.io/py/gala.svg
-   :target: https://badge.fury.io/py/gala
-.. |conda| image:: https://anaconda.org/conda-forge/gala/badges/version.svg
-   :target: https://anaconda.org/conda-forge/gala
-.. |Documentation Status| image:: https://readthedocs.org/projects/gala-astro/badge/?version=latest
-   :target: http://gala-astro.readthedocs.io/en/latest/?badge=latest
-.. |Affiliated package| image:: https://img.shields.io/badge/astropy-affiliated%20package-orange.svg
-   :target: http://astropy.org/affiliated
-.. |JOSS| image:: http://joss.theoj.org/papers/10.21105/joss.00388/status.svg
-   :target: http://joss.theoj.org/papers/10.21105/joss.00388
+   :target: https://github.com/AbEC-EC/AbEC/blob/main/LICENCE
+.. |Documentation Status| image:: https://readthedocs.org/projects/abec/badge/?version=latest
+   :target: https://abec.readthedocs.io/en/latest/?badge=latest
+.. |JOSS| image:: 
+   :target: 
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
 .. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
