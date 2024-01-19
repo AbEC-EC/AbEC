@@ -1,34 +1,6 @@
-# AbEC
-
-
-## Description
-The AbEC (<ins>**A**</ins>djusta<ins>**b**</ins>le <ins>**E**</ins>volutionary <ins>**C**</ins>omponents) is a framework developed in Python to test different 
-components present in the literature on Evolutionary Algorithms (EA) that are 
-used in optimization of Static and Dynamic problems. It allows the components to be turned 
-on/off in order to test the effectiveness of each one of them independently in a given 
-problem.
-Another characteristic is the possibility of configuring the parameters of both the 
-optimizers (GA, PSO, DE, ES) and the characteristics of the Benchmarks.
-
-## Usage
-
-To use the framework, the easiest way is just clone the git repository and start to use.
-For this, you can use the following command in your terminal:
- 
-```python
-git clone https://github.com/AbEC-EC/AbEC.git
-```
-
-<br>
-Now, you basically just need to adjust the algorithm in the way that you want and boom!!
-
-<br>
-
-To know more about the configuration files and usage of the framework [come here](https://abec-ec.github.io).
-
 |logo|
 
-Gala is a Python package for Galactic and gravitational dynamics.
+AbEC is a Component-based Framework for Research and Development in Static and Dynamic Evolutionary Computation 
 
 |Affiliated package| |Coverage Status| |Build status|
 
@@ -37,8 +9,8 @@ Documentation
 
 |Documentation Status|
 
-The documentation for ``Gala`` is hosted on `Read the docs
-<http://gala.adrian.pw>`__.
+The documentation for ``AbEC`` is hosted on `Read the docs
+<https://abec-ec.github.io>`__.
 
 Installation and Dependencies
 -----------------------------
@@ -47,7 +19,7 @@ The easiest way to get AbEC is to install cloning the reposity from github.
 
 The recommended install method is to use ``git clone``::
 
-   git clone bla bla bla
+   git clone https://github.com/AbEC-EC/AbEC.git
 
 See the `installation
 instructions <https://abec-ec.github.io/install.html>`_ in the
@@ -116,6 +88,6 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
 Contributors
 ------------
 
-See the `AUTHORS.rst <https://github.com/adrn/gala/blob/main/AUTHORS.rst>`_
+See the `AUTHORS.rst <https://github.com/AbEC-EC/AbEC/blob/main/AUTHORS.rst>`_
 file for a complete list of contributors to the project.
 
