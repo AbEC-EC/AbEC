@@ -16,7 +16,12 @@ Functionality
 
 - [X] Installation: Does installation proceed as outlined in the documentation?
 
+   - [ ] Modificar a pagina de instalacao para ter uma instalacao mais manual.
+
 - [ ] Functionality: Have the functional claims of the software been confirmed?
+
+   - [ ] Listar as funcionalidades
+   - [ ] Confirm the functional claims
 
 - [X] Performance: If there are any performance claims of the software, have they been confirmed? (If there are no claims, please check off this item.)
 
